@@ -51,7 +51,6 @@ class SP500CompleteAnalyzer:
             'LRCX': 'Lam Research',
             'KLAC': 'KLA Corp',
             'SNPS': 'Synopsys Inc',
-            'CDNS': 'Cadence Design',
             'MCHP': 'Microchip Technology',
             'NXPI': 'NXP Semiconductors',
             'ADSK': 'Autodesk Inc',
