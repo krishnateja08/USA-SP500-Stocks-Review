@@ -5,8 +5,11 @@ on:
     # Run at 4:30 PM EST (9:30 PM UTC) on weekdays
     - cron: '30 21 * * 1-5'
   
-  # Allow manual trigger
   workflow_dispatch:
+
+# Added permissions to allow the bot to write the web page
+permissions:
+  contents: write
 
 jobs:
   analyze-stocks:
@@ -14,12 +17,12 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4 # Upgraded from v3
+      uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v5 # Upgraded from v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12' # Changed to stable 3.12
     
     - name: Install dependencies
       run: |
@@ -34,12 +37,21 @@ jobs:
       run: |
         python sp500_analyzer.py
     
-    - name: Upload analysis results
+    # NEW STEP: Deploy the generated index.html to GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./ # Looks for index.html in your main folder
+        publish_branch: gh-pages
+    
+    - name: Upload analysis results (Artifacts)
       if: always()
-      uses: actions/upload-artifact@v4 # Upgraded from v3
+      uses: actions/upload-artifact@v4
       with:
         name: analysis-logs
         path: |
           *.log
           *.txt
+          index.html
         retention-days: 7
