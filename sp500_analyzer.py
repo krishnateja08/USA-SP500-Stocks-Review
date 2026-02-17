@@ -309,15 +309,36 @@ class SP500CompleteAnalyzer:
                 rating = "⭐ STRONG SELL"
                 recommendation = "STRONG SELL"
             
+            # ---- Smart Beta-Adjusted Stop Loss ----
+            # Max SL % based on Beta:
+            #   Beta < 0.8  → max 5%   (low volatility stocks e.g. JNJ, KO)
+            #   Beta 0.8-1.2 → max 7%  (market-like stocks e.g. MSFT, JPM)
+            #   Beta 1.2-1.8 → max 10% (moderate-high volatility e.g. NVDA, AMD)
+            #   Beta > 1.8  → max 12%  (high volatility e.g. TSLA)
+            stock_beta = beta if beta else 1.0
+            if stock_beta < 0.8:
+                max_sl_pct = 5.0
+            elif stock_beta < 1.2:
+                max_sl_pct = 7.0
+            elif stock_beta < 1.8:
+                max_sl_pct = 10.0
+            else:
+                max_sl_pct = 12.0
+
             # Stop Loss & Targets
             if recommendation in ["STRONG BUY", "BUY"]:
-                stop_loss = support * 0.97
+                # Use recent support but cap at max_sl_pct below current price
+                raw_stop_loss = support * 0.97
+                min_allowed_sl = current_price * (1 - max_sl_pct / 100)
+                stop_loss = max(raw_stop_loss, min_allowed_sl)  # take the higher (tighter) of the two
                 sl_percentage = ((current_price - stop_loss) / current_price) * 100
                 target_1 = resistance
                 target_2 = min(target_price, resistance * 1.05) if target_price > current_price else resistance * 1.05
                 upside = ((target_1 - current_price) / current_price) * 100
             else:
-                stop_loss = resistance * 1.03
+                raw_stop_loss = resistance * 1.03
+                max_allowed_sl = current_price * (1 + max_sl_pct / 100)
+                stop_loss = min(raw_stop_loss, max_allowed_sl)  # take the lower (tighter) of the two
                 sl_percentage = ((stop_loss - current_price) / current_price) * 100
                 target_1 = support
                 target_2 = support * 0.95
