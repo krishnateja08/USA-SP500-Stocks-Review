@@ -22,146 +22,58 @@ warnings.filterwarnings('ignore')
 
 class SP500CompleteAnalyzer:
     def __init__(self):
-        # S&P 500 stock symbols - Complete list of all 500 stocks
+        # Master Top 50 List (Nasdaq & S&P 500 Combined)
         self.sp500_stocks = {
-            # Technology
-            'NVDA': 'NVIDIA Corp',
-'AAPL': 'Apple Inc',
-'MSFT': 'Microsoft Corp',
-'AVGO': 'Broadcom Inc',
-'ORCL': 'Oracle Corp',
-'CSCO': 'Cisco Systems',
-'ACN': 'Accenture PLC',
-'AMD': 'Advanced Micro Devices',
-'IBM': 'IBM Corp',
-'CRM': 'Salesforce Inc',
-'ADBE': 'Adobe Inc',
-'INTU': 'Intuit Inc',
-'TXN': 'Texas Instruments',
-'QCOM': 'Qualcomm Inc',
-'AMAT': 'Applied Materials',
-'NOW': 'ServiceNow Inc',
-'MU': 'Micron Technology',
-'LRCX': 'Lam Research',
-'KLAC': 'KLA Corp',
-'PANW': 'Palo Alto Networks',
-'APH': 'Amphenol Corp',
-'ADI': 'Analog Devices',
-'SNPS': 'Synopsys Inc',
-'CDNS': 'Cadence Design Systems',
-'FTNT': 'Fortinet Inc',
-'ANET': 'Arista Networks',
-'INTC': 'Intel Corp',
-'MSI': 'Motorola Solutions',
-            
-            # Communication Services
-            'GOOGL': 'Alphabet Class A',
-'GOOG': 'Alphabet Class C',
-'META': 'Meta Platforms',
-'NFLX': 'Netflix Inc',
-'TMUS': 'T-Mobile US',
-'DIS': 'Walt Disney Co',
-'CMCSA': 'Comcast Corp',
-'VZ': 'Verizon Communications',
-'T': 'AT&T Inc',
-'CHTR': 'Charter Communications',
-            
-            # Healthcare
-            'LLY': 'Eli Lilly and Co',
-'UNH': 'UnitedHealth Group',
-'JNJ': 'Johnson & Johnson',
-'ABBV': 'AbbVie Inc',
-'MRK': 'Merck & Co',
-'TMO': 'Thermo Fisher Scientific',
-'ABT': 'Abbott Laboratories',
-'DHR': 'Danaher Corp',
-'AMGN': 'Amgen Inc',
-'ISRG': 'Intuitive Surgical',
-'PFE': 'Pfizer Inc',
-'BSX': 'Boston Scientific',
-'SYK': 'Stryker Corp',
-'VRTX': 'Vertex Pharmaceuticals',
-'ELV': 'Elevance Health',
-'GILD': 'Gilead Sciences',
-            
-            # Financials
+            'NVDA': 'NVIDIA',
+            'AAPL': 'Apple Inc.',
+            'MSFT': 'Microsoft',
+            'AMZN': 'Amazon',
+            'GOOGL': 'Alphabet (Class A)',
+            'GOOG': 'Alphabet (Class C)',
+            'META': 'Meta Platforms',
+            'TSLA': 'Tesla',
+            'AVGO': 'Broadcom',
             'BRK.B': 'Berkshire Hathaway',
-'JPM': 'JPMorgan Chase',
-'V': 'Visa Inc',
-'MA': 'Mastercard Inc',
-'BAC': 'Bank of America',
-'WFC': 'Wells Fargo',
-'GS': 'Goldman Sachs',
-'MS': 'Morgan Stanley',
-'AXP': 'American Express',
-'BLK': 'BlackRock Inc',
-'C': 'Citigroup Inc',
-'PGR': 'Progressive Corp',
-'SPGI': 'S&P Global Inc',
-'SCHW': 'Charles Schwab',
-'MMC': 'Marsh & McLennan',
-'CB': 'Chubb Ltd',
-'BX': 'Blackstone Inc',
-'CME': 'CME Group Inc',
-'KKR': 'KKR & Co Inc',
-'PYPL': 'PayPal Holdings',
-'MCO': 'Moody\'s Corp',
-'AON': 'Aon PLC',
-'ICE': 'Intercontinental Exchange',
-            
-            # Consumer Discretionary
-            'GOOGL': 'Alphabet Class A',
-'GOOG': 'Alphabet Class C',
-'META': 'Meta Platforms',
-'NFLX': 'Netflix Inc',
-'TMUS': 'T-Mobile US',
-'DIS': 'Walt Disney Co',
-'CMCSA': 'Comcast Corp',
-'VZ': 'Verizon Communications',
-'T': 'AT&T Inc',
-'CHTR': 'Charter Communications',
-            
-            # Consumer Staples
+            'WMT': 'Walmart',
+            'LLY': 'Eli Lilly',
+            'JPM': 'JPMorgan Chase',
+            'XOM': 'ExxonMobil',
+            'V': 'Visa Inc.',
+            'JNJ': 'Johnson & Johnson',
+            'MA': 'Mastercard',
+            'MU': 'Micron Technology',
+            'ORCL': 'Oracle Corporation',
+            'COST': 'Costco',
+            'ABBV': 'AbbVie',
+            'HD': 'Home Depot',
+            'BAC': 'Bank of America',
             'PG': 'Procter & Gamble',
-            'COST': 'Costco Wholesale',
-            'WMT': 'Walmart Inc',
-            'KO': 'Coca-Cola Co',
-            'PEP': 'PepsiCo Inc',
+            'CVX': 'Chevron Corporation',
+            'CAT': 'Caterpillar Inc.',
+            'KO': 'Coca-Cola Company',
+            'GE': 'GE Aerospace',
+            'AMD': 'Advanced Micro Devices',
+            'NFLX': 'Netflix',
+            'PLTR': 'Palantir Technologies',
+            'MRK': 'Merck & Co.',
+            'CSCO': 'Cisco Systems',
             'PM': 'Philip Morris International',
-            'CL': 'Colgate-Palmolive',
-            'DG': 'Dollar General',
-            'DLTR': 'Dollar Tree',
-            
-            # Energy
-            'XOM': 'Exxon Mobil',
-'CVX': 'Chevron Corp',
-'COP': 'ConocoPhillips',
-'NEE': 'NextEra Energy',
-'LIN': 'Linde PLC',
-'PLD': 'Prologis Inc',
-'AMT': 'American Tower',
-'EQIX': 'Equinix Inc',
-'PM': 'Philip Morris International',
-'PG': 'Procter & Gamble',
-'KO': 'Coca-Cola Co',
-'PEP': 'PepsiCo Inc',
-            
-            # Industrials
-             'GE': 'GE Aerospace',
-'CAT': 'Caterpillar Inc',
-'UNP': 'Union Pacific',
-'RTX': 'RTX Corp',
-'HON': 'Honeywell International',
-'LMT': 'Lockheed Martin',
-'BA': 'Boeing Co',
-'ETN': 'Eaton Corp',
-'UPS': 'United Parcel Service',
-'DE': 'Deere & Co',
-'ADP': 'Automatic Data Processing',
-'GEV': 'GE Vernova',
-            
-
-            
+            'LRCX': 'Lam Research',
+            'AMAT': 'Applied Materials',
+            'MS': 'Morgan Stanley',
+            'WFC': 'Wells Fargo',
+            'GS': 'Goldman Sachs',
+            'RTX': 'RTX Corporation',
+            'UNH': 'UnitedHealth Group',
+            'TMUS': 'T-Mobile US',
+            'IBM': 'IBM',
+            'MCD': 'McDonald\'s',
+            'AXP': 'American Express',
+            'INTC': 'Intel',
+            'PEP': 'PepsiCo',
+            'LIN': 'Linde plc',
+            'GEV': 'GE Vernova',
+            'VZ': 'Verizon',
         }
         
         self.results = []
@@ -486,9 +398,9 @@ class SP500CompleteAnalyzer:
             return None
     
     def analyze_all_stocks(self):
-        """Analyze all S&P 500 stocks"""
-        print(f"🔍 Analyzing {len(self.sp500_stocks)} S&P 500 stocks...")
-        print("⏳ This will take approximately 15-20 minutes...\n")
+        """Analyze all stocks"""
+        print(f"🔍 Analyzing {len(self.sp500_stocks)} stocks...")
+        print("⏳ This will take approximately 2-3 minutes...\n")
         
         for idx, (symbol, name) in enumerate(self.sp500_stocks.items(), 1):
             result = self.analyze_stock(symbol, name)
@@ -496,9 +408,7 @@ class SP500CompleteAnalyzer:
                 self.results.append(result)
             
             # Progress indicator
-            if idx % 50 == 0:
-                print(f"  ✓ Processed {idx}/{len(self.sp500_stocks)} stocks...")
-            elif idx % 10 == 0:
+            if idx % 10 == 0:
                 print(f"  [{idx}/{len(self.sp500_stocks)}] {name}")
         
         print(f"\n✅ Analysis complete: {len(self.results)} stocks analyzed\n")
