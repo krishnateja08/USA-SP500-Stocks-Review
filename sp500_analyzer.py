@@ -451,7 +451,7 @@ class SP500CompleteAnalyzer:
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a0a00">
         <tr>
             <td align="center" style="padding: 20px;">
-                <table width="900" cellpadding="0" cellspacing="0" border="0" style="max-width:900px; width:100%;">
+                <table width="1200" cellpadding="0" cellspacing="0" border="0" style="max-width:1200px; width:100%;">
                     <!-- Header -->
                     <tr>
                         <td align="center" style="background: linear-gradient(135deg, #7b2d00 0%, #c0392b 55%, #e67e22 100%); border-radius: 12px 12px 0 0; padding: 0;">
@@ -516,47 +516,103 @@ class SP500CompleteAnalyzer:
                             <h2 style="color: #e67e22; border-bottom: 3px solid #e67e22; padding-bottom: 10px; margin-top: 40px; font-size: 18px; letter-spacing: 0.5px;">🟢 TOP 20 BUY RECOMMENDATIONS</h2>
                             <table width="100%" cellpadding="12" cellspacing="0" border="1" bordercolor="#3d1500" style="border-collapse: collapse; margin: 20px 0;">
                                 <tr style="background: linear-gradient(90deg, #1e8449, #145a32);">
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">STOCK</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">PRICE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">RATING</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">SCORE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">UPSIDE %</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">TARGET</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">STOP LOSS</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">QUALITY</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOCK</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">PRICE</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RATING</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">SCORE</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">UPSIDE %</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">TARGET</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOP LOSS</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RSI</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">R:R</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">52W HIGH %</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">BETA</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">P/E</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">DIV %</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">QUALITY</th>
                                 </tr>
 """
             row_num = 0
             for idx, row in top_buys.iterrows():
                 row_num += 1
                 row_bg = "#1f0d00" if row_num % 2 == 1 else "#2a1000"
+
+                # Upside color
                 if row['Upside'] > 0:
-                    upside_color = "#15803d"
+                    upside_color = "#27ae60"
                 elif row['Upside'] < 0:
-                    upside_color = "#dc2626"
+                    upside_color = "#e74c3c"
                 else:
-                    upside_color = "#000000"
-                
-                # Quality badge color
+                    upside_color = "#e8c090"
+
+                # RSI color
+                if row['RSI'] > 70:
+                    rsi_color = "#e74c3c"
+                elif row['RSI'] < 30:
+                    rsi_color = "#27ae60"
+                else:
+                    rsi_color = "#f39c12"
+
+                # 52W High % — how far below the 52-week high
+                pct_from_52w_high = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                if pct_from_52w_high >= -5:
+                    w52_color = "#e74c3c"   # near high — caution
+                elif pct_from_52w_high >= -20:
+                    w52_color = "#f39c12"   # moderate pullback
+                else:
+                    w52_color = "#27ae60"   # deep pullback — opportunity
+
+                # Beta color
+                if row['Beta'] > 1.5:
+                    beta_color = "#e74c3c"
+                elif row['Beta'] > 1.0:
+                    beta_color = "#f39c12"
+                else:
+                    beta_color = "#27ae60"
+
+                # R:R color
+                rr = row['Risk_Reward']
+                if rr >= 2:
+                    rr_color = "#27ae60"
+                elif rr >= 1:
+                    rr_color = "#f39c12"
+                else:
+                    rr_color = "#e74c3c"
+
+                # P/E display
+                pe_display = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
+                pe_color = "#27ae60" if 0 < row['PE_Ratio'] < 25 else ("#f39c12" if row['PE_Ratio'] < 40 else "#e74c3c")
+
+                # Dividend display
+                div_display = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
+                div_color = "#27ae60" if row['Dividend_Yield'] > 2 else "#e8c090"
+
+                # Quality badge
                 if row['Quality'] == 'Excellent':
-                    badge_color = "#15803d"
+                    badge_color = "#1e8449"
                 elif row['Quality'] == 'Good':
-                    badge_color = "#3b82f6"
+                    badge_color = "#2471a3"
                 elif row['Quality'] == 'Average':
-                    badge_color = "#f59e0b"
+                    badge_color = "#d68910"
                 else:
-                    badge_color = "#dc2626"
-                
+                    badge_color = "#922b21"
+
                 html += f"""
                                 <tr bgcolor="{row_bg}">
-                                    <td style="color: #f0d0a0; font-weight: 600; padding: 14px 12px; border: 1px solid #3d1500;">{row['Name']}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500;">${row['Price']:,.2f}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500; font-size: 12px; font-weight: bold;">{row['Rating']}</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 14px 12px; border: 1px solid #3d1500; font-size: 16px;">{row['Combined_Score']:.0f}</td>
-                                    <td style="color: {upside_color}; font-weight: bold; padding: 14px 12px; border: 1px solid #3d1500; font-size: 16px;">{row['Upside']:+.1f}%</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500;">${row['Target_1']:,.2f}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500;">${row['Stop_Loss']:,.2f}</td>
-                                    <td style="padding: 14px 12px; border: 1px solid #3d1500;"><span style="background-color: {badge_color}; color: #ffffff; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">{row['Quality']}</span></td>
+                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">{row['Name']}<br><span style="color:#8a6040; font-size:11px; font-weight:400;">{row['Symbol']}</span></td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">${row['Price']:,.2f}</td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">{row['Rating']}</td>
+                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">{row['Combined_Score']:.0f}</td>
+                                    <td style="color: {upside_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{row['Upside']:+.1f}%</td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">${row['Target_1']:,.2f}</td>
+                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">${row['Stop_Loss']:,.2f}<br><span style="font-size:11px; color:#8a6040;">-{row['SL_Percentage']:.1f}%</span></td>
+                                    <td style="color: {rsi_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{row['RSI']:.0f}<br><span style="font-size:10px; color:#8a6040;">{row['RSI_Signal']}</span></td>
+                                    <td style="color: {rr_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{rr:.1f}x</td>
+                                    <td style="color: {w52_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">{pct_from_52w_high:+.1f}%<br><span style="font-size:10px; color:#8a6040;">${row['52W_High']:,.0f} hi</span></td>
+                                    <td style="color: {beta_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">{row['Beta']:.2f}</td>
+                                    <td style="color: {pe_color}; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">{pe_display}</td>
+                                    <td style="color: {div_color}; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">{div_display}</td>
+                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: {badge_color}; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">{row['Quality']}</span></td>
                                 </tr>
 """
             html += """
@@ -570,20 +626,26 @@ class SP500CompleteAnalyzer:
                             <h2 style="color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-top: 40px; font-size: 18px; letter-spacing: 0.5px;">🔴 TOP 20 SELL RECOMMENDATIONS</h2>
                             <table width="100%" cellpadding="12" cellspacing="0" border="1" bordercolor="#3d1500" style="border-collapse: collapse; margin: 20px 0;">
                                 <tr style="background: linear-gradient(90deg, #922b21, #c0392b);">
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">STOCK</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">PRICE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">RATING</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">SCORE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">RSI</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">MACD</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 16px 12px; font-size: 13px; letter-spacing: 0.5px;">QUALITY</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOCK</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">PRICE</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RATING</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">SCORE</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RSI</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">MACD</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">DOWNSIDE %</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">TARGET</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOP LOSS</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">R:R</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">BETA</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">P/E</th>
+                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">QUALITY</th>
                                 </tr>
 """
             row_num = 0
             for idx, row in top_sells.iterrows():
                 row_num += 1
                 row_bg = "#1f0d00" if row_num % 2 == 1 else "#2a1000"
-                
+
                 # RSI color
                 if row['RSI'] > 70:
                     rsi_color = "#e74c3c"
@@ -591,8 +653,32 @@ class SP500CompleteAnalyzer:
                     rsi_color = "#27ae60"
                 else:
                     rsi_color = "#f39c12"
-                
-                # Quality badge color
+
+                # Downside color
+                downside_color = "#e74c3c" if row['Upside'] > 0 else "#27ae60"
+
+                # R:R color
+                rr = row['Risk_Reward']
+                if rr >= 2:
+                    rr_color = "#27ae60"
+                elif rr >= 1:
+                    rr_color = "#f39c12"
+                else:
+                    rr_color = "#e74c3c"
+
+                # Beta color
+                if row['Beta'] > 1.5:
+                    beta_color = "#e74c3c"
+                elif row['Beta'] > 1.0:
+                    beta_color = "#f39c12"
+                else:
+                    beta_color = "#27ae60"
+
+                # P/E display
+                pe_display = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
+                pe_color = "#e74c3c" if row['PE_Ratio'] > 40 else ("#f39c12" if row['PE_Ratio'] > 25 else "#27ae60")
+
+                # Quality badge
                 if row['Quality'] == 'Excellent':
                     badge_color = "#1e8449"
                 elif row['Quality'] == 'Good':
@@ -601,16 +687,22 @@ class SP500CompleteAnalyzer:
                     badge_color = "#d68910"
                 else:
                     badge_color = "#922b21"
-                
+
                 html += f"""
                                 <tr bgcolor="{row_bg}">
-                                    <td style="color: #f0d0a0; font-weight: 600; padding: 14px 12px; border: 1px solid #3d1500;">{row['Name']}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500;">${row['Price']:,.2f}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500; font-size: 12px; font-weight: bold;">{row['Rating']}</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 14px 12px; border: 1px solid #3d1500; font-size: 16px;">{row['Combined_Score']:.0f}</td>
-                                    <td style="color: {rsi_color}; font-weight: bold; padding: 14px 12px; border: 1px solid #3d1500; font-size: 16px;">{row['RSI']:.0f}</td>
-                                    <td style="color: #e8c090; padding: 14px 12px; border: 1px solid #3d1500;">{row['MACD']}</td>
-                                    <td style="padding: 14px 12px; border: 1px solid #3d1500;"><span style="background-color: {badge_color}; color: #ffffff; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">{row['Quality']}</span></td>
+                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">{row['Name']}<br><span style="color:#8a6040; font-size:11px; font-weight:400;">{row['Symbol']}</span></td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">${row['Price']:,.2f}</td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">{row['Rating']}</td>
+                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">{row['Combined_Score']:.0f}</td>
+                                    <td style="color: {rsi_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{row['RSI']:.0f}<br><span style="font-size:10px; color:#8a6040;">{row['RSI_Signal']}</span></td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">{row['MACD']}</td>
+                                    <td style="color: {downside_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{row['Upside']:+.1f}%</td>
+                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">${row['Target_1']:,.2f}</td>
+                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">${row['Stop_Loss']:,.2f}<br><span style="font-size:11px; color:#8a6040;">+{row['SL_Percentage']:.1f}%</span></td>
+                                    <td style="color: {rr_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">{rr:.1f}x</td>
+                                    <td style="color: {beta_color}; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">{row['Beta']:.2f}</td>
+                                    <td style="color: {pe_color}; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">{pe_display}</td>
+                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: {badge_color}; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">{row['Quality']}</span></td>
                                 </tr>
 """
             html += """
