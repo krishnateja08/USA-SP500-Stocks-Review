@@ -33,7 +33,7 @@ class SP500CompleteAnalyzer:
             'META': 'Meta Platforms',
             'TSLA': 'Tesla',
             'AVGO': 'Broadcom',
-            'BRK.B': 'Berkshire Hathaway',
+            'BRK-B': 'Berkshire Hathaway',
             'WMT': 'Walmart',
             'LLY': 'Eli Lilly',
             'JPM': 'JPMorgan Chase',
