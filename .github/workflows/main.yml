@@ -2,8 +2,11 @@ name: S&P 500 Stock Analysis - Daily Report
 
 on:
   schedule:
-    # Run at 4:30 PM EST (9:30 PM UTC) on weekdays
-    - cron: '30 21 * * 1-5'
+    # Run at 10:00 AM EST (3:00 PM UTC) on weekdays
+  - cron: '0 15 * * 1-5'
+
+# Run at 4:30 PM EST (9:30 PM UTC) on weekdays
+  - cron: '30 21 * * 1-5'
   
   workflow_dispatch:
 
