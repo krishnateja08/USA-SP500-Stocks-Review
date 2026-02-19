@@ -1,7 +1,7 @@
 """
 S&P 500 COMPLETE STOCK ANALYZER
 Technical + Fundamental Analysis with Email Delivery
-Theme: Deep Navy Executive
+Theme: Sunset Warm (Theme 10)
 
 Requirements:
 pip install yfinance pandas numpy openpyxl pytz
@@ -423,7 +423,6 @@ class SP500CompleteAnalyzer:
             if result:
                 self.results.append(result)
 
-            # Progress indicator
             if idx % 10 == 0:
                 print(f"  [{idx}/{len(self.sp500_stocks)}] {name}")
 
@@ -433,363 +432,218 @@ class SP500CompleteAnalyzer:
         """Get top 20 buy and sell recommendations"""
         df = pd.DataFrame(self.results)
 
-        # Top 20 Buy (highest combined scores from BUY + STRONG BUY)
         top_buys = df[df['Recommendation'].isin(['STRONG BUY', 'BUY'])].nlargest(20, 'Combined_Score')
-
-        # Top 20 Sell (lowest combined scores from SELL + STRONG SELL)
         top_sells = df[df['Recommendation'].isin(['STRONG SELL', 'SELL'])].nsmallest(20, 'Combined_Score')
 
         return top_buys, top_sells
 
+    # =========================================================================
+    #  HTML GENERATION  —  Sunset Warm Theme
+    # =========================================================================
     def generate_email_html(self):
-        """Generate beautiful HTML email — Deep Navy Executive Theme"""
+        """Generate beautiful HTML report — Sunset Warm Theme"""
         df = pd.DataFrame(self.results)
         top_buys, top_sells = self.get_top_recommendations()
 
-        # Get EST time
         now = self.get_est_time()
         time_of_day = "Morning" if now.hour < 12 else "Evening"
+        next_update  = "4:30 PM" if now.hour < 12 else "9:30 AM (Next Day)"
 
-        # Count recommendations
-        strong_buy_count = len(df[df['Recommendation'] == 'STRONG BUY'])
-        buy_count = len(df[df['Recommendation'] == 'BUY'])
-        hold_count = len(df[df['Recommendation'] == 'HOLD'])
-        sell_count = len(df[df['Recommendation'] == 'SELL'])
+        strong_buy_count  = len(df[df['Recommendation'] == 'STRONG BUY'])
+        buy_count         = len(df[df['Recommendation'] == 'BUY'])
+        hold_count        = len(df[df['Recommendation'] == 'HOLD'])
+        sell_count        = len(df[df['Recommendation'] == 'SELL'])
         strong_sell_count = len(df[df['Recommendation'] == 'STRONG SELL'])
 
-        next_update = "4:30 PM" if now.hour < 12 else "9:30 AM (Next Day)"
-
-        # ── CSS / HEAD ────────────────────────────────────────────────────────────
+        # ── HEAD / CSS ────────────────────────────────────────────────────────
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Top US Market Influencers: NASDAQ &amp; S&amp;P 500 — {time_of_day} Report</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=Barlow:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{{
-    --bg:#0e1621;--bg2:#121d2e;--card:#162030;--card2:#1a2840;
-    --accent:#3d8eff;--accent2:#5ba3ff;
-    --green:#00c875;--green2:#33d68e;
-    --red:#ff4757;--red2:#ff6b78;
-    --gold:#ffb347;--gold2:#ffc87a;
-    --purple:#9b59f5;
-    --text:#c8d8eb;--text2:#e8f0f8;--muted:#4a6080;
-    --border:#1e3050;--border2:#243a58;
+    --bg:#0f0a05;--bg2:#160d05;--card:#1d1108;--card2:#241508;
+    --accent:#ff6b2b;--accent2:#ff8c55;
+    --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+    --gold:#f59e0b;--teal:#14b8a6;
+    --text:#f0d5b0;--text2:#fdf0d8;--muted:#7a5030;
+    --border:#3d2010;--border2:#4d2a14;
   }}
   *{{margin:0;padding:0;box-sizing:border-box;}}
-  body{{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;font-size:14px;
-    background-image:radial-gradient(ellipse at 70% -10%,rgba(61,142,255,0.06) 0%,transparent 50%);
+  body{{
+    background:var(--bg);color:var(--text);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    min-height:100vh;font-size:14px;
+    background-image:
+      radial-gradient(ellipse at 0% 0%,rgba(255,107,43,0.08) 0%,transparent 50%),
+      radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.05) 0%,transparent 40%);
   }}
 
-  /* ===== HEADER ===== */
-  header{{
-    background:linear-gradient(180deg,#0c1520 0%,var(--bg2) 100%);
-    border-bottom:1px solid var(--border2);
-    padding:0;
-  }}
-  .hdr-main{{
-    max-width:1400px;margin:0 auto;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:16px 28px;
-    gap:20px;
-  }}
-  .hdr-brand{{display:flex;flex-direction:column;gap:4px;}}
-  .brand-logo{{display:flex;align-items:center;gap:10px;}}
-  .brand-square{{
-    width:32px;height:32px;
-    background:var(--accent);
-    clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Barlow Condensed',sans-serif;
-    font-weight:800;font-size:14px;color:#fff;
-  }}
-  .brand-name{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:clamp(16px,2.5vw,22px);font-weight:700;letter-spacing:1px;
-    color:var(--text2);text-transform:uppercase;
-  }}
-  .brand-sub{{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}}
+  /* HEADER */
+  header{{background:linear-gradient(180deg,#1a0e06,var(--bg2));border-bottom:2px solid var(--accent);padding:0;box-shadow:0 2px 20px rgba(255,107,43,0.15);}}
+  .h-top{{max-width:1380px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;}}
+  .brand{{display:flex;align-items:center;gap:12px;}}
+  .brand-icon{{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}}
+  .brand-t{{font-size:clamp(13px,2vw,19px);font-weight:800;color:var(--text2);}}
+  .brand-s{{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}}
+  .h-right{{display:flex;gap:0;}}
+  .hr{{padding:8px 16px;border-left:1px solid var(--border2);text-align:right;}}
+  .hr-l{{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}}
+  .hr-v{{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;margin-top:2px;}}
+  .ticker{{background:#0a0602;border-bottom:1px solid var(--border);overflow:hidden;display:flex;}}
+  .ticker-inner{{max-width:1380px;margin:0 auto;display:flex;padding:0 28px;}}
+  .ti{{display:flex;gap:6px;align-items:center;padding:6px 12px;border-right:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}}
+  .ti-s{{color:var(--accent2);font-weight:600;}} .ti-p{{color:var(--text);}} .ti-u{{color:var(--green);}} .ti-d{{color:var(--red);}}
 
-  .hdr-kpis{{display:flex;gap:0;}}
-  .kpi-block{{
-    padding:10px 20px;border-left:1px solid var(--border);
-    display:flex;flex-direction:column;align-items:flex-end;gap:2px;
-  }}
-  .kpi-label{{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}}
-  .kpi-val{{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}}
+  /* KPI BAND */
+  .kpi-band{{background:var(--card);border-bottom:1px solid var(--border2);}}
+  .kpi-inner{{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);}}
+  .kc{{padding:15px 20px;border-right:1px solid var(--border);text-align:center;}}
+  .kc:last-child{{border-right:none;}}
+  .kn{{font-size:30px;font-weight:800;line-height:1;}}
+  .kl{{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}}
+  .kbar{{height:2px;border-radius:1px;margin:4px auto 0;width:40px;}}
 
-  .hdr-ticker{{
-    background:var(--bg);border-top:1px solid var(--border);
-    overflow:hidden;display:flex;
-  }}
-  .hdr-ticker-inner{{
-    max-width:1400px;margin:0 auto;
-    display:flex;padding:0 28px;
-  }}
-  .tick{{
-    display:flex;gap:8px;align-items:center;
-    padding:7px 14px;border-right:1px solid var(--border);
-    font-family:'Roboto Mono',monospace;font-size:11px;white-space:nowrap;
-  }}
-  .tick-sym{{color:var(--accent2);font-weight:600;}}
-  .tick-price{{color:var(--text);}}
-  .tick-up{{color:var(--green);}}
-  .tick-dn{{color:var(--red);}}
+  /* MAIN */
+  .main{{max-width:1380px;margin:0 auto;padding:24px 28px;}}
+  .sh{{display:flex;align-items:center;gap:12px;margin-bottom:14px;}}
+  .sh-icon{{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}}
+  .shi-buy{{background:rgba(34,197,94,0.15);}}
+  .shi-sell{{background:rgba(239,68,68,0.15);}}
+  .sh-title{{font-size:16px;font-weight:800;color:var(--text2);}}
+  .sh-divider{{flex:1;height:1px;background:var(--border);}}
+  .sh-count{{font-size:10px;color:var(--muted);}}
 
-  /* ===== STATS BAND ===== */
-  .stats-band{{background:var(--card);border-bottom:1px solid var(--border2);}}
-  .stats-inner{{
-    max-width:1400px;margin:0 auto;
-    display:grid;grid-template-columns:repeat(5,1fr);
-    padding:0 28px;
-  }}
-  .stat-c{{
-    padding:16px 20px;border-right:1px solid var(--border);
-    text-align:center;transition:0.2s;
-  }}
-  .stat-c:hover{{background:rgba(61,142,255,0.05);}}
-  .stat-c:last-child{{border-right:none;}}
-  .stat-num{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:32px;font-weight:700;line-height:1;
-  }}
-  .stat-lbl{{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}}
-  .stat-bar{{height:2px;border-radius:1px;margin:6px auto 0;max-width:60px;}}
-
-  /* ===== CONTENT ===== */
-  .content{{max-width:1400px;margin:0 auto;padding:24px 28px;}}
-
-  .sec-header{{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:14px;
-  }}
-  .sec-left{{display:flex;align-items:center;gap:10px;}}
-  .sec-indicator{{width:4px;height:28px;border-radius:2px;}}
-  .sec-title{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    color:var(--text2);
-  }}
-  .sec-count{{
-    font-size:10px;letter-spacing:2px;color:var(--muted);
-    border:1px solid var(--border2);padding:3px 10px;border-radius:2px;
-  }}
-  .sec-divider{{width:100%;height:1px;background:var(--border);margin-bottom:14px;}}
-
-  /* Table */
-  .tbl-wrap{{overflow-x:auto;border-radius:4px;border:1px solid var(--border2);}}
+  /* TABLE */
+  .tbl-wrap{{overflow-x:auto;border:1px solid var(--border2);border-radius:8px;margin-bottom:28px;background:var(--card);box-shadow:0 4px 24px rgba(0,0,0,0.3);}}
   table{{width:100%;border-collapse:collapse;}}
-  thead tr{{background:var(--card2);}}
-  th{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
-    color:var(--muted);padding:11px 12px;
-    border-bottom:1px solid var(--border2);
-    text-align:left;white-space:nowrap;
-  }}
-  tbody td{{
-    padding:11px 12px;border-bottom:1px solid var(--border);
-    vertical-align:middle;white-space:nowrap;
-  }}
-  tbody tr:nth-child(even) td{{background:rgba(22,32,48,0.5);}}
-  tbody tr:hover td{{background:rgba(61,142,255,0.06);}}
-  tbody tr:last-child td{{border-bottom:none;}}
+  th{{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 12px;background:var(--card2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;}}
+  td{{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}}
+  tr:hover td{{background:rgba(255,107,43,0.04);}}
+  tr:nth-child(even) td{{background:rgba(29,17,8,0.5);}}
+  tr:last-child td{{border-bottom:none;}}
 
-  .stk-name{{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--text2);}}
-  .stk-sym{{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}}
-  .price-val{{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}}
+  .sn{{font-size:14px;font-weight:700;color:var(--text2);}}
+  .ss{{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px;}}
+  .pv{{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}}
 
-  .rtag{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    padding:4px 10px;border-radius:3px;white-space:nowrap;
-    display:inline-block;
-  }}
-  .rtag-sb{{background:rgba(0,200,117,0.12);color:var(--green2);border:1px solid rgba(0,200,117,0.25);}}
-  .rtag-b{{background:rgba(61,142,255,0.12);color:var(--accent2);border:1px solid rgba(61,142,255,0.25);}}
-  .rtag-h{{background:rgba(155,89,245,0.12);color:var(--purple);border:1px solid rgba(155,89,245,0.25);}}
-  .rtag-s{{background:rgba(255,71,87,0.12);color:var(--red2);border:1px solid rgba(255,71,87,0.25);}}
-  .rtag-ss{{background:rgba(255,71,87,0.2);color:var(--red);border:1px solid rgba(255,71,87,0.4);}}
+  /* Rating tags */
+  .rt{{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;white-space:nowrap;}}
+  .rt-sb{{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.25);}}
+  .rt-b{{background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.25);}}
+  .rt-s{{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.25);}}
+  .rt-ss{{background:rgba(239,68,68,0.18);color:var(--red);border:1px solid rgba(239,68,68,0.4);}}
 
-  .score-box{{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}}
-  .score-num{{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}}
-  .score-track{{width:36px;height:3px;background:var(--border);border-radius:2px;}}
-  .score-fill{{height:100%;border-radius:2px;}}
+  /* Score */
+  .scn{{font-size:22px;font-weight:800;}}
+  .scb{{height:3px;border-radius:2px;margin-top:4px;width:40px;}}
 
-  .up-pct{{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--green);}}
-  .dn-pct{{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--red);}}
+  .up{{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
+  .dn{{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
 
-  .tgt{{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text);}}
-  .tgt2{{font-size:10px;color:var(--muted);}}
-
-  .sl{{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--red2);}}
+  .t1{{font-family:'JetBrains Mono',monospace;font-size:12px;}}
+  .t2{{font-size:10px;color:var(--muted);}}
+  .sl1{{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);}}
   .sl2{{font-size:10px;color:var(--muted);}}
+  .rv{{font-family:'JetBrains Mono',monospace;font-size:13px;}}
+  .rsb{{font-size:9px;color:var(--muted);}}
+  .rrv{{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}}
 
-  .rsi-num{{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;}}
-  .rsi-lbl{{font-size:9px;color:var(--muted);}}
+  /* Quality badges */
+  .qb{{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;}}
+  .qb-ex{{background:rgba(34,197,94,0.1);color:var(--green);}}
+  .qb-gd{{background:rgba(59,130,246,0.1);color:var(--blue);}}
+  .qb-av{{background:rgba(245,158,11,0.1);color:var(--gold);}}
+  .qb-po{{background:rgba(239,68,68,0.1);color:var(--red);}}
 
-  .rr{{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;}}
+  /* Disclaimer */
+  .disc{{background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:14px 18px;margin:20px 0;font-size:12px;color:var(--muted);line-height:1.7;}}
+  .disc strong{{color:var(--red);}}
 
-  .pe-val{{font-family:'Roboto Mono',monospace;font-size:13px;}}
-
-  .qbadge{{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    padding:3px 8px;border-radius:3px;
-  }}
-  .qb-ex{{background:rgba(0,200,117,0.1);color:var(--green2);}}
-  .qb-gd{{background:rgba(61,142,255,0.1);color:var(--accent2);}}
-  .qb-av{{background:rgba(255,179,71,0.1);color:var(--gold2);}}
-  .qb-po{{background:rgba(255,71,87,0.1);color:var(--red2);}}
-
-  .spacer{{height:28px;}}
-
-  .disc{{
-    background:var(--card);border:1px solid var(--border2);
-    border-left:3px solid var(--gold);
-    padding:16px 20px;margin-top:28px;
-    font-size:12px;color:var(--muted);line-height:1.7;
-  }}
-  .disc strong{{color:var(--red2);}}
-
-  footer{{
-    background:var(--bg2);border-top:1px solid var(--border2);
-    padding:16px 28px;text-align:center;
-    font-size:11px;color:var(--muted);letter-spacing:1px;
-    font-family:'Barlow Condensed',sans-serif;
-  }}
+  footer{{background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2));border-top:2px solid var(--accent);text-align:center;padding:18px;font-size:11px;color:var(--muted);letter-spacing:1px;}}
   footer strong{{color:var(--accent2);}}
 
-  @media(max-width:1100px){{
-    .stats-inner{{grid-template-columns:repeat(3,1fr);}}
-    .hdr-kpis .kpi-block:nth-child(n+3){{display:none;}}
-  }}
-  @media(max-width:700px){{
-    .hdr-main{{padding:12px 16px;flex-wrap:wrap;}}
-    .stats-inner{{grid-template-columns:repeat(2,1fr);padding:0 16px;}}
-    .content{{padding:16px;}}
-    table{{min-width:700px;}}
-  }}
+  @media(max-width:1000px){{.kpi-inner{{grid-template-columns:repeat(3,1fr);}} .h-right .hr:nth-child(n+3){{display:none;}}}}
+  @media(max-width:600px){{.kpi-inner{{grid-template-columns:repeat(2,1fr);}} .h-top{{padding:10px 14px;}} .main{{padding:14px;}} table{{min-width:650px;}}}}
 </style>
 </head>
 <body>
 
 <!-- ===== HEADER ===== -->
 <header>
-  <div class="hdr-main">
-    <div class="hdr-brand">
-      <div class="brand-logo">
-        <div class="brand-square">US</div>
-        <div class="brand-name">Market Intelligence · NASDAQ &amp; S&amp;P 500</div>
+  <div class="h-top">
+    <div class="brand">
+      <div class="brand-icon">🌅</div>
+      <div>
+        <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
+        <div class="brand-s">Technical &amp; Fundamental Analysis Report</div>
       </div>
-      <div class="brand-sub">Technical &amp; Fundamental Analysis Report</div>
     </div>
-    <div class="hdr-kpis">
-      <div class="kpi-block">
-        <span class="kpi-label">Session</span>
-        <span class="kpi-val" style="color:var(--green)">{time_of_day.upper()} ▲</span>
-      </div>
-      <div class="kpi-block">
-        <span class="kpi-label">Updated</span>
-        <span class="kpi-val" style="color:var(--accent2)">{now.strftime('%I:%M %p')} EST</span>
-      </div>
-      <div class="kpi-block">
-        <span class="kpi-label">{now.strftime('%d %b %Y')}</span>
-        <span class="kpi-val" style="color:var(--gold)">{time_of_day}</span>
-      </div>
+    <div class="h-right">
+      <div class="hr"><div class="hr-l">Date</div><div class="hr-v" style="color:var(--gold)">{now.strftime('%d %b %Y')}</div></div>
+      <div class="hr"><div class="hr-l">Time</div><div class="hr-v" style="color:var(--green)">{now.strftime('%I:%M %p')} EST</div></div>
+      <div class="hr"><div class="hr-l">Session</div><div class="hr-v" style="color:var(--green)">▲ {time_of_day.upper()}</div></div>
+      <div class="hr"><div class="hr-l">Next</div><div class="hr-v" style="color:var(--accent2)">{next_update}</div></div>
     </div>
   </div>
-  <div class="hdr-ticker">
-    <div class="hdr-ticker-inner">
+  <div class="ticker"><div class="ticker-inner">
 """
-        # Ticker bar — use top buy stocks if available, fallback to first 7 results
-        ticker_stocks = list(self.results[:7]) if self.results else []
-        for t in ticker_stocks:
+        # Ticker bar — first 7 results, show vs SMA20 as proxy for day change
+        for t in self.results[:7]:
             pct_chg = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
-            tick_cls = "tick-up" if pct_chg >= 0 else "tick-dn"
+            tick_cls = "ti-u" if pct_chg >= 0 else "ti-d"
             sign = "+" if pct_chg >= 0 else ""
-            html += f'      <div class="tick"><span class="tick-sym">{t["Symbol"]}</span><span class="tick-price">${t["Price"]:,.2f}</span><span class="{tick_cls}">{sign}{pct_chg:.1f}%</span></div>\n'
+            html += f'    <div class="ti"><span class="ti-s">{t["Symbol"]}</span><span class="ti-p">${t["Price"]:,.2f}</span><span class="{tick_cls}">{sign}{pct_chg:.1f}%</span></div>\n'
 
-        html += f"""    </div>
-  </div>
+        html += f"""  </div></div>
 </header>
 
-<!-- ===== STATS BAND ===== -->
-<div class="stats-band">
-  <div class="stats-inner">
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--accent2)">{len(self.results)}</div>
-      <div class="stat-lbl">Stocks Analyzed</div>
-      <div class="stat-bar" style="background:var(--accent)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--green)">{strong_buy_count}</div>
-      <div class="stat-lbl">Strong Buy</div>
-      <div class="stat-bar" style="background:var(--green)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--green2)">{buy_count}</div>
-      <div class="stat-lbl">Buy</div>
-      <div class="stat-bar" style="background:var(--green2)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--red)">{sell_count + strong_sell_count}</div>
-      <div class="stat-lbl">Sell / Strong Sell</div>
-      <div class="stat-bar" style="background:var(--red)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--purple)">{hold_count}</div>
-      <div class="stat-lbl">Hold</div>
-      <div class="stat-bar" style="background:var(--purple)"></div>
-    </div>
-  </div>
-</div>
+<!-- ===== KPI BAND ===== -->
+<div class="kpi-band"><div class="kpi-inner">
+  <div class="kc"><div class="kn" style="color:var(--accent2)">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--green)">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--teal)">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:var(--teal)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--red)">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:var(--red)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--blue)">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
+</div></div>
 
 <!-- ===== MAIN CONTENT ===== -->
-<div class="content">
+<div class="main">
 """
 
-        # ── BUY TABLE ────────────────────────────────────────────────────────────
+        # ── BUY TABLE ─────────────────────────────────────────────────────────
         if not top_buys.empty:
-            html += f"""  <!-- BUY TABLE -->
-  <div class="sec-header">
-    <div class="sec-left">
-      <div class="sec-indicator" style="background:var(--green)"></div>
-      <span class="sec-title">▲ Top 20 Buy Recommendations</span>
-    </div>
-    <span class="sec-count">Sorted by Combined Score</span>
+            html += """  <!-- BUY TABLE -->
+  <div class="sh">
+    <div class="sh-icon shi-buy">▲</div>
+    <span class="sh-title">Top 20 Buy Recommendations</span>
+    <div class="sh-divider"></div>
+    <span class="sh-count">Sorted by Combined Score</span>
   </div>
-  <div class="sec-divider"></div>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-          <th>Upside</th><th>Target</th><th>Stop Loss</th><th>RSI</th>
-          <th>R:R</th><th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+      <th>Upside</th><th>Target</th><th>Stop Loss</th><th>RSI</th>
+      <th>R:R</th><th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
+    </tr></thead>
+    <tbody>
 """
             for row_num, (_, row) in enumerate(top_buys.iterrows(), 1):
-                # Rating tag class
-                rtag_cls = "rtag-sb" if row['Recommendation'] == "STRONG BUY" else "rtag-b"
+                # Rating tag
+                rtag_cls = "rt-sb" if row['Recommendation'] == "STRONG BUY" else "rt-b"
 
                 # Score colour
                 if row['Combined_Score'] >= 75:
-                    score_color = "var(--green)"
-                    score_bar_color = "var(--green)"
+                    sc_color = "var(--green)"; sc_bg = "var(--green)"
                 elif row['Combined_Score'] >= 55:
-                    score_color = "var(--accent2)"
-                    score_bar_color = "var(--accent)"
+                    sc_color = "var(--teal)";  sc_bg = "var(--teal)"
                 else:
-                    score_color = "var(--gold)"
-                    score_bar_color = "var(--gold)"
+                    sc_color = "var(--gold)";  sc_bg = "var(--gold)"
 
-                # Upside
-                upside_cls = "up-pct" if row['Upside'] >= 0 else "dn-pct"
+                # Upside class
+                upside_cls = "up" if row['Upside'] >= 0 else "dn"
 
                 # RSI colour
                 if row['RSI'] > 70:
@@ -797,13 +651,13 @@ class SP500CompleteAnalyzer:
                 elif row['RSI'] < 30:
                     rsi_color = "var(--green)"
                 else:
-                    rsi_color = "var(--accent2)"
+                    rsi_color = "var(--blue)"
 
                 # 52W High %
-                pct_from_52w_high = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
-                if pct_from_52w_high >= -5:
+                pct_from_52w = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                if pct_from_52w >= -5:
                     w52_color = "var(--red)"
-                elif pct_from_52w_high >= -20:
+                elif pct_from_52w >= -20:
                     w52_color = "var(--muted)"
                 else:
                     w52_color = "var(--green)"
@@ -821,7 +675,7 @@ class SP500CompleteAnalyzer:
                 if rr >= 2:
                     rr_color = "var(--green)"
                 elif rr >= 1:
-                    rr_color = "var(--accent2)"
+                    rr_color = "var(--teal)"
                 else:
                     rr_color = "var(--red)"
 
@@ -834,74 +688,61 @@ class SP500CompleteAnalyzer:
                 elif row['PE_Ratio'] < 40:
                     pe_color = "var(--gold)"
                 else:
-                    pe_color = "var(--red2)"
+                    pe_color = "var(--red)"
 
                 # Dividend
                 div_display = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                div_color = "var(--green)" if row['Dividend_Yield'] > 2 else "var(--text)"
+                div_color   = "var(--green)" if row['Dividend_Yield'] > 0 else "var(--muted)"
 
                 # Quality badge
-                qbadge_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
-                qbadge_cls = qbadge_map.get(row['Quality'], "qb-av")
+                qb_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
+                qb_cls = qb_map.get(row['Quality'], "qb-av")
 
-                html += f"""        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">{row_num:02d}</td>
-          <td><div class="stk-name">{row['Name']}</div><div class="stk-sym">{row['Symbol']}</div></td>
-          <td><div class="price-val">${row['Price']:,.2f}</div></td>
-          <td><span class="rtag {rtag_cls}">{row['Rating']}</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:{score_color}">{row['Combined_Score']:.0f}</div><div class="score-track"><div class="score-fill" style="width:{row['Combined_Score']:.0f}%;background:{score_bar_color}"></div></div></div></td>
-          <td><span class="{upside_cls}">{row['Upside']:+.1f}%</span></td>
-          <td><div class="tgt">${row['Target_1']:,.2f}</div><div class="tgt2">T2: ${row['Target_2']:,.2f}</div></td>
-          <td><div class="sl">${row['Stop_Loss']:,.2f}</div><div class="sl2">-{row['SL_Percentage']:.1f}%</div></td>
-          <td><div class="rsi-num" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsi-lbl">{row['RSI_Signal']}</div></td>
-          <td><span class="rr" style="color:{rr_color}">{rr:.1f}×</span></td>
-          <td style="color:{w52_color};font-family:'Roboto Mono',monospace;font-size:12px">{pct_from_52w_high:+.1f}%</td>
-          <td style="color:{beta_color};font-family:'Roboto Mono',monospace">{row['Beta']:.2f}</td>
-          <td><span class="pe-val" style="color:{pe_color}">{pe_display}</span></td>
-          <td style="color:{div_color};font-size:12px">{div_display}</td>
-          <td><span class="qbadge {qbadge_cls}">{row['Quality']}</span></td>
-        </tr>
+                html += f"""      <tr>
+        <td style="color:var(--muted)">{row_num}</td>
+        <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
+        <td><div class="pv">${row['Price']:,.2f}</div></td>
+        <td><span class="rt {rtag_cls}">{row['Rating']}</span></td>
+        <td><div class="scn" style="color:{sc_color}">{row['Combined_Score']:.0f}</div><div class="scb" style="background:{sc_bg}"></div></td>
+        <td class="{upside_cls}">{row['Upside']:+.1f}%</td>
+        <td><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
+        <td><div class="sl1">${row['Stop_Loss']:,.2f}</div><div class="sl2">-{row['SL_Percentage']:.1f}%</div></td>
+        <td><div class="rv" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
+        <td class="rrv" style="color:{rr_color}">{rr:.1f}×</td>
+        <td style="color:{w52_color};font-size:11px">{pct_from_52w:+.1f}%</td>
+        <td style="color:{beta_color};font-size:11px">{row['Beta']:.2f}</td>
+        <td style="color:{pe_color};font-size:11px">{pe_display}</td>
+        <td style="color:{div_color}">{div_display}</td>
+        <td><span class="qb {qb_cls}">{row['Quality']}</span></td>
+      </tr>
 """
-            html += """      </tbody>
-    </table>
-  </div>
-
-  <div class="spacer"></div>
+            html += """    </tbody>
+  </table></div>
 """
 
-        # ── SELL TABLE ───────────────────────────────────────────────────────────
+        # ── SELL TABLE ────────────────────────────────────────────────────────
         if not top_sells.empty:
             html += """  <!-- SELL TABLE -->
-  <div class="sec-header">
-    <div class="sec-left">
-      <div class="sec-indicator" style="background:var(--red)"></div>
-      <span class="sec-title">▼ Top 20 Sell Recommendations</span>
-    </div>
-    <span class="sec-count">Sorted by Combined Score</span>
+  <div class="sh">
+    <div class="sh-icon shi-sell">▼</div>
+    <span class="sh-title">Top 20 Sell Recommendations</span>
+    <div class="sh-divider"></div>
+    <span class="sh-count">Sorted by Combined Score</span>
   </div>
-  <div class="sec-divider"></div>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-          <th>RSI</th><th>MACD</th><th>Downside</th><th>Target</th><th>Stop Loss</th>
-          <th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+      <th>RSI</th><th>MACD</th><th>Downside</th><th>Target</th><th>Stop Loss</th>
+      <th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
+    </tr></thead>
+    <tbody>
 """
             for row_num, (_, row) in enumerate(top_sells.iterrows(), 1):
-                # Rating tag class
-                rtag_cls = "rtag-ss" if row['Recommendation'] == "STRONG SELL" else "rtag-s"
+                # Rating tag
+                rtag_cls = "rt-ss" if row['Recommendation'] == "STRONG SELL" else "rt-s"
 
-                # Score colour (sell = always red range)
-                if row['Combined_Score'] <= 30:
-                    score_color = "var(--red)"
-                    score_bar_color = "var(--red)"
-                else:
-                    score_color = "var(--red2)"
-                    score_bar_color = "var(--red2)"
+                # Score colour (sell range)
+                sc_color = "var(--red)"; sc_bg = "var(--red)"
 
                 # RSI colour
                 if row['RSI'] > 70:
@@ -911,11 +752,11 @@ class SP500CompleteAnalyzer:
                 else:
                     rsi_color = "var(--gold)"
 
-                # Downside
-                dn_cls = "dn-pct" if row['Upside'] >= 0 else "up-pct"
-
                 # MACD colour
                 macd_color = "var(--red)" if row['MACD'] == "Bearish" else "var(--green)"
+
+                # Downside class
+                dn_cls = "dn" if row['Upside'] >= 0 else "up"
 
                 # R:R colour
                 rr = row['Risk_Reward']
@@ -946,40 +787,43 @@ class SP500CompleteAnalyzer:
                     pe_color = "var(--green)"
 
                 # Quality badge
-                qbadge_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
-                qbadge_cls = qbadge_map.get(row['Quality'], "qb-av")
+                qb_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
+                qb_cls = qb_map.get(row['Quality'], "qb-av")
 
-                html += f"""        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">{row_num:02d}</td>
-          <td><div class="stk-name">{row['Name']}</div><div class="stk-sym">{row['Symbol']}</div></td>
-          <td><div class="price-val">${row['Price']:,.2f}</div></td>
-          <td><span class="rtag {rtag_cls}">{row['Rating']}</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:{score_color}">{row['Combined_Score']:.0f}</div><div class="score-track"><div class="score-fill" style="width:{row['Combined_Score']:.0f}%;background:{score_bar_color}"></div></div></div></td>
-          <td><div class="rsi-num" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsi-lbl">{row['RSI_Signal']}</div></td>
-          <td style="color:{macd_color};font-size:13px;font-weight:600">{row['MACD']}</td>
-          <td><span class="{dn_cls}">{row['Upside']:+.1f}%</span></td>
-          <td><div class="tgt">${row['Target_1']:,.2f}</div><div class="tgt2">T2: ${row['Target_2']:,.2f}</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">${row['Stop_Loss']:,.2f}</div><div class="sl2">+{row['SL_Percentage']:.1f}%</div></td>
-          <td><span class="rr" style="color:{rr_color}">{rr:.1f}×</span></td>
-          <td style="color:{beta_color};font-family:'Roboto Mono',monospace">{row['Beta']:.2f}</td>
-          <td><span class="pe-val" style="color:{pe_color}">{pe_display}</span></td>
-          <td><span class="qbadge {qbadge_cls}">{row['Quality']}</span></td>
-        </tr>
+                html += f"""      <tr>
+        <td style="color:var(--muted)">{row_num}</td>
+        <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
+        <td><div class="pv">${row['Price']:,.2f}</div></td>
+        <td><span class="rt {rtag_cls}">{row['Rating']}</span></td>
+        <td><div class="scn" style="color:{sc_color}">{row['Combined_Score']:.0f}</div><div class="scb" style="background:{sc_bg}"></div></td>
+        <td><div class="rv" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
+        <td style="color:{macd_color};font-weight:600">{row['MACD']}</td>
+        <td class="{dn_cls}">{row['Upside']:+.1f}%</td>
+        <td><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${row['Stop_Loss']:,.2f}</div><div class="sl2">+{row['SL_Percentage']:.1f}%</div></td>
+        <td class="rrv" style="color:{rr_color}">{rr:.1f}×</td>
+        <td style="color:{beta_color};font-size:11px">{row['Beta']:.2f}</td>
+        <td style="color:{pe_color};font-size:11px">{pe_display}</td>
+        <td><span class="qb {qb_cls}">{row['Quality']}</span></td>
+      </tr>
 """
-            html += """      </tbody>
-    </table>
-  </div>
+            html += """    </tbody>
+  </table></div>
 """
 
-        # ── DISCLAIMER + FOOTER ──────────────────────────────────────────────────
-        html += f"""
-  <div class="disc">
-    <strong>⚠ DISCLAIMER:</strong> This analysis is for <strong>EDUCATIONAL PURPOSES ONLY</strong>. This is NOT financial advice. Always do your own research, consult a registered financial advisor, use proper risk management, and never invest more than you can afford to lose.
+        # ── DISCLAIMER + FOOTER ───────────────────────────────────────────────
+        html += f"""  <div class="disc">
+    <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
+    Conduct your own research, consult a registered financial advisor, use stop-losses,
+    and never invest more than you can afford to lose.
   </div>
 </div>
 
 <footer>
-  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong> &nbsp;·&nbsp; Automated Analysis System &nbsp;·&nbsp; Next Update: <strong>{next_update} EST</strong> &nbsp;·&nbsp; {now.strftime('%d %b %Y')}
+  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
+  · Automated Technical &amp; Fundamental Analysis
+  · Next Update: <strong>{next_update} EST</strong>
+  · {now.strftime('%d %b %Y')}
 </footer>
 
 </body>
@@ -987,33 +831,31 @@ class SP500CompleteAnalyzer:
 """
         return html
 
+    # =========================================================================
+    #  EMAIL
+    # =========================================================================
     def send_email(self, to_email):
         """Send email with analysis report"""
         try:
-            # Get credentials from environment variables
             from_email = os.environ.get('GMAIL_USER')
-            password = os.environ.get('GMAIL_APP_PASSWORD')
+            password   = os.environ.get('GMAIL_APP_PASSWORD')
 
             if not from_email or not password:
                 print("❌ Gmail credentials not found in environment variables")
                 print("   Set GMAIL_USER and GMAIL_APP_PASSWORD")
                 return False
 
-            # Get EST time
             now = self.get_est_time()
             time_of_day = "Morning" if now.hour < 12 else "Evening"
 
-            # Create message
             msg = MIMEMultipart('alternative')
-            msg['From'] = from_email
-            msg['To'] = to_email
+            msg['From']    = from_email
+            msg['To']      = to_email
             msg['Subject'] = f"🌅 Top US Market Influencers: NASDAQ & S&P 500 — {time_of_day} Report ({now.strftime('%d %b %Y')})"
 
-            # Generate email body
             html_body = self.generate_email_html()
             msg.attach(MIMEText(html_body, 'html'))
 
-            # Send email
             print(f"📧 Sending email to {to_email}...")
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
@@ -1021,7 +863,7 @@ class SP500CompleteAnalyzer:
             server.send_message(msg)
             server.quit()
 
-            print(f"✅ Email sent successfully!\n")
+            print("✅ Email sent successfully!\n")
             return True
 
         except Exception as e:
@@ -1038,10 +880,8 @@ class SP500CompleteAnalyzer:
         print("=" * 70)
         print()
 
-        # Analyze all stocks
         self.analyze_all_stocks()
 
-        # Send email if requested
         if send_email_flag and recipient_email:
             self.send_email(recipient_email)
 
@@ -1050,19 +890,17 @@ class SP500CompleteAnalyzer:
         print("=" * 70)
 
 
+# =============================================================================
+#  ENTRY POINT
+# =============================================================================
 def main():
-    """Main execution"""
-    analyzer = SP500CompleteAnalyzer()
-
-    # Get recipient email from environment variable
+    analyzer  = SP500CompleteAnalyzer()
     recipient = os.environ.get('RECIPIENT_EMAIL')
 
     if not recipient:
         print("⚠️  RECIPIENT_EMAIL environment variable not set")
-        print("   Please set it to receive email reports")
         recipient = None
 
-    # Generate report and send email
     analyzer.generate_complete_report(send_email_flag=True, recipient_email=recipient)
 
 
@@ -1070,13 +908,10 @@ if __name__ == "__main__":
     analyzer = SP500CompleteAnalyzer()
     analyzer.analyze_all_stocks()
 
-    # 1. Generate the HTML content
     report_html = analyzer.generate_email_html()
 
-    # 2. Save it as index.html (This is what GitHub Pages will display)
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(report_html)
 
-    # 3. Keep your existing email logic here
     # analyzer.send_email(report_html)
     print("✅ Report saved to index.html and sent to email.")
