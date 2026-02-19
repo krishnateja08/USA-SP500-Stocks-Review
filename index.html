@@ -1,876 +1,733 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Top US Market Influencers: NASDAQ &amp; S&amp;P 500 — Evening Report</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=Barlow:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0e1621;--bg2:#121d2e;--card:#162030;--card2:#1a2840;
-    --accent:#3d8eff;--accent2:#5ba3ff;
-    --green:#00c875;--green2:#33d68e;
-    --red:#ff4757;--red2:#ff6b78;
-    --gold:#ffb347;--gold2:#ffc87a;
-    --purple:#9b59f5;
-    --text:#c8d8eb;--text2:#e8f0f8;--muted:#4a6080;
-    --border:#1e3050;--border2:#243a58;
+    --bg:#0f0a05;--bg2:#160d05;--card:#1d1108;--card2:#241508;
+    --accent:#ff6b2b;--accent2:#ff8c55;
+    --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+    --gold:#f59e0b;--teal:#14b8a6;
+    --text:#f0d5b0;--text2:#fdf0d8;--muted:#7a5030;
+    --border:#3d2010;--border2:#4d2a14;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;font-size:14px;
-    background-image:radial-gradient(ellipse at 70% -10%,rgba(61,142,255,0.06) 0%,transparent 50%);
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    min-height:100vh;font-size:14px;
+    background-image:
+      radial-gradient(ellipse at 0% 0%,rgba(255,107,43,0.08) 0%,transparent 50%),
+      radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.05) 0%,transparent 40%);
   }
 
-  /* ===== HEADER ===== */
-  header{
-    background:linear-gradient(180deg,#0c1520 0%,var(--bg2) 100%);
-    border-bottom:1px solid var(--border2);
-    padding:0;
-  }
-  .hdr-main{
-    max-width:1400px;margin:0 auto;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:16px 28px;
-    gap:20px;
-  }
-  .hdr-brand{display:flex;flex-direction:column;gap:4px;}
-  .brand-logo{display:flex;align-items:center;gap:10px;}
-  .brand-square{
-    width:32px;height:32px;
-    background:var(--accent);
-    clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Barlow Condensed',sans-serif;
-    font-weight:800;font-size:14px;color:#fff;
-  }
-  .brand-name{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:clamp(16px,2.5vw,22px);font-weight:700;letter-spacing:1px;
-    color:var(--text2);text-transform:uppercase;
-  }
-  .brand-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+  /* HEADER */
+  header{background:linear-gradient(180deg,#1a0e06,var(--bg2));border-bottom:2px solid var(--accent);padding:0;box-shadow:0 2px 20px rgba(255,107,43,0.15);}
+  .h-top{max-width:1380px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .brand-t{font-size:clamp(13px,2vw,19px);font-weight:800;color:var(--text2);}
+  .brand-s{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+  .h-right{display:flex;gap:0;}
+  .hr{padding:8px 16px;border-left:1px solid var(--border2);text-align:right;}
+  .hr-l{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+  .hr-v{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;margin-top:2px;}
+  .ticker{background:#0a0602;border-bottom:1px solid var(--border);overflow:hidden;display:flex;}
+  .ticker-inner{max-width:1380px;margin:0 auto;display:flex;padding:0 28px;}
+  .ti{display:flex;gap:6px;align-items:center;padding:6px 12px;border-right:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}
+  .ti-s{color:var(--accent2);font-weight:600;} .ti-p{color:var(--text);} .ti-u{color:var(--green);} .ti-d{color:var(--red);}
 
-  .hdr-kpis{display:flex;gap:0;}
-  .kpi-block{
-    padding:10px 20px;border-left:1px solid var(--border);
-    display:flex;flex-direction:column;align-items:flex-end;gap:2px;
-  }
-  .kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
-  .kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
+  /* KPI BAND */
+  .kpi-band{background:var(--card);border-bottom:1px solid var(--border2);}
+  .kpi-inner{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);}
+  .kc{padding:15px 20px;border-right:1px solid var(--border);text-align:center;}
+  .kc:last-child{border-right:none;}
+  .kn{font-size:30px;font-weight:800;line-height:1;}
+  .kl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+  .kbar{height:2px;border-radius:1px;margin:4px auto 0;width:40px;}
 
-  .hdr-ticker{
-    background:var(--bg);border-top:1px solid var(--border);
-    overflow:hidden;display:flex;
-  }
-  .hdr-ticker-inner{
-    max-width:1400px;margin:0 auto;
-    display:flex;padding:0 28px;
-  }
-  .tick{
-    display:flex;gap:8px;align-items:center;
-    padding:7px 14px;border-right:1px solid var(--border);
-    font-family:'Roboto Mono',monospace;font-size:11px;white-space:nowrap;
-  }
-  .tick-sym{color:var(--accent2);font-weight:600;}
-  .tick-price{color:var(--text);}
-  .tick-up{color:var(--green);}
-  .tick-dn{color:var(--red);}
+  /* MAIN */
+  .main{max-width:1380px;margin:0 auto;padding:24px 28px;}
+  .sh{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .sh-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .shi-buy{background:rgba(34,197,94,0.15);}
+  .shi-sell{background:rgba(239,68,68,0.15);}
+  .sh-title{font-size:16px;font-weight:800;color:var(--text2);}
+  .sh-divider{flex:1;height:1px;background:var(--border);}
+  .sh-count{font-size:10px;color:var(--muted);}
 
-  /* ===== STATS BAND ===== */
-  .stats-band{background:var(--card);border-bottom:1px solid var(--border2);}
-  .stats-inner{
-    max-width:1400px;margin:0 auto;
-    display:grid;grid-template-columns:repeat(5,1fr);
-    padding:0 28px;
-  }
-  .stat-c{
-    padding:16px 20px;border-right:1px solid var(--border);
-    text-align:center;transition:0.2s;
-  }
-  .stat-c:hover{background:rgba(61,142,255,0.05);}
-  .stat-c:last-child{border-right:none;}
-  .stat-num{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:32px;font-weight:700;line-height:1;
-  }
-  .stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
-  .stat-bar{height:2px;border-radius:1px;margin:6px auto 0;max-width:60px;}
-
-  /* ===== CONTENT ===== */
-  .content{max-width:1400px;margin:0 auto;padding:24px 28px;}
-
-  .sec-header{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:14px;
-  }
-  .sec-left{display:flex;align-items:center;gap:10px;}
-  .sec-indicator{width:4px;height:28px;border-radius:2px;}
-  .sec-title{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    color:var(--text2);
-  }
-  .sec-count{
-    font-size:10px;letter-spacing:2px;color:var(--muted);
-    border:1px solid var(--border2);padding:3px 10px;border-radius:2px;
-  }
-  .sec-divider{width:100%;height:1px;background:var(--border);margin-bottom:14px;}
-
-  /* Table */
-  .tbl-wrap{overflow-x:auto;border-radius:4px;border:1px solid var(--border2);}
+  /* TABLE */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border2);border-radius:8px;margin-bottom:28px;background:var(--card);box-shadow:0 4px 24px rgba(0,0,0,0.3);}
   table{width:100%;border-collapse:collapse;}
-  thead tr{background:var(--card2);}
-  th{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
-    color:var(--muted);padding:11px 12px;
-    border-bottom:1px solid var(--border2);
-    text-align:left;white-space:nowrap;
-  }
-  tbody td{
-    padding:11px 12px;border-bottom:1px solid var(--border);
-    vertical-align:middle;white-space:nowrap;
-  }
-  tbody tr:nth-child(even) td{background:rgba(22,32,48,0.5);}
-  tbody tr:hover td{background:rgba(61,142,255,0.06);}
-  tbody tr:last-child td{border-bottom:none;}
+  th{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 12px;background:var(--card2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;}
+  td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}
+  tr:hover td{background:rgba(255,107,43,0.04);}
+  tr:nth-child(even) td{background:rgba(29,17,8,0.5);}
+  tr:last-child td{border-bottom:none;}
 
-  .stk-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--text2);}
-  .stk-sym{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
-  .price-val{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}
+  .sn{font-size:14px;font-weight:700;color:var(--text2);}
+  .ss{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+  .pv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}
 
-  .rtag{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    padding:4px 10px;border-radius:3px;white-space:nowrap;
-    display:inline-block;
-  }
-  .rtag-sb{background:rgba(0,200,117,0.12);color:var(--green2);border:1px solid rgba(0,200,117,0.25);}
-  .rtag-b{background:rgba(61,142,255,0.12);color:var(--accent2);border:1px solid rgba(61,142,255,0.25);}
-  .rtag-h{background:rgba(155,89,245,0.12);color:var(--purple);border:1px solid rgba(155,89,245,0.25);}
-  .rtag-s{background:rgba(255,71,87,0.12);color:var(--red2);border:1px solid rgba(255,71,87,0.25);}
-  .rtag-ss{background:rgba(255,71,87,0.2);color:var(--red);border:1px solid rgba(255,71,87,0.4);}
+  /* Rating tags */
+  .rt{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;white-space:nowrap;}
+  .rt-sb{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+  .rt-b{background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.25);}
+  .rt-s{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
+  .rt-ss{background:rgba(239,68,68,0.18);color:var(--red);border:1px solid rgba(239,68,68,0.4);}
 
-  .score-box{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}
-  .score-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}
-  .score-track{width:36px;height:3px;background:var(--border);border-radius:2px;}
-  .score-fill{height:100%;border-radius:2px;}
+  /* Score */
+  .scn{font-size:22px;font-weight:800;}
+  .scb{height:3px;border-radius:2px;margin-top:4px;width:40px;}
 
-  .up-pct{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--green);}
-  .dn-pct{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--red);}
+  .up{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}
+  .dn{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}
 
-  .tgt{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text);}
-  .tgt2{font-size:10px;color:var(--muted);}
-
-  .sl{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--red2);}
+  .t1{font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .t2{font-size:10px;color:var(--muted);}
+  .sl1{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);}
   .sl2{font-size:10px;color:var(--muted);}
+  .rv{font-family:'JetBrains Mono',monospace;font-size:13px;}
+  .rsb{font-size:9px;color:var(--muted);}
+  .rrv{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
 
-  .rsi-num{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;}
-  .rsi-lbl{font-size:9px;color:var(--muted);}
+  /* Quality badges */
+  .qb{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;}
+  .qb-ex{background:rgba(34,197,94,0.1);color:var(--green);}
+  .qb-gd{background:rgba(59,130,246,0.1);color:var(--blue);}
+  .qb-av{background:rgba(245,158,11,0.1);color:var(--gold);}
+  .qb-po{background:rgba(239,68,68,0.1);color:var(--red);}
 
-  .rr{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;}
+  /* Disclaimer */
+  .disc{background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:14px 18px;margin:20px 0;font-size:12px;color:var(--muted);line-height:1.7;}
+  .disc strong{color:var(--red);}
 
-  .pe-val{font-family:'Roboto Mono',monospace;font-size:13px;}
-
-  .qbadge{
-    font-family:'Barlow Condensed',sans-serif;
-    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    padding:3px 8px;border-radius:3px;
-  }
-  .qb-ex{background:rgba(0,200,117,0.1);color:var(--green2);}
-  .qb-gd{background:rgba(61,142,255,0.1);color:var(--accent2);}
-  .qb-av{background:rgba(255,179,71,0.1);color:var(--gold2);}
-  .qb-po{background:rgba(255,71,87,0.1);color:var(--red2);}
-
-  .spacer{height:28px;}
-
-  .disc{
-    background:var(--card);border:1px solid var(--border2);
-    border-left:3px solid var(--gold);
-    padding:16px 20px;margin-top:28px;
-    font-size:12px;color:var(--muted);line-height:1.7;
-  }
-  .disc strong{color:var(--red2);}
-
-  footer{
-    background:var(--bg2);border-top:1px solid var(--border2);
-    padding:16px 28px;text-align:center;
-    font-size:11px;color:var(--muted);letter-spacing:1px;
-    font-family:'Barlow Condensed',sans-serif;
-  }
+  footer{background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2));border-top:2px solid var(--accent);text-align:center;padding:18px;font-size:11px;color:var(--muted);letter-spacing:1px;}
   footer strong{color:var(--accent2);}
 
-  @media(max-width:1100px){
-    .stats-inner{grid-template-columns:repeat(3,1fr);}
-    .hdr-kpis .kpi-block:nth-child(n+3){display:none;}
-  }
-  @media(max-width:700px){
-    .hdr-main{padding:12px 16px;flex-wrap:wrap;}
-    .stats-inner{grid-template-columns:repeat(2,1fr);padding:0 16px;}
-    .content{padding:16px;}
-    table{min-width:700px;}
-  }
+  @media(max-width:1000px){.kpi-inner{grid-template-columns:repeat(3,1fr);} .h-right .hr:nth-child(n+3){display:none;}}
+  @media(max-width:600px){.kpi-inner{grid-template-columns:repeat(2,1fr);} .h-top{padding:10px 14px;} .main{padding:14px;} table{min-width:650px;}}
 </style>
 </head>
 <body>
 
 <!-- ===== HEADER ===== -->
 <header>
-  <div class="hdr-main">
-    <div class="hdr-brand">
-      <div class="brand-logo">
-        <div class="brand-square">US</div>
-        <div class="brand-name">Market Intelligence · NASDAQ &amp; S&amp;P 500</div>
+  <div class="h-top">
+    <div class="brand">
+      <div class="brand-icon">🌅</div>
+      <div>
+        <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
+        <div class="brand-s">Technical &amp; Fundamental Analysis Report</div>
       </div>
-      <div class="brand-sub">Technical &amp; Fundamental Analysis Report</div>
     </div>
-    <div class="hdr-kpis">
-      <div class="kpi-block">
-        <span class="kpi-label">Session</span>
-        <span class="kpi-val" style="color:var(--green)">EVENING ▲</span>
-      </div>
-      <div class="kpi-block">
-        <span class="kpi-label">Updated</span>
-        <span class="kpi-val" style="color:var(--accent2)">03:21 PM EST</span>
-      </div>
-      <div class="kpi-block">
-        <span class="kpi-label">19 Feb 2026</span>
-        <span class="kpi-val" style="color:var(--gold)">Evening</span>
-      </div>
+    <div class="h-right">
+      <div class="hr"><div class="hr-l">Date</div><div class="hr-v" style="color:var(--gold)">19 Feb 2026</div></div>
+      <div class="hr"><div class="hr-l">Time</div><div class="hr-v" style="color:var(--green)">03:38 PM EST</div></div>
+      <div class="hr"><div class="hr-l">Session</div><div class="hr-v" style="color:var(--green)">▲ EVENING</div></div>
+      <div class="hr"><div class="hr-l">Next</div><div class="hr-v" style="color:var(--accent2)">9:30 AM (Next Day)</div></div>
     </div>
   </div>
-  <div class="hdr-ticker">
-    <div class="hdr-ticker-inner">
-      <div class="tick"><span class="tick-sym">NVDA</span><span class="tick-price">$186.96</span><span class="tick-up">+0.6%</span></div>
-      <div class="tick"><span class="tick-sym">AAPL</span><span class="tick-price">$260.98</span><span class="tick-dn">-1.2%</span></div>
-      <div class="tick"><span class="tick-sym">MSFT</span><span class="tick-price">$397.20</span><span class="tick-dn">-6.4%</span></div>
-      <div class="tick"><span class="tick-sym">AMZN</span><span class="tick-price">$204.36</span><span class="tick-dn">-8.3%</span></div>
-      <div class="tick"><span class="tick-sym">GOOGL</span><span class="tick-price">$302.85</span><span class="tick-dn">-6.6%</span></div>
-      <div class="tick"><span class="tick-sym">GOOG</span><span class="tick-price">$303.36</span><span class="tick-dn">-6.6%</span></div>
-      <div class="tick"><span class="tick-sym">META</span><span class="tick-price">$642.42</span><span class="tick-dn">-4.2%</span></div>
-    </div>
-  </div>
+  <div class="ticker"><div class="ticker-inner">
+    <div class="ti"><span class="ti-s">NVDA</span><span class="ti-p">$187.20</span><span class="ti-u">+0.7%</span></div>
+    <div class="ti"><span class="ti-s">AAPL</span><span class="ti-p">$260.47</span><span class="ti-d">-1.4%</span></div>
+    <div class="ti"><span class="ti-s">MSFT</span><span class="ti-p">$397.08</span><span class="ti-d">-6.4%</span></div>
+    <div class="ti"><span class="ti-s">AMZN</span><span class="ti-p">$204.24</span><span class="ti-d">-8.3%</span></div>
+    <div class="ti"><span class="ti-s">GOOGL</span><span class="ti-p">$303.19</span><span class="ti-d">-6.5%</span></div>
+    <div class="ti"><span class="ti-s">GOOG</span><span class="ti-p">$303.73</span><span class="ti-d">-6.5%</span></div>
+    <div class="ti"><span class="ti-s">META</span><span class="ti-p">$643.12</span><span class="ti-d">-4.1%</span></div>
+  </div></div>
 </header>
 
-<!-- ===== STATS BAND ===== -->
-<div class="stats-band">
-  <div class="stats-inner">
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--accent2)">50</div>
-      <div class="stat-lbl">Stocks Analyzed</div>
-      <div class="stat-bar" style="background:var(--accent)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--green)">3</div>
-      <div class="stat-lbl">Strong Buy</div>
-      <div class="stat-bar" style="background:var(--green)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--green2)">23</div>
-      <div class="stat-lbl">Buy</div>
-      <div class="stat-bar" style="background:var(--green2)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--red)">12</div>
-      <div class="stat-lbl">Sell / Strong Sell</div>
-      <div class="stat-bar" style="background:var(--red)"></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-num" style="color:var(--purple)">12</div>
-      <div class="stat-lbl">Hold</div>
-      <div class="stat-bar" style="background:var(--purple)"></div>
-    </div>
-  </div>
-</div>
+<!-- ===== KPI BAND ===== -->
+<div class="kpi-band"><div class="kpi-inner">
+  <div class="kc"><div class="kn" style="color:var(--accent2)">50</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--green)">3</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--teal)">22</div><div class="kl">Buy</div><div class="kbar" style="background:var(--teal)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--red)">12</div><div class="kl">Sell</div><div class="kbar" style="background:var(--red)"></div></div>
+  <div class="kc"><div class="kn" style="color:var(--blue)">13</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
+</div></div>
 
 <!-- ===== MAIN CONTENT ===== -->
-<div class="content">
+<div class="main">
   <!-- BUY TABLE -->
-  <div class="sec-header">
-    <div class="sec-left">
-      <div class="sec-indicator" style="background:var(--green)"></div>
-      <span class="sec-title">▲ Top 20 Buy Recommendations</span>
-    </div>
-    <span class="sec-count">Sorted by Combined Score</span>
+  <div class="sh">
+    <div class="sh-icon shi-buy">▲</div>
+    <span class="sh-title">Top 20 Buy Recommendations</span>
+    <div class="sh-divider"></div>
+    <span class="sh-count">Sorted by Combined Score</span>
   </div>
-  <div class="sec-divider"></div>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-          <th>Upside</th><th>Target</th><th>Stop Loss</th><th>RSI</th>
-          <th>R:R</th><th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">01</td>
-          <td><div class="stk-name">NVIDIA</div><div class="stk-sym">NVDA</div></td>
-          <td><div class="price-val">$186.96</div></td>
-          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--green)">81</div><div class="score-track"><div class="score-fill" style="width:81%;background:var(--green)"></div></div></div></td>
-          <td><span class="up-pct">+3.2%</span></td>
-          <td><div class="tgt">$192.96</div><div class="tgt2">T2: $202.61</div></td>
-          <td><div class="sl">$168.39</div><div class="sl2">-9.9%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">45</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-11.9%</td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">2.31</td>
-          <td><span class="pe-val" style="color:var(--red2)">46.3</span></td>
-          <td style="color:var(--text);font-size:12px">2.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">02</td>
-          <td><div class="stk-name">Berkshire Hathaway</div><div class="stk-sym">BRK-B</div></td>
-          <td><div class="price-val">$496.10</div></td>
-          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--green)">80</div><div class="score-track"><div class="score-fill" style="width:80%;background:var(--green)"></div></div></div></td>
-          <td><span class="up-pct">+2.7%</span></td>
-          <td><div class="tgt">$509.61</div><div class="tgt2">T2: $526.00</div></td>
-          <td><div class="sl">$471.29</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">66</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.5×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-8.5%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.70</td>
-          <td><span class="pe-val" style="color:var(--green)">15.8</span></td>
-          <td style="color:var(--text);font-size:12px">—</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">03</td>
-          <td><div class="stk-name">Applied Materials</div><div class="stk-sym">AMAT</div></td>
-          <td><div class="price-val">$366.21</div></td>
-          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--green)">76</div><div class="score-track"><div class="score-fill" style="width:76%;background:var(--green)"></div></div></div></td>
-          <td><span class="dn-pct">-6.0%</span></td>
-          <td><div class="tgt">$344.07</div><div class="tgt2">T2: $361.27</div></td>
-          <td><div class="sl">$329.59</div><div class="sl2">-10.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">58</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.6×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.7%</td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.68</td>
-          <td><span class="pe-val" style="color:var(--gold)">37.6</span></td>
-          <td style="color:var(--green);font-size:12px">50.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">04</td>
-          <td><div class="stk-name">Micron Technology</div><div class="stk-sym">MU</div></td>
-          <td><div class="price-val">$413.52</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">72</div><div class="score-track"><div class="score-fill" style="width:72%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+3.7%</span></td>
-          <td><div class="tgt">$428.94</div><div class="tgt2">T2: $450.39</div></td>
-          <td><div class="sl">$372.17</div><div class="sl2">-10.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">45</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-9.2%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.50</td>
-          <td><span class="pe-val" style="color:var(--gold)">39.3</span></td>
-          <td style="color:var(--green);font-size:12px">11.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">05</td>
-          <td><div class="stk-name">Lam Research</div><div class="stk-sym">LRCX</div></td>
-          <td><div class="price-val">$235.48</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">72</div><div class="score-track"><div class="score-fill" style="width:72%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+3.1%</span></td>
-          <td><div class="tgt">$242.80</div><div class="tgt2">T2: $254.94</div></td>
-          <td><div class="sl">$211.93</div><div class="sl2">-10.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">44</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-6.5%</td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.78</td>
-          <td><span class="pe-val" style="color:var(--red2)">48.4</span></td>
-          <td style="color:var(--green);font-size:12px">43.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">06</td>
-          <td><div class="stk-name">Johnson & Johnson</div><div class="stk-sym">JNJ</div></td>
-          <td><div class="price-val">$246.40</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">70</div><div class="score-track"><div class="score-fill" style="width:70%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-2.2%</span></td>
-          <td><div class="tgt">$240.97</div><div class="tgt2">T2: $253.02</div></td>
-          <td><div class="sl">$234.08</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--red)">88</div><div class="rsi-lbl">Overbought</div></td>
-          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.2%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.35</td>
-          <td><span class="pe-val" style="color:var(--green)">22.4</span></td>
-          <td style="color:var(--green);font-size:12px">212.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">07</td>
-          <td><div class="stk-name">Caterpillar Inc.</div><div class="stk-sym">CAT</div></td>
-          <td><div class="price-val">$756.28</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-0.4%</span></td>
-          <td><div class="tgt">$753.00</div><div class="tgt2">T2: $790.65</div></td>
-          <td><div class="sl">$680.65</div><div class="sl2">-10.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">69</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.0×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-4.2%</td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.55</td>
-          <td><span class="pe-val" style="color:var(--red2)">40.2</span></td>
-          <td style="color:var(--green);font-size:12px">80.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">08</td>
-          <td><div class="stk-name">Linde plc</div><div class="stk-sym">LIN</div></td>
-          <td><div class="price-val">$488.43</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-2.8%</span></td>
-          <td><div class="tgt">$474.68</div><div class="tgt2">T2: $498.41</div></td>
-          <td><div class="sl">$454.24</div><div class="sl2">-7.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">70</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.2%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.85</td>
-          <td><span class="pe-val" style="color:var(--gold)">33.4</span></td>
-          <td style="color:var(--green);font-size:12px">124.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">09</td>
-          <td><div class="stk-name">Broadcom</div><div class="stk-sym">AVGO</div></td>
-          <td><div class="price-val">$331.07</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+19.3%</span></td>
-          <td><div class="tgt">$395.11</div><div class="tgt2">T2: $414.86</div></td>
-          <td><div class="sl">$307.95</div><div class="sl2">-7.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">50</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--green)">2.8×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-20.0%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.22</td>
-          <td><span class="pe-val" style="color:var(--red2)">69.4</span></td>
-          <td style="color:var(--green);font-size:12px">78.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">10</td>
-          <td><div class="stk-name">RTX Corporation</div><div class="stk-sym">RTX</div></td>
-          <td><div class="price-val">$204.66</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-0.4%</span></td>
-          <td><div class="tgt">$203.82</div><div class="tgt2">T2: $214.01</div></td>
-          <td><div class="sl">$194.43</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">58</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-1.0%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.42</td>
-          <td><span class="pe-val" style="color:var(--red2)">41.3</span></td>
-          <td style="color:var(--green);font-size:12px">133.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">11</td>
-          <td><div class="stk-name">Alphabet (Class A)</div><div class="stk-sym">GOOGL</div></td>
-          <td><div class="price-val">$302.85</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+11.7%</span></td>
-          <td><div class="tgt">$338.12</div><div class="tgt2">T2: $355.02</div></td>
-          <td><div class="sl">$292.19</div><div class="sl2">-3.5%</div></td>
-          <td><div class="rsi-num" style="color:var(--green)">16</div><div class="rsi-lbl">Oversold</div></td>
-          <td><span class="rr" style="color:var(--green)">3.3×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-13.2%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.09</td>
-          <td><span class="pe-val" style="color:var(--gold)">28.0</span></td>
-          <td style="color:var(--green);font-size:12px">28.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">12</td>
-          <td><div class="stk-name">Alphabet (Class C)</div><div class="stk-sym">GOOG</div></td>
-          <td><div class="price-val">$303.36</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+11.6%</span></td>
-          <td><div class="tgt">$338.42</div><div class="tgt2">T2: $355.34</div></td>
-          <td><div class="sl">$293.23</div><div class="sl2">-3.3%</div></td>
-          <td><div class="rsi-num" style="color:var(--green)">17</div><div class="rsi-lbl">Oversold</div></td>
-          <td><span class="rr" style="color:var(--green)">3.5×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-13.4%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.09</td>
-          <td><span class="pe-val" style="color:var(--gold)">28.0</span></td>
-          <td style="color:var(--green);font-size:12px">28.00%</td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">13</td>
-          <td><div class="stk-name">GE Aerospace</div><div class="stk-sym">GE</div></td>
-          <td><div class="price-val">$334.61</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">64</div><div class="score-track"><div class="score-fill" style="width:64%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-1.5%</span></td>
-          <td><div class="tgt">$329.50</div><div class="tgt2">T2: $345.98</div></td>
-          <td><div class="sl">$301.15</div><div class="sl2">-10.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--red)">80</div><div class="rsi-lbl">Overbought</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.4%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.38</td>
-          <td><span class="pe-val" style="color:var(--red2)">41.6</span></td>
-          <td style="color:var(--green);font-size:12px">57.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">14</td>
-          <td><div class="stk-name">ExxonMobil</div><div class="stk-sym">XOM</div></td>
-          <td><div class="price-val">$151.76</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">62</div><div class="score-track"><div class="score-fill" style="width:62%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-0.8%</span></td>
-          <td><div class="tgt">$150.57</div><div class="tgt2">T2: $158.10</div></td>
-          <td><div class="sl">$144.17</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">66</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.6%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.36</td>
-          <td><span class="pe-val" style="color:var(--green)">22.6</span></td>
-          <td style="color:var(--green);font-size:12px">273.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">15</td>
-          <td><div class="stk-name">GE Vernova</div><div class="stk-sym">GEV</div></td>
-          <td><div class="price-val">$828.30</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">62</div><div class="score-track"><div class="score-fill" style="width:62%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-1.5%</span></td>
-          <td><div class="tgt">$815.68</div><div class="tgt2">T2: $836.98</div></td>
-          <td><div class="sl">$770.32</div><div class="sl2">-7.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--red)">71</div><div class="rsi-lbl">Overbought</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.1%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">1.00</td>
-          <td><span class="pe-val" style="color:var(--red2)">46.9</span></td>
-          <td style="color:var(--green);font-size:12px">18.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">16</td>
-          <td><div class="stk-name">Costco</div><div class="stk-sym">COST</div></td>
-          <td><div class="price-val">$987.62</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">61</div><div class="score-track"><div class="score-fill" style="width:61%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+1.5%</span></td>
-          <td><div class="tgt">$1,002.02</div><div class="tgt2">T2: $1,046.41</div></td>
-          <td><div class="sl">$918.49</div><div class="sl2">-7.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">60</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-7.1%</td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.01</td>
-          <td><span class="pe-val" style="color:var(--red2)">53.0</span></td>
-          <td style="color:var(--green);font-size:12px">52.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">17</td>
-          <td><div class="stk-name">AbbVie</div><div class="stk-sym">ABBV</div></td>
-          <td><div class="price-val">$223.78</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">61</div><div class="score-track"><div class="score-fill" style="width:61%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+3.9%</span></td>
-          <td><div class="tgt">$232.39</div><div class="tgt2">T2: $244.01</div></td>
-          <td><div class="sl">$212.59</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">54</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.8×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-7.2%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.33</td>
-          <td><span class="pe-val" style="color:var(--red2)">94.8</span></td>
-          <td style="color:var(--green);font-size:12px">291.00%</td>
-          <td><span class="qbadge qb-po">Poor</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">18</td>
-          <td><div class="stk-name">Procter & Gamble</div><div class="stk-sym">PG</div></td>
-          <td><div class="price-val">$158.00</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
-          <td><span class="up-pct">+1.2%</span></td>
-          <td><div class="tgt">$159.96</div><div class="tgt2">T2: $167.96</div></td>
-          <td><div class="sl">$150.10</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--accent2)">70</div><div class="rsi-lbl">Neutral</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-9.8%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.38</td>
-          <td><span class="pe-val" style="color:var(--green)">23.4</span></td>
-          <td style="color:var(--green);font-size:12px">269.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">19</td>
-          <td><div class="stk-name">McDonald's</div><div class="stk-sym">MCD</div></td>
-          <td><div class="price-val">$328.48</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-0.1%</span></td>
-          <td><div class="tgt">$328.01</div><div class="tgt2">T2: $340.66</div></td>
-          <td><div class="sl">$312.06</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--red)">70</div><div class="rsi-lbl">Overbought</div></td>
-          <td><span class="rr" style="color:var(--red)">0.0×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.1%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.53</td>
-          <td><span class="pe-val" style="color:var(--gold)">27.5</span></td>
-          <td style="color:var(--green);font-size:12px">227.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">20</td>
-          <td><div class="stk-name">Verizon</div><div class="stk-sym">VZ</div></td>
-          <td><div class="price-val">$48.59</div></td>
-          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
-          <td><span class="dn-pct">-1.4%</span></td>
-          <td><div class="tgt">$47.91</div><div class="tgt2">T2: $49.34</div></td>
-          <td><div class="sl">$46.16</div><div class="sl2">-5.0%</div></td>
-          <td><div class="rsi-num" style="color:var(--red)">83</div><div class="rsi-lbl">Overbought</div></td>
-          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-3.3%</td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.32</td>
-          <td><span class="pe-val" style="color:var(--green)">12.0</span></td>
-          <td style="color:var(--green);font-size:12px">589.00%</td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="spacer"></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+      <th>Upside</th><th>Target</th><th>Stop Loss</th><th>RSI</th>
+      <th>R:R</th><th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--muted)">1</td>
+        <td><div class="sn">NVIDIA</div><div class="ss">NVDA</div></td>
+        <td><div class="pv">$187.20</div></td>
+        <td><span class="rt rt-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+        <td><div class="scn" style="color:var(--green)">81</div><div class="scb" style="background:var(--green)"></div></td>
+        <td class="up">+3.1%</td>
+        <td><div class="t1">$192.96</div><div class="t2">T2: $202.61</div></td>
+        <td><div class="sl1">$168.39</div><div class="sl2">-10.1%</div></td>
+        <td><div class="rv" style="color:var(--blue)">45</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.3×</td>
+        <td style="color:var(--muted);font-size:11px">-11.8%</td>
+        <td style="color:var(--red);font-size:11px">2.31</td>
+        <td style="color:var(--red);font-size:11px">46.3</td>
+        <td style="color:var(--green)">2.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">2</td>
+        <td><div class="sn">Berkshire Hathaway</div><div class="ss">BRK-B</div></td>
+        <td><div class="pv">$496.79</div></td>
+        <td><span class="rt rt-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+        <td><div class="scn" style="color:var(--green)">80</div><div class="scb" style="background:var(--green)"></div></td>
+        <td class="up">+2.6%</td>
+        <td><div class="t1">$509.61</div><div class="t2">T2: $526.00</div></td>
+        <td><div class="sl1">$471.95</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">67</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.5×</td>
+        <td style="color:var(--muted);font-size:11px">-8.4%</td>
+        <td style="color:var(--green);font-size:11px">0.70</td>
+        <td style="color:var(--green);font-size:11px">15.9</td>
+        <td style="color:var(--muted)">—</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">3</td>
+        <td><div class="sn">Applied Materials</div><div class="ss">AMAT</div></td>
+        <td><div class="pv">$367.70</div></td>
+        <td><span class="rt rt-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+        <td><div class="scn" style="color:var(--green)">76</div><div class="scb" style="background:var(--green)"></div></td>
+        <td class="dn">-6.4%</td>
+        <td><div class="t1">$344.07</div><div class="t2">T2: $361.27</div></td>
+        <td><div class="sl1">$330.93</div><div class="sl2">-10.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">58</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.6×</td>
+        <td style="color:var(--red);font-size:11px">-2.3%</td>
+        <td style="color:var(--red);font-size:11px">1.68</td>
+        <td style="color:var(--gold);font-size:11px">37.7</td>
+        <td style="color:var(--green)">50.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">4</td>
+        <td><div class="sn">Micron Technology</div><div class="ss">MU</div></td>
+        <td><div class="pv">$414.04</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">72</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+3.6%</td>
+        <td><div class="t1">$428.94</div><div class="t2">T2: $450.39</div></td>
+        <td><div class="sl1">$372.64</div><div class="sl2">-10.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">45</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.4×</td>
+        <td style="color:var(--muted);font-size:11px">-9.1%</td>
+        <td style="color:var(--gold);font-size:11px">1.50</td>
+        <td style="color:var(--gold);font-size:11px">39.4</td>
+        <td style="color:var(--green)">11.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">5</td>
+        <td><div class="sn">Lam Research</div><div class="ss">LRCX</div></td>
+        <td><div class="pv">$235.87</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">72</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+2.9%</td>
+        <td><div class="t1">$242.80</div><div class="t2">T2: $254.94</div></td>
+        <td><div class="sl1">$212.28</div><div class="sl2">-10.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">44</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.3×</td>
+        <td style="color:var(--muted);font-size:11px">-6.4%</td>
+        <td style="color:var(--red);font-size:11px">1.78</td>
+        <td style="color:var(--red);font-size:11px">48.4</td>
+        <td style="color:var(--green)">43.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">6</td>
+        <td><div class="sn">Johnson & Johnson</div><div class="ss">JNJ</div></td>
+        <td><div class="pv">$246.65</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">70</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-2.3%</td>
+        <td><div class="t1">$240.97</div><div class="t2">T2: $253.02</div></td>
+        <td><div class="sl1">$234.32</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--red)">88</div><div class="rsb">Overbought</div></td>
+        <td class="rrv" style="color:var(--red)">0.5×</td>
+        <td style="color:var(--red);font-size:11px">-0.1%</td>
+        <td style="color:var(--green);font-size:11px">0.35</td>
+        <td style="color:var(--green);font-size:11px">22.4</td>
+        <td style="color:var(--green)">212.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">7</td>
+        <td><div class="sn">Caterpillar Inc.</div><div class="ss">CAT</div></td>
+        <td><div class="pv">$756.08</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">68</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-0.4%</td>
+        <td><div class="t1">$753.00</div><div class="t2">T2: $790.65</div></td>
+        <td><div class="sl1">$680.47</div><div class="sl2">-10.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">69</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.0×</td>
+        <td style="color:var(--red);font-size:11px">-4.3%</td>
+        <td style="color:var(--red);font-size:11px">1.55</td>
+        <td style="color:var(--red);font-size:11px">40.2</td>
+        <td style="color:var(--green)">80.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">8</td>
+        <td><div class="sn">McDonald's</div><div class="ss">MCD</div></td>
+        <td><div class="pv">$327.75</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">68</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+0.1%</td>
+        <td><div class="t1">$328.01</div><div class="t2">T2: $340.66</div></td>
+        <td><div class="sl1">$311.36</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">69</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.0×</td>
+        <td style="color:var(--red);font-size:11px">-2.4%</td>
+        <td style="color:var(--green);font-size:11px">0.53</td>
+        <td style="color:var(--gold);font-size:11px">27.4</td>
+        <td style="color:var(--green)">227.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">9</td>
+        <td><div class="sn">Broadcom</div><div class="ss">AVGO</div></td>
+        <td><div class="pv">$332.01</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">68</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+19.0%</td>
+        <td><div class="t1">$395.11</div><div class="t2">T2: $414.86</div></td>
+        <td><div class="sl1">$307.95</div><div class="sl2">-7.2%</div></td>
+        <td><div class="rv" style="color:var(--blue)">51</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--green)">2.6×</td>
+        <td style="color:var(--muted);font-size:11px">-19.8%</td>
+        <td style="color:var(--gold);font-size:11px">1.22</td>
+        <td style="color:var(--red);font-size:11px">69.6</td>
+        <td style="color:var(--green)">78.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">10</td>
+        <td><div class="sn">RTX Corporation</div><div class="ss">RTX</div></td>
+        <td><div class="pv">$204.50</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">67</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-0.3%</td>
+        <td><div class="t1">$203.82</div><div class="t2">T2: $214.01</div></td>
+        <td><div class="sl1">$194.27</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">58</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--red);font-size:11px">-1.1%</td>
+        <td style="color:var(--green);font-size:11px">0.42</td>
+        <td style="color:var(--red);font-size:11px">41.2</td>
+        <td style="color:var(--green)">133.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">11</td>
+        <td><div class="sn">Alphabet (Class A)</div><div class="ss">GOOGL</div></td>
+        <td><div class="pv">$303.19</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">67</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+11.5%</td>
+        <td><div class="t1">$338.12</div><div class="t2">T2: $355.02</div></td>
+        <td><div class="sl1">$292.19</div><div class="sl2">-3.6%</div></td>
+        <td><div class="rv" style="color:var(--green)">16</div><div class="rsb">Oversold</div></td>
+        <td class="rrv" style="color:var(--green)">3.2×</td>
+        <td style="color:var(--muted);font-size:11px">-13.1%</td>
+        <td style="color:var(--gold);font-size:11px">1.09</td>
+        <td style="color:var(--gold);font-size:11px">28.1</td>
+        <td style="color:var(--green)">28.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">12</td>
+        <td><div class="sn">Alphabet (Class C)</div><div class="ss">GOOG</div></td>
+        <td><div class="pv">$303.73</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">67</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+11.4%</td>
+        <td><div class="t1">$338.42</div><div class="t2">T2: $355.34</div></td>
+        <td><div class="sl1">$293.23</div><div class="sl2">-3.5%</div></td>
+        <td><div class="rv" style="color:var(--green)">17</div><div class="rsb">Oversold</div></td>
+        <td class="rrv" style="color:var(--green)">3.3×</td>
+        <td style="color:var(--muted);font-size:11px">-13.3%</td>
+        <td style="color:var(--gold);font-size:11px">1.09</td>
+        <td style="color:var(--gold);font-size:11px">28.1</td>
+        <td style="color:var(--green)">28.00%</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">13</td>
+        <td><div class="sn">GE Aerospace</div><div class="ss">GE</div></td>
+        <td><div class="pv">$333.94</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">64</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-1.3%</td>
+        <td><div class="t1">$329.50</div><div class="t2">T2: $345.98</div></td>
+        <td><div class="sl1">$300.55</div><div class="sl2">-10.0%</div></td>
+        <td><div class="rv" style="color:var(--red)">80</div><div class="rsb">Overbought</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--red);font-size:11px">-0.6%</td>
+        <td style="color:var(--gold);font-size:11px">1.38</td>
+        <td style="color:var(--red);font-size:11px">41.5</td>
+        <td style="color:var(--green)">57.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">14</td>
+        <td><div class="sn">ExxonMobil</div><div class="ss">XOM</div></td>
+        <td><div class="pv">$151.65</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">62</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-0.7%</td>
+        <td><div class="t1">$150.57</div><div class="t2">T2: $158.10</div></td>
+        <td><div class="sl1">$144.07</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">66</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--red);font-size:11px">-2.7%</td>
+        <td style="color:var(--green);font-size:11px">0.36</td>
+        <td style="color:var(--green);font-size:11px">22.6</td>
+        <td style="color:var(--green)">273.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">15</td>
+        <td><div class="sn">GE Vernova</div><div class="ss">GEV</div></td>
+        <td><div class="pv">$830.09</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">62</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-1.7%</td>
+        <td><div class="t1">$815.68</div><div class="t2">T2: $836.98</div></td>
+        <td><div class="sl1">$771.98</div><div class="sl2">-7.0%</div></td>
+        <td><div class="rv" style="color:var(--red)">71</div><div class="rsb">Overbought</div></td>
+        <td class="rrv" style="color:var(--red)">0.2×</td>
+        <td style="color:var(--red);font-size:11px">-1.9%</td>
+        <td style="color:var(--green);font-size:11px">1.00</td>
+        <td style="color:var(--red);font-size:11px">47.0</td>
+        <td style="color:var(--green)">18.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">16</td>
+        <td><div class="sn">Costco</div><div class="ss">COST</div></td>
+        <td><div class="pv">$987.52</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">61</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+1.5%</td>
+        <td><div class="t1">$1,002.02</div><div class="t2">T2: $1,046.41</div></td>
+        <td><div class="sl1">$918.39</div><div class="sl2">-7.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">60</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.2×</td>
+        <td style="color:var(--muted);font-size:11px">-7.1%</td>
+        <td style="color:var(--gold);font-size:11px">1.01</td>
+        <td style="color:var(--red);font-size:11px">53.0</td>
+        <td style="color:var(--green)">52.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">17</td>
+        <td><div class="sn">AbbVie</div><div class="ss">ABBV</div></td>
+        <td><div class="pv">$223.72</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">61</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+3.9%</td>
+        <td><div class="t1">$232.39</div><div class="t2">T2: $244.01</div></td>
+        <td><div class="sl1">$212.53</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--blue)">54</div><div class="rsb">Neutral</div></td>
+        <td class="rrv" style="color:var(--red)">0.8×</td>
+        <td style="color:var(--muted);font-size:11px">-7.2%</td>
+        <td style="color:var(--green);font-size:11px">0.33</td>
+        <td style="color:var(--red);font-size:11px">94.8</td>
+        <td style="color:var(--green)">291.00%</td>
+        <td><span class="qb qb-po">Poor</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">18</td>
+        <td><div class="sn">Linde plc</div><div class="ss">LIN</div></td>
+        <td><div class="pv">$489.35</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">60</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-3.0%</td>
+        <td><div class="t1">$474.68</div><div class="t2">T2: $498.41</div></td>
+        <td><div class="sl1">$455.10</div><div class="sl2">-7.0%</div></td>
+        <td><div class="rv" style="color:var(--red)">70</div><div class="rsb">Overbought</div></td>
+        <td class="rrv" style="color:var(--red)">0.4×</td>
+        <td style="color:var(--red);font-size:11px">-0.0%</td>
+        <td style="color:var(--green);font-size:11px">0.85</td>
+        <td style="color:var(--gold);font-size:11px">33.5</td>
+        <td style="color:var(--green)">124.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">19</td>
+        <td><div class="sn">Verizon</div><div class="ss">VZ</div></td>
+        <td><div class="pv">$48.55</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">60</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="dn">-1.3%</td>
+        <td><div class="t1">$47.91</div><div class="t2">T2: $49.34</div></td>
+        <td><div class="sl1">$46.12</div><div class="sl2">-5.0%</div></td>
+        <td><div class="rv" style="color:var(--red)">83</div><div class="rsb">Overbought</div></td>
+        <td class="rrv" style="color:var(--red)">0.3×</td>
+        <td style="color:var(--red);font-size:11px">-3.4%</td>
+        <td style="color:var(--green);font-size:11px">0.32</td>
+        <td style="color:var(--green);font-size:11px">12.0</td>
+        <td style="color:var(--green)">589.00%</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">20</td>
+        <td><div class="sn">Advanced Micro Devices</div><div class="ss">AMD</div></td>
+        <td><div class="pv">$202.18</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td><div class="scn" style="color:var(--teal)">58</div><div class="scb" style="background:var(--teal)"></div></td>
+        <td class="up">+25.2%</td>
+        <td><div class="t1">$253.16</div><div class="t2">T2: $265.82</div></td>
+        <td><div class="sl1">$191.50</div><div class="sl2">-5.3%</div></td>
+        <td><div class="rv" style="color:var(--green)">30</div><div class="rsb">Oversold</div></td>
+        <td class="rrv" style="color:var(--green)">4.8×</td>
+        <td style="color:var(--green);font-size:11px">-24.3%</td>
+        <td style="color:var(--red);font-size:11px">1.95</td>
+        <td style="color:var(--red);font-size:11px">77.8</td>
+        <td style="color:var(--muted)">—</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+    </tbody>
+  </table></div>
   <!-- SELL TABLE -->
-  <div class="sec-header">
-    <div class="sec-left">
-      <div class="sec-indicator" style="background:var(--red)"></div>
-      <span class="sec-title">▼ Top 20 Sell Recommendations</span>
-    </div>
-    <span class="sec-count">Sorted by Combined Score</span>
+  <div class="sh">
+    <div class="sh-icon shi-sell">▼</div>
+    <span class="sh-title">Top 20 Sell Recommendations</span>
+    <div class="sh-divider"></div>
+    <span class="sh-count">Sorted by Combined Score</span>
   </div>
-  <div class="sec-divider"></div>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-          <th>RSI</th><th>MACD</th><th>Downside</th><th>Target</th><th>Stop Loss</th>
-          <th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">01</td>
-          <td><div class="stk-name">UnitedHealth Group</div><div class="stk-sym">UNH</div></td>
-          <td><div class="price-val">$289.63</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">32</div><div class="score-track"><div class="score-fill" style="width:32%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">48</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
-          <td><span class="dn-pct">+4.8%</span></td>
-          <td><div class="tgt">$275.63</div><div class="tgt2">T2: $261.85</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$304.11</div><div class="sl2">+5.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">1.0×</span></td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.41</td>
-          <td><span class="pe-val" style="color:var(--green)">21.9</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">02</td>
-          <td><div class="stk-name">Mastercard</div><div class="stk-sym">MA</div></td>
-          <td><div class="price-val">$518.22</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">34</div><div class="score-track"><div class="score-fill" style="width:34%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">36</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="up-pct">-0.3%</span></td>
-          <td><div class="tgt">$520.05</div><div class="tgt2">T2: $494.05</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$554.49</div><div class="sl2">+7.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.82</td>
-          <td><span class="pe-val" style="color:var(--gold)">31.4</span></td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">03</td>
-          <td><div class="stk-name">Visa Inc.</div><div class="stk-sym">V</div></td>
-          <td><div class="price-val">$318.43</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">35</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">40</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="up-pct">-1.2%</span></td>
-          <td><div class="tgt">$322.20</div><div class="tgt2">T2: $306.09</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$334.35</div><div class="sl2">+5.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.78</td>
-          <td><span class="pe-val" style="color:var(--gold)">29.8</span></td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">04</td>
-          <td><div class="stk-name">Oracle Corporation</div><div class="stk-sym">ORCL</div></td>
-          <td><div class="price-val">$156.04</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">36</div><div class="score-track"><div class="score-fill" style="width:36%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">41</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
-          <td><span class="dn-pct">+2.3%</span></td>
-          <td><div class="tgt">$152.44</div><div class="tgt2">T2: $144.82</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$171.65</div><div class="sl2">+10.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.63</td>
-          <td><span class="pe-val" style="color:var(--gold)">29.3</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">05</td>
-          <td><div class="stk-name">Netflix</div><div class="stk-sym">NFLX</div></td>
-          <td><div class="price-val">$76.70</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">37</div><div class="score-track"><div class="score-fill" style="width:37%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">31</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="up-pct">-3.6%</span></td>
-          <td><div class="tgt">$79.43</div><div class="tgt2">T2: $75.46</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$84.37</div><div class="sl2">+10.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.71</td>
-          <td><span class="pe-val" style="color:var(--gold)">30.3</span></td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">06</td>
-          <td><div class="stk-name">Palantir Technologies</div><div class="stk-sym">PLTR</div></td>
-          <td><div class="price-val">$133.98</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">39</div><div class="score-track"><div class="score-fill" style="width:39%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">39</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="dn-pct">+0.8%</span></td>
-          <td><div class="tgt">$132.89</div><div class="tgt2">T2: $126.25</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$147.38</div><div class="sl2">+10.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.69</td>
-          <td><span class="pe-val" style="color:var(--red)">209.3</span></td>
-          <td><span class="qbadge qb-gd">Good</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">07</td>
-          <td><div class="stk-name">Amazon</div><div class="stk-sym">AMZN</div></td>
-          <td><div class="price-val">$204.36</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">41</div><div class="score-track"><div class="score-fill" style="width:41%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--green)">17</div><div class="rsi-lbl">Oversold</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="dn-pct">+0.8%</span></td>
-          <td><div class="tgt">$202.78</div><div class="tgt2">T2: $192.64</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$224.80</div><div class="sl2">+10.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.39</td>
-          <td><span class="pe-val" style="color:var(--gold)">28.5</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">08</td>
-          <td><div class="stk-name">IBM</div><div class="stk-sym">IBM</div></td>
-          <td><div class="price-val">$256.30</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">41</div><div class="score-track"><div class="score-fill" style="width:41%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--green)">24</div><div class="rsi-lbl">Oversold</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="up-pct">-8.0%</span></td>
-          <td><div class="tgt">$276.88</div><div class="tgt2">T2: $263.03</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$269.12</div><div class="sl2">+5.0%</div></td>
-          <td><span class="rr" style="color:var(--gold)">1.6×</span></td>
-          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.69</td>
-          <td><span class="pe-val" style="color:var(--green)">23.0</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">09</td>
-          <td><div class="stk-name">Intel</div><div class="stk-sym">INTC</div></td>
-          <td><div class="price-val">$44.25</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">42</div><div class="score-track"><div class="score-fill" style="width:42%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">37</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="dn-pct">+19.0%</span></td>
-          <td><div class="tgt">$35.85</div><div class="tgt2">T2: $34.05</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$48.67</div><div class="sl2">+10.0%</div></td>
-          <td><span class="rr" style="color:var(--gold)">1.9×</span></td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.38</td>
-          <td><span class="pe-val" style="color:var(--red)">44.6</span></td>
-          <td><span class="qbadge qb-po">Poor</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">10</td>
-          <td><div class="stk-name">Tesla</div><div class="stk-sym">TSLA</div></td>
-          <td><div class="price-val">$411.16</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">43</div><div class="score-track"><div class="score-fill" style="width:43%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">47</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
-          <td><span class="dn-pct">+1.8%</span></td>
-          <td><div class="tgt">$403.81</div><div class="tgt2">T2: $383.62</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$460.50</div><div class="sl2">+12.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
-          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.89</td>
-          <td><span class="pe-val" style="color:var(--red)">384.3</span></td>
-          <td><span class="qbadge qb-po">Poor</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">11</td>
-          <td><div class="stk-name">JPMorgan Chase</div><div class="stk-sym">JPM</div></td>
-          <td><div class="price-val">$306.98</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">43</div><div class="score-track"><div class="score-fill" style="width:43%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">50</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="dn-pct">+3.1%</span></td>
-          <td><div class="tgt">$297.42</div><div class="tgt2">T2: $282.55</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$328.47</div><div class="sl2">+7.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.5×</span></td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.05</td>
-          <td><span class="pe-val" style="color:var(--green)">15.3</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-        <tr>
-          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">12</td>
-          <td><div class="stk-name">Wells Fargo</div><div class="stk-sym">WFC</div></td>
-          <td><div class="price-val">$87.55</div></td>
-          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
-          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">44</div><div class="score-track"><div class="score-fill" style="width:44%;background:var(--red2)"></div></div></div></td>
-          <td><div class="rsi-num" style="color:var(--gold)">43</div><div class="rsi-lbl">Neutral</div></td>
-          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
-          <td><span class="dn-pct">+3.0%</span></td>
-          <td><div class="tgt">$84.89</div><div class="tgt2">T2: $80.65</div></td>
-          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$93.68</div><div class="sl2">+7.0%</div></td>
-          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
-          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.06</td>
-          <td><span class="pe-val" style="color:var(--green)">14.0</span></td>
-          <td><span class="qbadge qb-av">Average</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+      <th>RSI</th><th>MACD</th><th>Downside</th><th>Target</th><th>Stop Loss</th>
+      <th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--muted)">1</td>
+        <td><div class="sn">UnitedHealth Group</div><div class="ss">UNH</div></td>
+        <td><div class="pv">$289.36</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">32</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">48</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--green);font-weight:600">Bullish</td>
+        <td class="dn">+4.7%</td>
+        <td><div class="t1">$275.63</div><div class="t2">T2: $261.85</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$303.82</div><div class="sl2">+5.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.9×</td>
+        <td style="color:var(--green);font-size:11px">0.41</td>
+        <td style="color:var(--green);font-size:11px">21.9</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">2</td>
+        <td><div class="sn">Mastercard</div><div class="ss">MA</div></td>
+        <td><div class="pv">$519.47</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">34</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">37</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="up">-0.1%</td>
+        <td><div class="t1">$520.05</div><div class="t2">T2: $494.05</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$555.84</div><div class="sl2">+7.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.0×</td>
+        <td style="color:var(--green);font-size:11px">0.82</td>
+        <td style="color:var(--gold);font-size:11px">31.4</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">3</td>
+        <td><div class="sn">Visa Inc.</div><div class="ss">V</div></td>
+        <td><div class="pv">$318.62</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">35</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">40</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="up">-1.1%</td>
+        <td><div class="t1">$322.20</div><div class="t2">T2: $306.09</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$334.55</div><div class="sl2">+5.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.2×</td>
+        <td style="color:var(--green);font-size:11px">0.78</td>
+        <td style="color:var(--gold);font-size:11px">29.9</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">4</td>
+        <td><div class="sn">Oracle Corporation</div><div class="ss">ORCL</div></td>
+        <td><div class="pv">$155.91</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">36</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">41</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--green);font-weight:600">Bullish</td>
+        <td class="dn">+2.2%</td>
+        <td><div class="t1">$152.44</div><div class="t2">T2: $144.82</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$171.51</div><div class="sl2">+10.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.2×</td>
+        <td style="color:var(--red);font-size:11px">1.63</td>
+        <td style="color:var(--gold);font-size:11px">29.2</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">5</td>
+        <td><div class="sn">Netflix</div><div class="ss">NFLX</div></td>
+        <td><div class="pv">$76.81</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">37</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">32</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="up">-3.4%</td>
+        <td><div class="t1">$79.43</div><div class="t2">T2: $75.46</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$84.49</div><div class="sl2">+10.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.3×</td>
+        <td style="color:var(--red);font-size:11px">1.71</td>
+        <td style="color:var(--gold);font-size:11px">30.4</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">6</td>
+        <td><div class="sn">Palantir Technologies</div><div class="ss">PLTR</div></td>
+        <td><div class="pv">$134.64</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">39</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">39</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="dn">+1.3%</td>
+        <td><div class="t1">$132.89</div><div class="t2">T2: $126.25</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$148.10</div><div class="sl2">+10.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--red);font-size:11px">1.69</td>
+        <td style="color:var(--red);font-size:11px">210.4</td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">7</td>
+        <td><div class="sn">Amazon</div><div class="ss">AMZN</div></td>
+        <td><div class="pv">$204.24</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">41</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--green)">17</div><div class="rsb">Oversold</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="dn">+0.7%</td>
+        <td><div class="t1">$202.78</div><div class="t2">T2: $192.64</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$224.66</div><div class="sl2">+10.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--gold);font-size:11px">1.39</td>
+        <td style="color:var(--gold);font-size:11px">28.5</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">8</td>
+        <td><div class="sn">IBM</div><div class="ss">IBM</div></td>
+        <td><div class="pv">$256.41</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">41</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--green)">24</div><div class="rsb">Oversold</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="up">-8.0%</td>
+        <td><div class="t1">$276.88</div><div class="t2">T2: $263.03</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$269.23</div><div class="sl2">+5.0%</div></td>
+        <td class="rrv" style="color:var(--gold)">1.6×</td>
+        <td style="color:var(--green);font-size:11px">0.69</td>
+        <td style="color:var(--green);font-size:11px">23.0</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">9</td>
+        <td><div class="sn">Intel</div><div class="ss">INTC</div></td>
+        <td><div class="pv">$44.40</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">42</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">38</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="dn">+19.2%</td>
+        <td><div class="t1">$35.85</div><div class="t2">T2: $34.05</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$48.83</div><div class="sl2">+10.0%</div></td>
+        <td class="rrv" style="color:var(--gold)">1.9×</td>
+        <td style="color:var(--gold);font-size:11px">1.38</td>
+        <td style="color:var(--red);font-size:11px">44.8</td>
+        <td><span class="qb qb-po">Poor</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">10</td>
+        <td><div class="sn">Tesla</div><div class="ss">TSLA</div></td>
+        <td><div class="pv">$410.40</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">43</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">47</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--green);font-weight:600">Bullish</td>
+        <td class="dn">+1.6%</td>
+        <td><div class="t1">$403.81</div><div class="t2">T2: $383.62</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$459.65</div><div class="sl2">+12.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.1×</td>
+        <td style="color:var(--red);font-size:11px">1.89</td>
+        <td style="color:var(--red);font-size:11px">383.6</td>
+        <td><span class="qb qb-po">Poor</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">11</td>
+        <td><div class="sn">JPMorgan Chase</div><div class="ss">JPM</div></td>
+        <td><div class="pv">$307.43</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">43</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">51</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="dn">+3.3%</td>
+        <td><div class="t1">$297.42</div><div class="t2">T2: $282.55</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$328.95</div><div class="sl2">+7.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.5×</td>
+        <td style="color:var(--gold);font-size:11px">1.05</td>
+        <td style="color:var(--green);font-size:11px">15.4</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">12</td>
+        <td><div class="sn">Wells Fargo</div><div class="ss">WFC</div></td>
+        <td><div class="pv">$87.62</div></td>
+        <td><span class="rt rt-s">⭐⭐ SELL</span></td>
+        <td><div class="scn" style="color:var(--red)">44</div><div class="scb" style="background:var(--red)"></div></td>
+        <td><div class="rv" style="color:var(--gold)">43</div><div class="rsb">Neutral</div></td>
+        <td style="color:var(--red);font-weight:600">Bearish</td>
+        <td class="dn">+3.1%</td>
+        <td><div class="t1">$84.89</div><div class="t2">T2: $80.65</div></td>
+        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">$93.75</div><div class="sl2">+7.0%</div></td>
+        <td class="rrv" style="color:var(--red)">0.5×</td>
+        <td style="color:var(--gold);font-size:11px">1.06</td>
+        <td style="color:var(--green);font-size:11px">14.0</td>
+        <td><span class="qb qb-av">Average</span></td>
+      </tr>
+    </tbody>
+  </table></div>
   <div class="disc">
-    <strong>⚠ DISCLAIMER:</strong> This analysis is for <strong>EDUCATIONAL PURPOSES ONLY</strong>. This is NOT financial advice. Always do your own research, consult a registered financial advisor, use proper risk management, and never invest more than you can afford to lose.
+    <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
+    Conduct your own research, consult a registered financial advisor, use stop-losses,
+    and never invest more than you can afford to lose.
   </div>
 </div>
 
 <footer>
-  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong> &nbsp;·&nbsp; Automated Analysis System &nbsp;·&nbsp; Next Update: <strong>9:30 AM (Next Day) EST</strong> &nbsp;·&nbsp; 19 Feb 2026
+  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
+  · Automated Technical &amp; Fundamental Analysis
+  · Next Update: <strong>9:30 AM (Next Day) EST</strong>
+  · 19 Feb 2026
 </footer>
 
 </body>
