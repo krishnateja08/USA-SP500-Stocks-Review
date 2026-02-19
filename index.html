@@ -1,673 +1,877 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top US Market Influencers: NASDAQ &amp; S&amp;P 500 — Evening Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=Barlow:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1621;--bg2:#121d2e;--card:#162030;--card2:#1a2840;
+    --accent:#3d8eff;--accent2:#5ba3ff;
+    --green:#00c875;--green2:#33d68e;
+    --red:#ff4757;--red2:#ff6b78;
+    --gold:#ffb347;--gold2:#ffc87a;
+    --purple:#9b59f5;
+    --text:#c8d8eb;--text2:#e8f0f8;--muted:#4a6080;
+    --border:#1e3050;--border2:#243a58;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;font-size:14px;
+    background-image:radial-gradient(ellipse at 70% -10%,rgba(61,142,255,0.06) 0%,transparent 50%);
+  }
+
+  /* ===== HEADER ===== */
+  header{
+    background:linear-gradient(180deg,#0c1520 0%,var(--bg2) 100%);
+    border-bottom:1px solid var(--border2);
+    padding:0;
+  }
+  .hdr-main{
+    max-width:1400px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;
+    gap:20px;
+  }
+  .hdr-brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-logo{display:flex;align-items:center;gap:10px;}
+  .brand-square{
+    width:32px;height:32px;
+    background:var(--accent);
+    clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:14px;color:#fff;
+  }
+  .brand-name{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(16px,2.5vw,22px);font-weight:700;letter-spacing:1px;
+    color:var(--text2);text-transform:uppercase;
+  }
+  .brand-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+
+  .hdr-kpis{display:flex;gap:0;}
+  .kpi-block{
+    padding:10px 20px;border-left:1px solid var(--border);
+    display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+  }
+  .kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
+
+  .hdr-ticker{
+    background:var(--bg);border-top:1px solid var(--border);
+    overflow:hidden;display:flex;
+  }
+  .hdr-ticker-inner{
+    max-width:1400px;margin:0 auto;
+    display:flex;padding:0 28px;
+  }
+  .tick{
+    display:flex;gap:8px;align-items:center;
+    padding:7px 14px;border-right:1px solid var(--border);
+    font-family:'Roboto Mono',monospace;font-size:11px;white-space:nowrap;
+  }
+  .tick-sym{color:var(--accent2);font-weight:600;}
+  .tick-price{color:var(--text);}
+  .tick-up{color:var(--green);}
+  .tick-dn{color:var(--red);}
+
+  /* ===== STATS BAND ===== */
+  .stats-band{background:var(--card);border-bottom:1px solid var(--border2);}
+  .stats-inner{
+    max-width:1400px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(5,1fr);
+    padding:0 28px;
+  }
+  .stat-c{
+    padding:16px 20px;border-right:1px solid var(--border);
+    text-align:center;transition:0.2s;
+  }
+  .stat-c:hover{background:rgba(61,142,255,0.05);}
+  .stat-c:last-child{border-right:none;}
+  .stat-num{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:32px;font-weight:700;line-height:1;
+  }
+  .stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+  .stat-bar{height:2px;border-radius:1px;margin:6px auto 0;max-width:60px;}
+
+  /* ===== CONTENT ===== */
+  .content{max-width:1400px;margin:0 auto;padding:24px 28px;}
+
+  .sec-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .sec-left{display:flex;align-items:center;gap:10px;}
+  .sec-indicator{width:4px;height:28px;border-radius:2px;}
+  .sec-title{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    color:var(--text2);
+  }
+  .sec-count{
+    font-size:10px;letter-spacing:2px;color:var(--muted);
+    border:1px solid var(--border2);padding:3px 10px;border-radius:2px;
+  }
+  .sec-divider{width:100%;height:1px;background:var(--border);margin-bottom:14px;}
+
+  /* Table */
+  .tbl-wrap{overflow-x:auto;border-radius:4px;border:1px solid var(--border2);}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:var(--card2);}
+  th{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--muted);padding:11px 12px;
+    border-bottom:1px solid var(--border2);
+    text-align:left;white-space:nowrap;
+  }
+  tbody td{
+    padding:11px 12px;border-bottom:1px solid var(--border);
+    vertical-align:middle;white-space:nowrap;
+  }
+  tbody tr:nth-child(even) td{background:rgba(22,32,48,0.5);}
+  tbody tr:hover td{background:rgba(61,142,255,0.06);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .stk-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--text2);}
+  .stk-sym{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+  .price-val{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}
+
+  .rtag{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    padding:4px 10px;border-radius:3px;white-space:nowrap;
+    display:inline-block;
+  }
+  .rtag-sb{background:rgba(0,200,117,0.12);color:var(--green2);border:1px solid rgba(0,200,117,0.25);}
+  .rtag-b{background:rgba(61,142,255,0.12);color:var(--accent2);border:1px solid rgba(61,142,255,0.25);}
+  .rtag-h{background:rgba(155,89,245,0.12);color:var(--purple);border:1px solid rgba(155,89,245,0.25);}
+  .rtag-s{background:rgba(255,71,87,0.12);color:var(--red2);border:1px solid rgba(255,71,87,0.25);}
+  .rtag-ss{background:rgba(255,71,87,0.2);color:var(--red);border:1px solid rgba(255,71,87,0.4);}
+
+  .score-box{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}
+  .score-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}
+  .score-track{width:36px;height:3px;background:var(--border);border-radius:2px;}
+  .score-fill{height:100%;border-radius:2px;}
+
+  .up-pct{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--green);}
+  .dn-pct{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--red);}
+
+  .tgt{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text);}
+  .tgt2{font-size:10px;color:var(--muted);}
+
+  .sl{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--red2);}
+  .sl2{font-size:10px;color:var(--muted);}
+
+  .rsi-num{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:600;}
+  .rsi-lbl{font-size:9px;color:var(--muted);}
+
+  .rr{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;}
+
+  .pe-val{font-family:'Roboto Mono',monospace;font-size:13px;}
+
+  .qbadge{
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    padding:3px 8px;border-radius:3px;
+  }
+  .qb-ex{background:rgba(0,200,117,0.1);color:var(--green2);}
+  .qb-gd{background:rgba(61,142,255,0.1);color:var(--accent2);}
+  .qb-av{background:rgba(255,179,71,0.1);color:var(--gold2);}
+  .qb-po{background:rgba(255,71,87,0.1);color:var(--red2);}
+
+  .spacer{height:28px;}
+
+  .disc{
+    background:var(--card);border:1px solid var(--border2);
+    border-left:3px solid var(--gold);
+    padding:16px 20px;margin-top:28px;
+    font-size:12px;color:var(--muted);line-height:1.7;
+  }
+  .disc strong{color:var(--red2);}
+
+  footer{
+    background:var(--bg2);border-top:1px solid var(--border2);
+    padding:16px 28px;text-align:center;
+    font-size:11px;color:var(--muted);letter-spacing:1px;
+    font-family:'Barlow Condensed',sans-serif;
+  }
+  footer strong{color:var(--accent2);}
+
+  @media(max-width:1100px){
+    .stats-inner{grid-template-columns:repeat(3,1fr);}
+    .hdr-kpis .kpi-block:nth-child(n+3){display:none;}
+  }
+  @media(max-width:700px){
+    .hdr-main{padding:12px 16px;flex-wrap:wrap;}
+    .stats-inner{grid-template-columns:repeat(2,1fr);padding:0 16px;}
+    .content{padding:16px;}
+    table{min-width:700px;}
+  }
+</style>
 </head>
-<body bgcolor="#1a0a00" style="margin:0; padding:0; font-family: Arial, sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a0a00">
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="hdr-main">
+    <div class="hdr-brand">
+      <div class="brand-logo">
+        <div class="brand-square">US</div>
+        <div class="brand-name">Market Intelligence · NASDAQ &amp; S&amp;P 500</div>
+      </div>
+      <div class="brand-sub">Technical &amp; Fundamental Analysis Report</div>
+    </div>
+    <div class="hdr-kpis">
+      <div class="kpi-block">
+        <span class="kpi-label">Session</span>
+        <span class="kpi-val" style="color:var(--green)">EVENING ▲</span>
+      </div>
+      <div class="kpi-block">
+        <span class="kpi-label">Updated</span>
+        <span class="kpi-val" style="color:var(--accent2)">03:21 PM EST</span>
+      </div>
+      <div class="kpi-block">
+        <span class="kpi-label">19 Feb 2026</span>
+        <span class="kpi-val" style="color:var(--gold)">Evening</span>
+      </div>
+    </div>
+  </div>
+  <div class="hdr-ticker">
+    <div class="hdr-ticker-inner">
+      <div class="tick"><span class="tick-sym">NVDA</span><span class="tick-price">$186.96</span><span class="tick-up">+0.6%</span></div>
+      <div class="tick"><span class="tick-sym">AAPL</span><span class="tick-price">$260.98</span><span class="tick-dn">-1.2%</span></div>
+      <div class="tick"><span class="tick-sym">MSFT</span><span class="tick-price">$397.20</span><span class="tick-dn">-6.4%</span></div>
+      <div class="tick"><span class="tick-sym">AMZN</span><span class="tick-price">$204.36</span><span class="tick-dn">-8.3%</span></div>
+      <div class="tick"><span class="tick-sym">GOOGL</span><span class="tick-price">$302.85</span><span class="tick-dn">-6.6%</span></div>
+      <div class="tick"><span class="tick-sym">GOOG</span><span class="tick-price">$303.36</span><span class="tick-dn">-6.6%</span></div>
+      <div class="tick"><span class="tick-sym">META</span><span class="tick-price">$642.42</span><span class="tick-dn">-4.2%</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== STATS BAND ===== -->
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat-c">
+      <div class="stat-num" style="color:var(--accent2)">50</div>
+      <div class="stat-lbl">Stocks Analyzed</div>
+      <div class="stat-bar" style="background:var(--accent)"></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-num" style="color:var(--green)">3</div>
+      <div class="stat-lbl">Strong Buy</div>
+      <div class="stat-bar" style="background:var(--green)"></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-num" style="color:var(--green2)">23</div>
+      <div class="stat-lbl">Buy</div>
+      <div class="stat-bar" style="background:var(--green2)"></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-num" style="color:var(--red)">12</div>
+      <div class="stat-lbl">Sell / Strong Sell</div>
+      <div class="stat-bar" style="background:var(--red)"></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-num" style="color:var(--purple)">12</div>
+      <div class="stat-lbl">Hold</div>
+      <div class="stat-bar" style="background:var(--purple)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="content">
+  <!-- BUY TABLE -->
+  <div class="sec-header">
+    <div class="sec-left">
+      <div class="sec-indicator" style="background:var(--green)"></div>
+      <span class="sec-title">▲ Top 20 Buy Recommendations</span>
+    </div>
+    <span class="sec-count">Sorted by Combined Score</span>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
         <tr>
-            <td align="center" style="padding: 20px;">
-                <table width="1200" cellpadding="0" cellspacing="0" border="0" style="max-width:1200px; width:100%;">
-                    <!-- Header -->
-                    <tr>
-                        <td align="center" style="background: linear-gradient(135deg, #7b2d00 0%, #c0392b 55%, #e67e22 100%); border-radius: 12px 12px 0 0; padding: 0;">
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td align="center" style="padding: 12px 30px 4px;">
-                                        <p style="color: #ffd5b0; margin: 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9;">📅 Morning Update &nbsp;|&nbsp; 19 Feb 2026, 10:57 AM EST</p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td align="center" style="padding: 8px 30px 6px;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.3;">🌅 Top US Market Influencers: NASDAQ &amp; S&amp;P 500</h1>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td align="center" style="padding: 4px 30px 18px;">
-                                        <p style="color: #ffd5b0; margin: 0; font-size: 13px; opacity: 0.85;">Technical &amp; Fundamental Analysis Report</p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Content -->
-                    <tr>
-                        <td bgcolor="#1f0d00" style="padding: 28px 30px;">
-                            
-                            <!-- Summary Box -->
-                            <table width="100%" cellpadding="15" cellspacing="0" border="0" style="border-radius: 10px; margin-bottom: 30px; background: linear-gradient(135deg, #7b2d00, #c0392b); border: 1px solid #e67e2266;">
-                                <tr>
-                                    <td>
-                                        <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 18px; letter-spacing: 0.5px;">📈 Market Summary</h2>
-                                        <table width="100%" cellpadding="10" cellspacing="10" border="0">
-                                            <tr>
-                                                <td width="25%" bgcolor="#e67e22" align="center" style="border-radius: 8px;">
-                                                    <strong style="color: #ffffff; font-size: 30px; display: block;">50</strong>
-                                                    <span style="color: #fff3e0; font-size: 12px; font-weight: 600;">STOCKS ANALYZED</span>
-                                                </td>
-                                                <td width="25%" bgcolor="#1e8449" align="center" style="border-radius: 8px;">
-                                                    <strong style="color: #ffffff; font-size: 30px; display: block;">3</strong>
-                                                    <span style="color: #d5f5e3; font-size: 12px; font-weight: 600;">STRONG BUY</span>
-                                                </td>
-                                                <td width="25%" bgcolor="#2471a3" align="center" style="border-radius: 8px;">
-                                                    <strong style="color: #ffffff; font-size: 30px; display: block;">24</strong>
-                                                    <span style="color: #d6eaf8; font-size: 12px; font-weight: 600;">BUY</span>
-                                                </td>
-                                                <td width="25%" bgcolor="#6c3483" align="center" style="border-radius: 8px;">
-                                                    <strong style="color: #ffffff; font-size: 30px; display: block;">11</strong>
-                                                    <span style="color: #e8daef; font-size: 12px; font-weight: 600;">HOLD</span>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- BUY Section -->
-                            <h2 style="color: #e67e22; border-bottom: 3px solid #e67e22; padding-bottom: 10px; margin-top: 40px; font-size: 18px; letter-spacing: 0.5px;">🟢 TOP 20 BUY RECOMMENDATIONS</h2>
-                            <table width="100%" cellpadding="12" cellspacing="0" border="1" bordercolor="#3d1500" style="border-collapse: collapse; margin: 20px 0;">
-                                <tr style="background: linear-gradient(90deg, #1e8449, #145a32);">
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOCK</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">PRICE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RATING</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">SCORE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">UPSIDE %</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">TARGET</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOP LOSS</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RSI</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">R:R</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">52W HIGH %</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">BETA</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">P/E</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">DIV %</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">QUALITY</th>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">NVIDIA<br><span style="color:#8a6040; font-size:11px; font-weight:400;">NVDA</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$187.73</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐⭐ STRONG BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">81</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+2.8%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$192.96</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$168.39<br><span style="font-size:11px; color:#8a6040;">-10.3%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">46<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.3x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-11.5%<br><span style="font-size:10px; color:#8a6040;">$212 hi</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">2.31</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">46.5</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">2.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Berkshire Hathaway<br><span style="color:#8a6040; font-size:11px; font-weight:400;">BRK-B</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$499.47</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐⭐ STRONG BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">80</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+2.0%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$509.61</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$474.50<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">70<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-7.9%<br><span style="font-size:10px; color:#8a6040;">$542 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.70</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">16.0</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">—</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Applied Materials<br><span style="color:#8a6040; font-size:11px; font-weight:400;">AMAT</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$365.65</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐⭐ STRONG BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">76</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-5.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$344.07</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$329.08<br><span style="font-size:11px; color:#8a6040;">-10.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">58<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.6x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-2.8%<br><span style="font-size:10px; color:#8a6040;">$376 hi</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.68</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">37.5</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">50.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Micron Technology<br><span style="color:#8a6040; font-size:11px; font-weight:400;">MU</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$417.46</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">72</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+2.8%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$428.94</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$375.71<br><span style="font-size:11px; color:#8a6040;">-10.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">46<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.3x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-8.4%<br><span style="font-size:10px; color:#8a6040;">$456 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.50</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">39.7</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">11.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Lam Research<br><span style="color:#8a6040; font-size:11px; font-weight:400;">LRCX</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$234.06</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">72</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+3.7%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$242.80</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$210.65<br><span style="font-size:11px; color:#8a6040;">-10.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">43<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-7.1%<br><span style="font-size:10px; color:#8a6040;">$252 hi</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.78</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">48.1</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">43.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Johnson & Johnson<br><span style="color:#8a6040; font-size:11px; font-weight:400;">JNJ</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$245.64</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">70</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-1.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$240.97</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$233.36<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">88<br><span style="font-size:10px; color:#8a6040;">Overbought</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-0.3%<br><span style="font-size:10px; color:#8a6040;">$246 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.35</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">22.3</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">212.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Caterpillar Inc.<br><span style="color:#8a6040; font-size:11px; font-weight:400;">CAT</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$759.20</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">68</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-0.8%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$752.90</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$683.28<br><span style="font-size:11px; color:#8a6040;">-10.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">70<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-3.9%<br><span style="font-size:10px; color:#8a6040;">$790 hi</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.55</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">40.4</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">80.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Linde plc<br><span style="color:#8a6040; font-size:11px; font-weight:400;">LIN</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$487.20</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">68</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-2.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$474.68</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$453.10<br><span style="font-size:11px; color:#8a6040;">-7.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">70<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-0.3%<br><span style="font-size:10px; color:#8a6040;">$489 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.85</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">33.4</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">124.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Broadcom<br><span style="color:#8a6040; font-size:11px; font-weight:400;">AVGO</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$336.74</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">68</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+17.3%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$395.11</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$307.95<br><span style="font-size:11px; color:#8a6040;">-8.6%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">53<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">2.0x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-18.6%<br><span style="font-size:10px; color:#8a6040;">$414 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.22</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">70.6</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">78.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">RTX Corporation<br><span style="color:#8a6040; font-size:11px; font-weight:400;">RTX</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$205.33</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">67</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-0.7%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$203.82</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$195.06<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">59<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-0.7%<br><span style="font-size:10px; color:#8a6040;">$207 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.42</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">41.4</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">133.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Alphabet (Class A)<br><span style="color:#8a6040; font-size:11px; font-weight:400;">GOOGL</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$302.99</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">67</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+11.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$338.12</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$292.19<br><span style="font-size:11px; color:#8a6040;">-3.6%</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">16<br><span style="font-size:10px; color:#8a6040;">Oversold</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">3.2x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-13.2%<br><span style="font-size:10px; color:#8a6040;">$349 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.09</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">28.1</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">28.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Alphabet (Class C)<br><span style="color:#8a6040; font-size:11px; font-weight:400;">GOOG</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$303.58</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">67</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+11.5%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$338.42</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$293.23<br><span style="font-size:11px; color:#8a6040;">-3.4%</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">17<br><span style="font-size:10px; color:#8a6040;">Oversold</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">3.4x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-13.3%<br><span style="font-size:10px; color:#8a6040;">$350 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.09</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">28.1</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">28.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">GE Aerospace<br><span style="color:#8a6040; font-size:11px; font-weight:400;">GE</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$334.31</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">64</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-1.4%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$329.50</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$300.88<br><span style="font-size:11px; color:#8a6040;">-10.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">80<br><span style="font-size:10px; color:#8a6040;">Overbought</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-0.3%<br><span style="font-size:10px; color:#8a6040;">$335 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.38</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">41.6</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">57.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">ExxonMobil<br><span style="color:#8a6040; font-size:11px; font-weight:400;">XOM</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$152.00</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">62</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-0.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$150.57</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$144.40<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">66<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.2x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-2.5%<br><span style="font-size:10px; color:#8a6040;">$156 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.36</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">22.6</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">273.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">GE Vernova<br><span style="color:#8a6040; font-size:11px; font-weight:400;">GEV</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$831.83</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">62</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-1.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$815.68</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$773.60<br><span style="font-size:11px; color:#8a6040;">-7.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">71<br><span style="font-size:10px; color:#8a6040;">Overbought</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.3x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-1.7%<br><span style="font-size:10px; color:#8a6040;">$846 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.00</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">47.1</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">18.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Costco<br><span style="color:#8a6040; font-size:11px; font-weight:400;">COST</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$1,000.41</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">61</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+0.2%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$1,002.02</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$930.39<br><span style="font-size:11px; color:#8a6040;">-7.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">64<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.0x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-5.9%<br><span style="font-size:10px; color:#8a6040;">$1,063 hi</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.01</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">53.7</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">52.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">AbbVie<br><span style="color:#8a6040; font-size:11px; font-weight:400;">ABBV</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$224.30</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">61</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+3.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$232.39</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$213.09<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">54<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.7x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-7.0%<br><span style="font-size:10px; color:#8a6040;">$241 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.33</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">95.0</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">291.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #922b21; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Poor</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">McDonald's<br><span style="color:#8a6040; font-size:11px; font-weight:400;">MCD</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$330.78</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">60</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-0.8%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$328.01</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$314.24<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">72<br><span style="font-size:10px; color:#8a6040;">Overbought</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.2x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-1.5%<br><span style="font-size:10px; color:#8a6040;">$336 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.53</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">27.7</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">227.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">PepsiCo<br><span style="color:#8a6040; font-size:11px; font-weight:400;">PEP</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$163.93</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">60</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+2.4%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$167.89</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$155.73<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">70<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.5x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-4.4%<br><span style="font-size:10px; color:#8a6040;">$171 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.42</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">27.3</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">346.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Verizon<br><span style="color:#8a6040; font-size:11px; font-weight:400;">VZ</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$48.90</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐⭐⭐ BUY</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">60</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-2.0%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$47.91</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$46.46<br><span style="font-size:11px; color:#8a6040;">-5.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">84<br><span style="font-size:10px; color:#8a6040;">Overbought</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">-2.7%<br><span style="font-size:10px; color:#8a6040;">$50 hi</span></td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.32</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">12.0</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">589.00%</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                            </table>
-
-                            <!-- SELL Section -->
-                            <h2 style="color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-top: 40px; font-size: 18px; letter-spacing: 0.5px;">🔴 TOP 20 SELL RECOMMENDATIONS</h2>
-                            <table width="100%" cellpadding="12" cellspacing="0" border="1" bordercolor="#3d1500" style="border-collapse: collapse; margin: 20px 0;">
-                                <tr style="background: linear-gradient(90deg, #922b21, #c0392b);">
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOCK</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">PRICE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RATING</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">SCORE</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">RSI</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">MACD</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">DOWNSIDE %</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">TARGET</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">STOP LOSS</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">R:R</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">BETA</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">P/E</th>
-                                    <th style="color: #ffffff; text-align: left; padding: 14px 10px; font-size: 12px; letter-spacing: 0.5px;">QUALITY</th>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">UnitedHealth Group<br><span style="color:#8a6040; font-size:11px; font-weight:400;">UNH</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$289.00</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">32</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">47<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bullish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+4.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$275.63</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$303.45<br><span style="font-size:11px; color:#8a6040;">+5.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.9x</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.41</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">21.8</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Mastercard<br><span style="color:#8a6040; font-size:11px; font-weight:400;">MA</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$517.57</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">34</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">36<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-0.5%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$520.05</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$553.80<br><span style="font-size:11px; color:#8a6040;">+7.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.82</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">31.3</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Visa Inc.<br><span style="color:#8a6040; font-size:11px; font-weight:400;">V</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$317.43</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">35</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">40<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-1.5%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$322.20</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$333.30<br><span style="font-size:11px; color:#8a6040;">+5.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.3x</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.78</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">29.8</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Oracle Corporation<br><span style="color:#8a6040; font-size:11px; font-weight:400;">ORCL</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$158.63</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">36</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">43<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bullish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+3.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$152.44</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$174.49<br><span style="font-size:11px; color:#8a6040;">+10.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.63</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">29.8</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Microsoft<br><span style="color:#8a6040; font-size:11px; font-weight:400;">MSFT</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$400.39</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">39</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">31<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+0.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$398.05</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$428.41<br><span style="font-size:11px; color:#8a6040;">+7.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.08</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">25.1</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Palantir Technologies<br><span style="color:#8a6040; font-size:11px; font-weight:400;">PLTR</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$135.15</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">39</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">39<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+1.7%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$132.89</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$148.66<br><span style="font-size:11px; color:#8a6040;">+10.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.2x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.69</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">211.2</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #2471a3; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Good</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Amazon<br><span style="color:#8a6040; font-size:11px; font-weight:400;">AMZN</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$204.45</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">41</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">17<br><span style="font-size:10px; color:#8a6040;">Oversold</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+0.8%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$202.78</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$224.89<br><span style="font-size:11px; color:#8a6040;">+10.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.1x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.39</td>
-                                    <td style="color: #f39c12; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">28.5</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">IBM<br><span style="color:#8a6040; font-size:11px; font-weight:400;">IBM</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$257.12</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">41</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">24<br><span style="font-size:10px; color:#8a6040;">Oversold</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">-7.7%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$276.88</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$269.98<br><span style="font-size:11px; color:#8a6040;">+5.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">1.5x</td>
-                                    <td style="color: #27ae60; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">0.69</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">23.1</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Intel<br><span style="color:#8a6040; font-size:11px; font-weight:400;">INTC</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$44.60</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">42</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">38<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+19.6%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$35.85</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$49.06<br><span style="font-size:11px; color:#8a6040;">+10.0%</span></td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">2.0x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.38</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">45.0</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #922b21; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Poor</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Tesla<br><span style="color:#8a6040; font-size:11px; font-weight:400;">TSLA</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$411.80</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">43</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">48<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bullish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+1.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$403.81</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$461.22<br><span style="font-size:11px; color:#8a6040;">+12.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.2x</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.89</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">384.9</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #922b21; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Poor</span></td>
-                                </tr>
-
-                                <tr bgcolor="#1f0d00">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">JPMorgan Chase<br><span style="color:#8a6040; font-size:11px; font-weight:400;">JPM</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$308.20</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">43</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">52<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+3.5%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$297.42</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$329.77<br><span style="font-size:11px; color:#8a6040;">+7.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.5x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.05</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">15.4</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                                <tr bgcolor="#2a1000">
-                                    <td style="color: #f0d0a0; font-weight: 700; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">Wells Fargo<br><span style="color:#8a6040; font-size:11px; font-weight:400;">WFC</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">$87.39</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 11px; font-weight: bold;">⭐⭐ SELL</td>
-                                    <td style="color: #e67e22; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 18px;">44</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">43<br><span style="font-size:10px; color:#8a6040;">Neutral</span></td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">Bearish</td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">+2.9%</td>
-                                    <td style="color: #e8c090; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$84.89</td>
-                                    <td style="color: #e74c3c; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">$93.51<br><span style="font-size:11px; color:#8a6040;">+7.0%</span></td>
-                                    <td style="color: #e74c3c; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 15px;">0.4x</td>
-                                    <td style="color: #f39c12; font-weight: bold; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px;">1.06</td>
-                                    <td style="color: #27ae60; padding: 12px 10px; border: 1px solid #3d1500; font-size: 13px; font-weight: 600;">14.0</td>
-                                    <td style="padding: 12px 10px; border: 1px solid #3d1500;"><span style="background-color: #d68910; color: #ffffff; padding: 5px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; white-space: nowrap;">Average</span></td>
-                                </tr>
-
-                            </table>
-
-                            <!-- Disclaimer -->
-                            <table width="100%" cellpadding="20" cellspacing="0" border="0" style="margin: 30px 0; border-radius: 8px; background: #2a1000; border-left: 4px solid #e67e22;">
-                                <tr>
-                                    <td>
-                                        <p style="color: #f0d0a0; margin: 0 0 10px 0;"><strong style="color: #e74c3c;">⚠️ DISCLAIMER:</strong> This analysis is for <strong style="color: #e67e22;">EDUCATIONAL PURPOSES ONLY</strong>. This is NOT financial advice. Always:</p>
-                                        <ul style="color: #d4a080; margin: 10px 0; padding-left: 20px; line-height: 1.8;">
-                                            <li>Do your own research</li>
-                                            <li>Consult a registered financial advisor</li>
-                                            <li>Use proper risk management and stop losses</li>
-                                            <li>Never invest more than you can afford to lose</li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                        </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                        <td align="center" style="padding: 25px; background: linear-gradient(135deg, #7b2d00, #c0392b); border-radius: 0 0 12px 12px;">
-                            <p style="color: #ffffff; margin: 0 0 6px 0; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">🌅 Top US Market Influencers: NASDAQ &amp; S&amp;P 500</p>
-                            <p style="color: #ffd5b0; margin: 0; font-size: 12px; opacity: 0.85;">Automated Stock Analysis System &nbsp;|&nbsp; Next Update: 4:30 PM EST</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
+          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+          <th>Upside</th><th>Target</th><th>Stop Loss</th><th>RSI</th>
+          <th>R:R</th><th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
         </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">01</td>
+          <td><div class="stk-name">NVIDIA</div><div class="stk-sym">NVDA</div></td>
+          <td><div class="price-val">$186.96</div></td>
+          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--green)">81</div><div class="score-track"><div class="score-fill" style="width:81%;background:var(--green)"></div></div></div></td>
+          <td><span class="up-pct">+3.2%</span></td>
+          <td><div class="tgt">$192.96</div><div class="tgt2">T2: $202.61</div></td>
+          <td><div class="sl">$168.39</div><div class="sl2">-9.9%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">45</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-11.9%</td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">2.31</td>
+          <td><span class="pe-val" style="color:var(--red2)">46.3</span></td>
+          <td style="color:var(--text);font-size:12px">2.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">02</td>
+          <td><div class="stk-name">Berkshire Hathaway</div><div class="stk-sym">BRK-B</div></td>
+          <td><div class="price-val">$496.10</div></td>
+          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--green)">80</div><div class="score-track"><div class="score-fill" style="width:80%;background:var(--green)"></div></div></div></td>
+          <td><span class="up-pct">+2.7%</span></td>
+          <td><div class="tgt">$509.61</div><div class="tgt2">T2: $526.00</div></td>
+          <td><div class="sl">$471.29</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">66</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.5×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-8.5%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.70</td>
+          <td><span class="pe-val" style="color:var(--green)">15.8</span></td>
+          <td style="color:var(--text);font-size:12px">—</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">03</td>
+          <td><div class="stk-name">Applied Materials</div><div class="stk-sym">AMAT</div></td>
+          <td><div class="price-val">$366.21</div></td>
+          <td><span class="rtag rtag-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--green)">76</div><div class="score-track"><div class="score-fill" style="width:76%;background:var(--green)"></div></div></div></td>
+          <td><span class="dn-pct">-6.0%</span></td>
+          <td><div class="tgt">$344.07</div><div class="tgt2">T2: $361.27</div></td>
+          <td><div class="sl">$329.59</div><div class="sl2">-10.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">58</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.6×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.7%</td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.68</td>
+          <td><span class="pe-val" style="color:var(--gold)">37.6</span></td>
+          <td style="color:var(--green);font-size:12px">50.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">04</td>
+          <td><div class="stk-name">Micron Technology</div><div class="stk-sym">MU</div></td>
+          <td><div class="price-val">$413.52</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">72</div><div class="score-track"><div class="score-fill" style="width:72%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+3.7%</span></td>
+          <td><div class="tgt">$428.94</div><div class="tgt2">T2: $450.39</div></td>
+          <td><div class="sl">$372.17</div><div class="sl2">-10.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">45</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-9.2%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.50</td>
+          <td><span class="pe-val" style="color:var(--gold)">39.3</span></td>
+          <td style="color:var(--green);font-size:12px">11.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">05</td>
+          <td><div class="stk-name">Lam Research</div><div class="stk-sym">LRCX</div></td>
+          <td><div class="price-val">$235.48</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">72</div><div class="score-track"><div class="score-fill" style="width:72%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+3.1%</span></td>
+          <td><div class="tgt">$242.80</div><div class="tgt2">T2: $254.94</div></td>
+          <td><div class="sl">$211.93</div><div class="sl2">-10.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">44</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-6.5%</td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.78</td>
+          <td><span class="pe-val" style="color:var(--red2)">48.4</span></td>
+          <td style="color:var(--green);font-size:12px">43.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">06</td>
+          <td><div class="stk-name">Johnson & Johnson</div><div class="stk-sym">JNJ</div></td>
+          <td><div class="price-val">$246.40</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">70</div><div class="score-track"><div class="score-fill" style="width:70%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-2.2%</span></td>
+          <td><div class="tgt">$240.97</div><div class="tgt2">T2: $253.02</div></td>
+          <td><div class="sl">$234.08</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--red)">88</div><div class="rsi-lbl">Overbought</div></td>
+          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.2%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.35</td>
+          <td><span class="pe-val" style="color:var(--green)">22.4</span></td>
+          <td style="color:var(--green);font-size:12px">212.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">07</td>
+          <td><div class="stk-name">Caterpillar Inc.</div><div class="stk-sym">CAT</div></td>
+          <td><div class="price-val">$756.28</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-0.4%</span></td>
+          <td><div class="tgt">$753.00</div><div class="tgt2">T2: $790.65</div></td>
+          <td><div class="sl">$680.65</div><div class="sl2">-10.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">69</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.0×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-4.2%</td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.55</td>
+          <td><span class="pe-val" style="color:var(--red2)">40.2</span></td>
+          <td style="color:var(--green);font-size:12px">80.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">08</td>
+          <td><div class="stk-name">Linde plc</div><div class="stk-sym">LIN</div></td>
+          <td><div class="price-val">$488.43</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-2.8%</span></td>
+          <td><div class="tgt">$474.68</div><div class="tgt2">T2: $498.41</div></td>
+          <td><div class="sl">$454.24</div><div class="sl2">-7.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">70</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.2%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.85</td>
+          <td><span class="pe-val" style="color:var(--gold)">33.4</span></td>
+          <td style="color:var(--green);font-size:12px">124.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">09</td>
+          <td><div class="stk-name">Broadcom</div><div class="stk-sym">AVGO</div></td>
+          <td><div class="price-val">$331.07</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">68</div><div class="score-track"><div class="score-fill" style="width:68%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+19.3%</span></td>
+          <td><div class="tgt">$395.11</div><div class="tgt2">T2: $414.86</div></td>
+          <td><div class="sl">$307.95</div><div class="sl2">-7.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">50</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--green)">2.8×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-20.0%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.22</td>
+          <td><span class="pe-val" style="color:var(--red2)">69.4</span></td>
+          <td style="color:var(--green);font-size:12px">78.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">10</td>
+          <td><div class="stk-name">RTX Corporation</div><div class="stk-sym">RTX</div></td>
+          <td><div class="price-val">$204.66</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-0.4%</span></td>
+          <td><div class="tgt">$203.82</div><div class="tgt2">T2: $214.01</div></td>
+          <td><div class="sl">$194.43</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">58</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-1.0%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.42</td>
+          <td><span class="pe-val" style="color:var(--red2)">41.3</span></td>
+          <td style="color:var(--green);font-size:12px">133.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">11</td>
+          <td><div class="stk-name">Alphabet (Class A)</div><div class="stk-sym">GOOGL</div></td>
+          <td><div class="price-val">$302.85</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+11.7%</span></td>
+          <td><div class="tgt">$338.12</div><div class="tgt2">T2: $355.02</div></td>
+          <td><div class="sl">$292.19</div><div class="sl2">-3.5%</div></td>
+          <td><div class="rsi-num" style="color:var(--green)">16</div><div class="rsi-lbl">Oversold</div></td>
+          <td><span class="rr" style="color:var(--green)">3.3×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-13.2%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.09</td>
+          <td><span class="pe-val" style="color:var(--gold)">28.0</span></td>
+          <td style="color:var(--green);font-size:12px">28.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">12</td>
+          <td><div class="stk-name">Alphabet (Class C)</div><div class="stk-sym">GOOG</div></td>
+          <td><div class="price-val">$303.36</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">67</div><div class="score-track"><div class="score-fill" style="width:67%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+11.6%</span></td>
+          <td><div class="tgt">$338.42</div><div class="tgt2">T2: $355.34</div></td>
+          <td><div class="sl">$293.23</div><div class="sl2">-3.3%</div></td>
+          <td><div class="rsi-num" style="color:var(--green)">17</div><div class="rsi-lbl">Oversold</div></td>
+          <td><span class="rr" style="color:var(--green)">3.5×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-13.4%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.09</td>
+          <td><span class="pe-val" style="color:var(--gold)">28.0</span></td>
+          <td style="color:var(--green);font-size:12px">28.00%</td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">13</td>
+          <td><div class="stk-name">GE Aerospace</div><div class="stk-sym">GE</div></td>
+          <td><div class="price-val">$334.61</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">64</div><div class="score-track"><div class="score-fill" style="width:64%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-1.5%</span></td>
+          <td><div class="tgt">$329.50</div><div class="tgt2">T2: $345.98</div></td>
+          <td><div class="sl">$301.15</div><div class="sl2">-10.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--red)">80</div><div class="rsi-lbl">Overbought</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-0.4%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.38</td>
+          <td><span class="pe-val" style="color:var(--red2)">41.6</span></td>
+          <td style="color:var(--green);font-size:12px">57.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">14</td>
+          <td><div class="stk-name">ExxonMobil</div><div class="stk-sym">XOM</div></td>
+          <td><div class="price-val">$151.76</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">62</div><div class="score-track"><div class="score-fill" style="width:62%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-0.8%</span></td>
+          <td><div class="tgt">$150.57</div><div class="tgt2">T2: $158.10</div></td>
+          <td><div class="sl">$144.17</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">66</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.6%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.36</td>
+          <td><span class="pe-val" style="color:var(--green)">22.6</span></td>
+          <td style="color:var(--green);font-size:12px">273.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">15</td>
+          <td><div class="stk-name">GE Vernova</div><div class="stk-sym">GEV</div></td>
+          <td><div class="price-val">$828.30</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">62</div><div class="score-track"><div class="score-fill" style="width:62%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-1.5%</span></td>
+          <td><div class="tgt">$815.68</div><div class="tgt2">T2: $836.98</div></td>
+          <td><div class="sl">$770.32</div><div class="sl2">-7.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--red)">71</div><div class="rsi-lbl">Overbought</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.1%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">1.00</td>
+          <td><span class="pe-val" style="color:var(--red2)">46.9</span></td>
+          <td style="color:var(--green);font-size:12px">18.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">16</td>
+          <td><div class="stk-name">Costco</div><div class="stk-sym">COST</div></td>
+          <td><div class="price-val">$987.62</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">61</div><div class="score-track"><div class="score-fill" style="width:61%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+1.5%</span></td>
+          <td><div class="tgt">$1,002.02</div><div class="tgt2">T2: $1,046.41</div></td>
+          <td><div class="sl">$918.49</div><div class="sl2">-7.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">60</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-7.1%</td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.01</td>
+          <td><span class="pe-val" style="color:var(--red2)">53.0</span></td>
+          <td style="color:var(--green);font-size:12px">52.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">17</td>
+          <td><div class="stk-name">AbbVie</div><div class="stk-sym">ABBV</div></td>
+          <td><div class="price-val">$223.78</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">61</div><div class="score-track"><div class="score-fill" style="width:61%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+3.9%</span></td>
+          <td><div class="tgt">$232.39</div><div class="tgt2">T2: $244.01</div></td>
+          <td><div class="sl">$212.59</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">54</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.8×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-7.2%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.33</td>
+          <td><span class="pe-val" style="color:var(--red2)">94.8</span></td>
+          <td style="color:var(--green);font-size:12px">291.00%</td>
+          <td><span class="qbadge qb-po">Poor</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">18</td>
+          <td><div class="stk-name">Procter & Gamble</div><div class="stk-sym">PG</div></td>
+          <td><div class="price-val">$158.00</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
+          <td><span class="up-pct">+1.2%</span></td>
+          <td><div class="tgt">$159.96</div><div class="tgt2">T2: $167.96</div></td>
+          <td><div class="sl">$150.10</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--accent2)">70</div><div class="rsi-lbl">Neutral</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:12px">-9.8%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.38</td>
+          <td><span class="pe-val" style="color:var(--green)">23.4</span></td>
+          <td style="color:var(--green);font-size:12px">269.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">19</td>
+          <td><div class="stk-name">McDonald's</div><div class="stk-sym">MCD</div></td>
+          <td><div class="price-val">$328.48</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-0.1%</span></td>
+          <td><div class="tgt">$328.01</div><div class="tgt2">T2: $340.66</div></td>
+          <td><div class="sl">$312.06</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--red)">70</div><div class="rsi-lbl">Overbought</div></td>
+          <td><span class="rr" style="color:var(--red)">0.0×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-2.1%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.53</td>
+          <td><span class="pe-val" style="color:var(--gold)">27.5</span></td>
+          <td style="color:var(--green);font-size:12px">227.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">20</td>
+          <td><div class="stk-name">Verizon</div><div class="stk-sym">VZ</div></td>
+          <td><div class="price-val">$48.59</div></td>
+          <td><span class="rtag rtag-b">⭐⭐⭐⭐ BUY</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--accent2)">60</div><div class="score-track"><div class="score-fill" style="width:60%;background:var(--accent)"></div></div></div></td>
+          <td><span class="dn-pct">-1.4%</span></td>
+          <td><div class="tgt">$47.91</div><div class="tgt2">T2: $49.34</div></td>
+          <td><div class="sl">$46.16</div><div class="sl2">-5.0%</div></td>
+          <td><div class="rsi-num" style="color:var(--red)">83</div><div class="rsi-lbl">Overbought</div></td>
+          <td><span class="rr" style="color:var(--red)">0.3×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace;font-size:12px">-3.3%</td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.32</td>
+          <td><span class="pe-val" style="color:var(--green)">12.0</span></td>
+          <td style="color:var(--green);font-size:12px">589.00%</td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+      </tbody>
     </table>
+  </div>
+
+  <div class="spacer"></div>
+  <!-- SELL TABLE -->
+  <div class="sec-header">
+    <div class="sec-left">
+      <div class="sec-indicator" style="background:var(--red)"></div>
+      <span class="sec-title">▼ Top 20 Sell Recommendations</span>
+    </div>
+    <span class="sec-count">Sorted by Combined Score</span>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
+          <th>RSI</th><th>MACD</th><th>Downside</th><th>Target</th><th>Stop Loss</th>
+          <th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">01</td>
+          <td><div class="stk-name">UnitedHealth Group</div><div class="stk-sym">UNH</div></td>
+          <td><div class="price-val">$289.63</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">32</div><div class="score-track"><div class="score-fill" style="width:32%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">48</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
+          <td><span class="dn-pct">+4.8%</span></td>
+          <td><div class="tgt">$275.63</div><div class="tgt2">T2: $261.85</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$304.11</div><div class="sl2">+5.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">1.0×</span></td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.41</td>
+          <td><span class="pe-val" style="color:var(--green)">21.9</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">02</td>
+          <td><div class="stk-name">Mastercard</div><div class="stk-sym">MA</div></td>
+          <td><div class="price-val">$518.22</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">34</div><div class="score-track"><div class="score-fill" style="width:34%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">36</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="up-pct">-0.3%</span></td>
+          <td><div class="tgt">$520.05</div><div class="tgt2">T2: $494.05</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$554.49</div><div class="sl2">+7.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.82</td>
+          <td><span class="pe-val" style="color:var(--gold)">31.4</span></td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">03</td>
+          <td><div class="stk-name">Visa Inc.</div><div class="stk-sym">V</div></td>
+          <td><div class="price-val">$318.43</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">35</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">40</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="up-pct">-1.2%</span></td>
+          <td><div class="tgt">$322.20</div><div class="tgt2">T2: $306.09</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$334.35</div><div class="sl2">+5.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.78</td>
+          <td><span class="pe-val" style="color:var(--gold)">29.8</span></td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">04</td>
+          <td><div class="stk-name">Oracle Corporation</div><div class="stk-sym">ORCL</div></td>
+          <td><div class="price-val">$156.04</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">36</div><div class="score-track"><div class="score-fill" style="width:36%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">41</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
+          <td><span class="dn-pct">+2.3%</span></td>
+          <td><div class="tgt">$152.44</div><div class="tgt2">T2: $144.82</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$171.65</div><div class="sl2">+10.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.2×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.63</td>
+          <td><span class="pe-val" style="color:var(--gold)">29.3</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">05</td>
+          <td><div class="stk-name">Netflix</div><div class="stk-sym">NFLX</div></td>
+          <td><div class="price-val">$76.70</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">37</div><div class="score-track"><div class="score-fill" style="width:37%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">31</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="up-pct">-3.6%</span></td>
+          <td><div class="tgt">$79.43</div><div class="tgt2">T2: $75.46</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$84.37</div><div class="sl2">+10.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.71</td>
+          <td><span class="pe-val" style="color:var(--gold)">30.3</span></td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">06</td>
+          <td><div class="stk-name">Palantir Technologies</div><div class="stk-sym">PLTR</div></td>
+          <td><div class="price-val">$133.98</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">39</div><div class="score-track"><div class="score-fill" style="width:39%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">39</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="dn-pct">+0.8%</span></td>
+          <td><div class="tgt">$132.89</div><div class="tgt2">T2: $126.25</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$147.38</div><div class="sl2">+10.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.69</td>
+          <td><span class="pe-val" style="color:var(--red)">209.3</span></td>
+          <td><span class="qbadge qb-gd">Good</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">07</td>
+          <td><div class="stk-name">Amazon</div><div class="stk-sym">AMZN</div></td>
+          <td><div class="price-val">$204.36</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">41</div><div class="score-track"><div class="score-fill" style="width:41%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--green)">17</div><div class="rsi-lbl">Oversold</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="dn-pct">+0.8%</span></td>
+          <td><div class="tgt">$202.78</div><div class="tgt2">T2: $192.64</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$224.80</div><div class="sl2">+10.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.39</td>
+          <td><span class="pe-val" style="color:var(--gold)">28.5</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">08</td>
+          <td><div class="stk-name">IBM</div><div class="stk-sym">IBM</div></td>
+          <td><div class="price-val">$256.30</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">41</div><div class="score-track"><div class="score-fill" style="width:41%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--green)">24</div><div class="rsi-lbl">Oversold</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="up-pct">-8.0%</span></td>
+          <td><div class="tgt">$276.88</div><div class="tgt2">T2: $263.03</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$269.12</div><div class="sl2">+5.0%</div></td>
+          <td><span class="rr" style="color:var(--gold)">1.6×</span></td>
+          <td style="color:var(--green);font-family:'Roboto Mono',monospace">0.69</td>
+          <td><span class="pe-val" style="color:var(--green)">23.0</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">09</td>
+          <td><div class="stk-name">Intel</div><div class="stk-sym">INTC</div></td>
+          <td><div class="price-val">$44.25</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">42</div><div class="score-track"><div class="score-fill" style="width:42%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">37</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="dn-pct">+19.0%</span></td>
+          <td><div class="tgt">$35.85</div><div class="tgt2">T2: $34.05</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$48.67</div><div class="sl2">+10.0%</div></td>
+          <td><span class="rr" style="color:var(--gold)">1.9×</span></td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.38</td>
+          <td><span class="pe-val" style="color:var(--red)">44.6</span></td>
+          <td><span class="qbadge qb-po">Poor</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">10</td>
+          <td><div class="stk-name">Tesla</div><div class="stk-sym">TSLA</div></td>
+          <td><div class="price-val">$411.16</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">43</div><div class="score-track"><div class="score-fill" style="width:43%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">47</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--green);font-size:13px;font-weight:600">Bullish</td>
+          <td><span class="dn-pct">+1.8%</span></td>
+          <td><div class="tgt">$403.81</div><div class="tgt2">T2: $383.62</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$460.50</div><div class="sl2">+12.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.1×</span></td>
+          <td style="color:var(--red);font-family:'Roboto Mono',monospace">1.89</td>
+          <td><span class="pe-val" style="color:var(--red)">384.3</span></td>
+          <td><span class="qbadge qb-po">Poor</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">11</td>
+          <td><div class="stk-name">JPMorgan Chase</div><div class="stk-sym">JPM</div></td>
+          <td><div class="price-val">$306.98</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">43</div><div class="score-track"><div class="score-fill" style="width:43%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">50</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="dn-pct">+3.1%</span></td>
+          <td><div class="tgt">$297.42</div><div class="tgt2">T2: $282.55</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$328.47</div><div class="sl2">+7.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.5×</span></td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.05</td>
+          <td><span class="pe-val" style="color:var(--green)">15.3</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--muted);font-family:'Roboto Mono',monospace;font-size:11px">12</td>
+          <td><div class="stk-name">Wells Fargo</div><div class="stk-sym">WFC</div></td>
+          <td><div class="price-val">$87.55</div></td>
+          <td><span class="rtag rtag-s">⭐⭐ SELL</span></td>
+          <td><div class="score-box"><div class="score-num" style="color:var(--red2)">44</div><div class="score-track"><div class="score-fill" style="width:44%;background:var(--red2)"></div></div></div></td>
+          <td><div class="rsi-num" style="color:var(--gold)">43</div><div class="rsi-lbl">Neutral</div></td>
+          <td style="color:var(--red);font-size:13px;font-weight:600">Bearish</td>
+          <td><span class="dn-pct">+3.0%</span></td>
+          <td><div class="tgt">$84.89</div><div class="tgt2">T2: $80.65</div></td>
+          <td><div style="font-family:'Roboto Mono',monospace;font-size:13px;color:var(--gold)">$93.68</div><div class="sl2">+7.0%</div></td>
+          <td><span class="rr" style="color:var(--red)">0.4×</span></td>
+          <td style="color:var(--gold);font-family:'Roboto Mono',monospace">1.06</td>
+          <td><span class="pe-val" style="color:var(--green)">14.0</span></td>
+          <td><span class="qbadge qb-av">Average</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="disc">
+    <strong>⚠ DISCLAIMER:</strong> This analysis is for <strong>EDUCATIONAL PURPOSES ONLY</strong>. This is NOT financial advice. Always do your own research, consult a registered financial advisor, use proper risk management, and never invest more than you can afford to lose.
+  </div>
+</div>
+
+<footer>
+  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong> &nbsp;·&nbsp; Automated Analysis System &nbsp;·&nbsp; Next Update: <strong>9:30 AM (Next Day) EST</strong> &nbsp;·&nbsp; 19 Feb 2026
+</footer>
+
 </body>
 </html>
