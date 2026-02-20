@@ -1,10 +1,7 @@
 """
 S&P 500 COMPLETE STOCK ANALYZER
 Technical + Fundamental Analysis with Email Delivery
-Theme: Sunset Warm (Theme 10)
-
-Requirements:
-pip install yfinance pandas numpy openpyxl pytz
+Theme: Sunset Warm (Theme 10) — VISIBILITY FIXED
 """
 
 import yfinance as yf
@@ -438,7 +435,7 @@ class SP500CompleteAnalyzer:
         return top_buys, top_sells
 
     # =========================================================================
-    #  HTML GENERATION  —  Sunset Warm Theme
+    #  HTML GENERATION  —  Sunset Warm Theme  (VISIBILITY FIXED)
     # =========================================================================
     def generate_email_html(self):
         """Generate beautiful HTML report — Sunset Warm Theme"""
@@ -466,9 +463,14 @@ class SP500CompleteAnalyzer:
   :root{{
     --bg:#0f0a05;--bg2:#160d05;--card:#1d1108;--card2:#241508;
     --accent:#ff6b2b;--accent2:#ff8c55;
-    --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
-    --gold:#f59e0b;--teal:#14b8a6;
-    --text:#f0d5b0;--text2:#fdf0d8;--muted:#7a5030;
+    --green:#22c55e;--red:#ef4444;--blue:#60a5fa;
+    --gold:#f59e0b;--teal:#2dd4bf;
+    /* ── FIXED: brighter base text colours ── */
+    --text:#f5ddb8;--text2:#fff8ee;
+    --sym:#ffb366;          /* ticker symbol — bright amber */
+    --t2-price:#ffd080;     /* T2 price sub-line — warm yellow */
+    --w52-neu:#c8a882;      /* 52W% neutral — readable warm grey */
+    --muted:#a07850;        /* muted — raised from #7a5030 */
     --border:#3d2010;--border2:#4d2a14;
   }}
   *{{margin:0;padding:0;box-sizing:border-box;}}
@@ -481,23 +483,28 @@ class SP500CompleteAnalyzer:
       radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.05) 0%,transparent 40%);
   }}
 
-  /* HEADER */
+  /* ── HEADER ── */
   header{{background:linear-gradient(180deg,#1a0e06,var(--bg2));border-bottom:2px solid var(--accent);padding:0;box-shadow:0 2px 20px rgba(255,107,43,0.15);}}
-  .h-top{{max-width:1380px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;}}
+  .h-top{{max-width:1380px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;gap:20px;flex-wrap:wrap;}}
   .brand{{display:flex;align-items:center;gap:12px;}}
   .brand-icon{{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}}
   .brand-t{{font-size:clamp(13px,2vw,19px);font-weight:800;color:var(--text2);}}
   .brand-s{{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}}
-  .h-right{{display:flex;gap:0;}}
+  .h-right{{display:flex;gap:0;flex-wrap:wrap;}}
   .hr{{padding:8px 16px;border-left:1px solid var(--border2);text-align:right;}}
   .hr-l{{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}}
   .hr-v{{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;margin-top:2px;}}
-  .ticker{{background:#0a0602;border-bottom:1px solid var(--border);overflow:hidden;display:flex;}}
-  .ticker-inner{{max-width:1380px;margin:0 auto;display:flex;padding:0 28px;}}
-  .ti{{display:flex;gap:6px;align-items:center;padding:6px 12px;border-right:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}}
-  .ti-s{{color:var(--accent2);font-weight:600;}} .ti-p{{color:var(--text);}} .ti-u{{color:var(--green);}} .ti-d{{color:var(--red);}}
 
-  /* KPI BAND */
+  /* Ticker bar */
+  .ticker{{background:#0a0602;border-bottom:1px solid var(--border);overflow:hidden;display:flex;}}
+  .ticker-inner{{max-width:1380px;margin:0 auto;display:flex;padding:0 28px;overflow-x:auto;}}
+  .ti{{display:flex;gap:6px;align-items:center;padding:6px 12px;border-right:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}}
+  .ti-s{{color:var(--accent2);font-weight:700;}}
+  .ti-p{{color:var(--text2);}}
+  .ti-u{{color:var(--green);}}
+  .ti-d{{color:var(--red);}}
+
+  /* ── KPI BAND ── */
   .kpi-band{{background:var(--card);border-bottom:1px solid var(--border2);}}
   .kpi-inner{{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);}}
   .kc{{padding:15px 20px;border-right:1px solid var(--border);text-align:center;}}
@@ -506,67 +513,96 @@ class SP500CompleteAnalyzer:
   .kl{{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}}
   .kbar{{height:2px;border-radius:1px;margin:4px auto 0;width:40px;}}
 
-  /* MAIN */
+  /* ── MAIN ── */
   .main{{max-width:1380px;margin:0 auto;padding:24px 28px;}}
-  .sh{{display:flex;align-items:center;gap:12px;margin-bottom:14px;}}
+
+  /* Section header */
+  .sh{{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}}
   .sh-icon{{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}}
   .shi-buy{{background:rgba(34,197,94,0.15);}}
   .shi-sell{{background:rgba(239,68,68,0.15);}}
   .sh-title{{font-size:16px;font-weight:800;color:var(--text2);}}
-  .sh-divider{{flex:1;height:1px;background:var(--border);}}
+  .sh-divider{{flex:1;height:1px;background:var(--border);min-width:20px;}}
   .sh-count{{font-size:10px;color:var(--muted);}}
 
-  /* TABLE */
-  .tbl-wrap{{overflow-x:auto;border:1px solid var(--border2);border-radius:8px;margin-bottom:28px;background:var(--card);box-shadow:0 4px 24px rgba(0,0,0,0.3);}}
-  table{{width:100%;border-collapse:collapse;}}
-  th{{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 12px;background:var(--card2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;}}
+  /* ── TABLE ── */
+  .tbl-wrap{{overflow-x:auto;border:1px solid var(--border2);border-radius:8px;margin-bottom:28px;background:var(--card);box-shadow:0 4px 24px rgba(0,0,0,0.3);-webkit-overflow-scrolling:touch;}}
+  table{{width:100%;border-collapse:collapse;min-width:900px;}}
+  th{{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c8a060;padding:10px 12px;background:var(--card2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;}}
   td{{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}}
-  tr:hover td{{background:rgba(255,107,43,0.04);}}
+  tr:hover td{{background:rgba(255,107,43,0.06);}}
   tr:nth-child(even) td{{background:rgba(29,17,8,0.5);}}
   tr:last-child td{{border-bottom:none;}}
 
+  /* Stock name + symbol cell */
   .sn{{font-size:14px;font-weight:700;color:var(--text2);}}
-  .ss{{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px;}}
+  /* FIXED: symbol now uses --sym (bright amber) not --muted */
+  .ss{{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--sym);letter-spacing:1px;margin-top:3px;}}
+
   .pv{{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);}}
 
   /* Rating tags */
-  .rt{{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;white-space:nowrap;}}
-  .rt-sb{{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.25);}}
-  .rt-b{{background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.25);}}
-  .rt-s{{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.25);}}
-  .rt-ss{{background:rgba(239,68,68,0.18);color:var(--red);border:1px solid rgba(239,68,68,0.4);}}
+  .rt{{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;white-space:nowrap;letter-spacing:0.5px;}}
+  .rt-sb{{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.35);}}
+  .rt-b{{background:rgba(96,165,250,0.15);color:#93c5fd;border:1px solid rgba(96,165,250,0.35);}}
+  .rt-s{{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.35);}}
+  .rt-ss{{background:rgba(239,68,68,0.22);color:#fca5a5;border:1px solid rgba(239,68,68,0.5);}}
 
   /* Score */
   .scn{{font-size:22px;font-weight:800;}}
   .scb{{height:3px;border-radius:2px;margin-top:4px;width:40px;}}
 
-  .up{{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
-  .dn{{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
+  /* Upside / Downside */
+  .up{{color:#4ade80;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
+  .dn{{color:#f87171;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;}}
 
-  .t1{{font-family:'JetBrains Mono',monospace;font-size:12px;}}
-  .t2{{font-size:10px;color:var(--muted);}}
-  .sl1{{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);}}
-  .sl2{{font-size:10px;color:var(--muted);}}
-  .rv{{font-family:'JetBrains Mono',monospace;font-size:13px;}}
+  /* Target cell — FIXED: T1 brighter, T2 clearly readable */
+  .t1{{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text2);}}
+  .t2{{font-size:10px;font-weight:500;color:var(--t2-price);margin-top:2px;}}  /* was --muted */
+
+  /* Stop loss cell */
+  .sl1{{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#f87171;}}
+  .sl2{{font-size:10px;color:var(--muted);margin-top:2px;}}
+
+  /* RSI */
+  .rv{{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}}
   .rsb{{font-size:9px;color:var(--muted);}}
+
+  /* R:R */
   .rrv{{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}}
 
   /* Quality badges */
   .qb{{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;}}
-  .qb-ex{{background:rgba(34,197,94,0.1);color:var(--green);}}
-  .qb-gd{{background:rgba(59,130,246,0.1);color:var(--blue);}}
-  .qb-av{{background:rgba(245,158,11,0.1);color:var(--gold);}}
-  .qb-po{{background:rgba(239,68,68,0.1);color:var(--red);}}
+  .qb-ex{{background:rgba(34,197,94,0.15);color:#4ade80;}}
+  .qb-gd{{background:rgba(96,165,250,0.15);color:#93c5fd;}}
+  .qb-av{{background:rgba(245,158,11,0.15);color:#fbbf24;}}
+  .qb-po{{background:rgba(239,68,68,0.15);color:#f87171;}}
 
   /* Disclaimer */
   .disc{{background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:14px 18px;margin:20px 0;font-size:12px;color:var(--muted);line-height:1.7;}}
-  .disc strong{{color:var(--red);}}
+  .disc strong{{color:#f87171;}}
 
   footer{{background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2));border-top:2px solid var(--accent);text-align:center;padding:18px;font-size:11px;color:var(--muted);letter-spacing:1px;}}
   footer strong{{color:var(--accent2);}}
 
-  @media(max-width:1000px){{.kpi-inner{{grid-template-columns:repeat(3,1fr);}} .h-right .hr:nth-child(n+3){{display:none;}}}}
-  @media(max-width:600px){{.kpi-inner{{grid-template-columns:repeat(2,1fr);}} .h-top{{padding:10px 14px;}} .main{{padding:14px;}} table{{min-width:650px;}}}}
+  /* ── RESPONSIVE ── */
+  @media(max-width:1200px){{
+    .kpi-inner{{grid-template-columns:repeat(3,1fr);}}
+    .h-right .hr:nth-child(n+4){{display:none;}}
+  }}
+  @media(max-width:768px){{
+    .kpi-inner{{grid-template-columns:repeat(2,1fr);}}
+    .h-top{{padding:10px 14px;}}
+    .main{{padding:14px;}}
+    .h-right .hr:nth-child(n+3){{display:none;}}
+    .kn{{font-size:24px;}}
+  }}
+  @media(max-width:480px){{
+    .kpi-inner{{grid-template-columns:repeat(2,1fr);}}
+    .brand-t{{font-size:13px;}}
+    .sh-title{{font-size:14px;}}
+    .main{{padding:10px;}}
+  }}
 </style>
 </head>
 <body>
@@ -590,7 +626,7 @@ class SP500CompleteAnalyzer:
   </div>
   <div class="ticker"><div class="ticker-inner">
 """
-        # Ticker bar — first 7 results, show vs SMA20 as proxy for day change
+        # Ticker bar
         for t in self.results[:7]:
             pct_chg = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
             tick_cls = "ti-u" if pct_chg >= 0 else "ti-d"
@@ -631,85 +667,82 @@ class SP500CompleteAnalyzer:
     <tbody>
 """
             for row_num, (_, row) in enumerate(top_buys.iterrows(), 1):
-                # Rating tag
                 rtag_cls = "rt-sb" if row['Recommendation'] == "STRONG BUY" else "rt-b"
 
-                # Score colour
                 if row['Combined_Score'] >= 75:
-                    sc_color = "var(--green)"; sc_bg = "var(--green)"
+                    sc_color = "#4ade80"; sc_bg = "#22c55e"
                 elif row['Combined_Score'] >= 55:
-                    sc_color = "var(--teal)";  sc_bg = "var(--teal)"
+                    sc_color = "#2dd4bf"; sc_bg = "#14b8a6"
                 else:
-                    sc_color = "var(--gold)";  sc_bg = "var(--gold)"
+                    sc_color = "#fbbf24"; sc_bg = "#f59e0b"
 
-                # Upside class
                 upside_cls = "up" if row['Upside'] >= 0 else "dn"
 
-                # RSI colour
                 if row['RSI'] > 70:
-                    rsi_color = "var(--red)"
+                    rsi_color = "#f87171"
                 elif row['RSI'] < 30:
-                    rsi_color = "var(--green)"
+                    rsi_color = "#4ade80"
                 else:
-                    rsi_color = "var(--blue)"
+                    rsi_color = "#93c5fd"
 
-                # 52W High %
+                # FIXED: 52W% — use explicit bright colours, never --muted for neutral
                 pct_from_52w = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
                 if pct_from_52w >= -5:
-                    w52_color = "var(--red)"
+                    w52_color = "#f87171"   # near 52W high — red warning
                 elif pct_from_52w >= -20:
-                    w52_color = "var(--muted)"
+                    w52_color = "#d4a85a"   # mid range — readable warm amber (was var(--muted))
                 else:
-                    w52_color = "var(--green)"
+                    w52_color = "#4ade80"   # well below 52W — green opportunity
 
-                # Beta colour
                 if row['Beta'] > 1.5:
-                    beta_color = "var(--red)"
+                    beta_color = "#f87171"
                 elif row['Beta'] > 1.0:
-                    beta_color = "var(--gold)"
+                    beta_color = "#fbbf24"
                 else:
-                    beta_color = "var(--green)"
+                    beta_color = "#4ade80"
 
-                # R:R colour
                 rr = row['Risk_Reward']
                 if rr >= 2:
-                    rr_color = "var(--green)"
+                    rr_color = "#4ade80"
                 elif rr >= 1:
-                    rr_color = "var(--teal)"
+                    rr_color = "#2dd4bf"
                 else:
-                    rr_color = "var(--red)"
+                    rr_color = "#f87171"
 
-                # P/E
                 pe_display = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
                 if row['PE_Ratio'] <= 0:
-                    pe_color = "var(--muted)"
+                    pe_color = "#a07850"
                 elif row['PE_Ratio'] < 25:
-                    pe_color = "var(--green)"
+                    pe_color = "#4ade80"
                 elif row['PE_Ratio'] < 40:
-                    pe_color = "var(--gold)"
+                    pe_color = "#fbbf24"
                 else:
-                    pe_color = "var(--red)"
+                    pe_color = "#f87171"
 
-                # Dividend
                 div_display = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                div_color   = "var(--green)" if row['Dividend_Yield'] > 0 else "var(--muted)"
+                div_color   = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
 
-                # Quality badge
                 qb_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
                 qb_cls = qb_map.get(row['Quality'], "qb-av")
 
                 html += f"""      <tr>
-        <td style="color:var(--muted)">{row_num}</td>
+        <td style="color:#a07850">{row_num}</td>
         <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
         <td><div class="pv">${row['Price']:,.2f}</div></td>
         <td><span class="rt {rtag_cls}">{row['Rating']}</span></td>
         <td><div class="scn" style="color:{sc_color}">{row['Combined_Score']:.0f}</div><div class="scb" style="background:{sc_bg}"></div></td>
         <td class="{upside_cls}">{row['Upside']:+.1f}%</td>
-        <td><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
-        <td><div class="sl1">${row['Stop_Loss']:,.2f}</div><div class="sl2">-{row['SL_Percentage']:.1f}%</div></td>
+        <td>
+          <div class="t1">${row['Target_1']:,.2f}</div>
+          <div class="t2">T2: ${row['Target_2']:,.2f}</div>
+        </td>
+        <td>
+          <div class="sl1">${row['Stop_Loss']:,.2f}</div>
+          <div class="sl2">-{row['SL_Percentage']:.1f}%</div>
+        </td>
         <td><div class="rv" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
         <td class="rrv" style="color:{rr_color}">{rr:.1f}×</td>
-        <td style="color:{w52_color};font-size:11px">{pct_from_52w:+.1f}%</td>
+        <td style="color:{w52_color};font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">{pct_from_52w:+.1f}%</td>
         <td style="color:{beta_color};font-size:11px">{row['Beta']:.2f}</td>
         <td style="color:{pe_color};font-size:11px">{pe_display}</td>
         <td style="color:{div_color}">{div_display}</td>
@@ -738,60 +771,50 @@ class SP500CompleteAnalyzer:
     <tbody>
 """
             for row_num, (_, row) in enumerate(top_sells.iterrows(), 1):
-                # Rating tag
                 rtag_cls = "rt-ss" if row['Recommendation'] == "STRONG SELL" else "rt-s"
 
-                # Score colour (sell range)
-                sc_color = "var(--red)"; sc_bg = "var(--red)"
+                sc_color = "#f87171"; sc_bg = "#ef4444"
 
-                # RSI colour
                 if row['RSI'] > 70:
-                    rsi_color = "var(--red)"
+                    rsi_color = "#f87171"
                 elif row['RSI'] < 30:
-                    rsi_color = "var(--green)"
+                    rsi_color = "#4ade80"
                 else:
-                    rsi_color = "var(--gold)"
+                    rsi_color = "#fbbf24"
 
-                # MACD colour
-                macd_color = "var(--red)" if row['MACD'] == "Bearish" else "var(--green)"
-
-                # Downside class
+                macd_color = "#f87171" if row['MACD'] == "Bearish" else "#4ade80"
                 dn_cls = "dn" if row['Upside'] >= 0 else "up"
 
-                # R:R colour
                 rr = row['Risk_Reward']
                 if rr >= 2:
-                    rr_color = "var(--green)"
+                    rr_color = "#4ade80"
                 elif rr >= 1:
-                    rr_color = "var(--gold)"
+                    rr_color = "#fbbf24"
                 else:
-                    rr_color = "var(--red)"
+                    rr_color = "#f87171"
 
-                # Beta colour
                 if row['Beta'] > 1.5:
-                    beta_color = "var(--red)"
+                    beta_color = "#f87171"
                 elif row['Beta'] > 1.0:
-                    beta_color = "var(--gold)"
+                    beta_color = "#fbbf24"
                 else:
-                    beta_color = "var(--green)"
+                    beta_color = "#4ade80"
 
-                # P/E
                 pe_display = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
                 if row['PE_Ratio'] <= 0:
-                    pe_color = "var(--muted)"
+                    pe_color = "#a07850"
                 elif row['PE_Ratio'] > 40:
-                    pe_color = "var(--red)"
+                    pe_color = "#f87171"
                 elif row['PE_Ratio'] > 25:
-                    pe_color = "var(--gold)"
+                    pe_color = "#fbbf24"
                 else:
-                    pe_color = "var(--green)"
+                    pe_color = "#4ade80"
 
-                # Quality badge
                 qb_map = {"Excellent": "qb-ex", "Good": "qb-gd", "Average": "qb-av", "Poor": "qb-po"}
                 qb_cls = qb_map.get(row['Quality'], "qb-av")
 
                 html += f"""      <tr>
-        <td style="color:var(--muted)">{row_num}</td>
+        <td style="color:#a07850">{row_num}</td>
         <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
         <td><div class="pv">${row['Price']:,.2f}</div></td>
         <td><span class="rt {rtag_cls}">{row['Rating']}</span></td>
@@ -799,8 +822,14 @@ class SP500CompleteAnalyzer:
         <td><div class="rv" style="color:{rsi_color}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
         <td style="color:{macd_color};font-weight:600">{row['MACD']}</td>
         <td class="{dn_cls}">{row['Upside']:+.1f}%</td>
-        <td><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
-        <td><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold)">${row['Stop_Loss']:,.2f}</div><div class="sl2">+{row['SL_Percentage']:.1f}%</div></td>
+        <td>
+          <div class="t1">${row['Target_1']:,.2f}</div>
+          <div class="t2">T2: ${row['Target_2']:,.2f}</div>
+        </td>
+        <td>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">${row['Stop_Loss']:,.2f}</div>
+          <div class="sl2">+{row['SL_Percentage']:.1f}%</div>
+        </td>
         <td class="rrv" style="color:{rr_color}">{rr:.1f}×</td>
         <td style="color:{beta_color};font-size:11px">{row['Beta']:.2f}</td>
         <td style="color:{pe_color};font-size:11px">{pe_display}</td>
