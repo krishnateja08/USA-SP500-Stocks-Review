@@ -203,6 +203,16 @@
     padding:14px; font-size:10px; color:var(--muted); letter-spacing:1px;
   }
   footer strong { color:var(--accent2); }
+  /* ── LIVE CLOCK ── */
+  .live-clock-wrap {
+    display:flex; flex-direction:column; align-items:center;
+    padding:6px 16px; border-left:1px solid var(--border2);
+    min-width:120px;
+  }
+  .lc-label { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .lc-time  { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }
+  .lc-date  { font-family:'JetBrains Mono',monospace; font-size:9px;  color:var(--muted); margin-top:1px; }
+  .lc-last  { font-size:8px; color:var(--accent2); margin-top:3px; letter-spacing:0.5px; }
 
   /* ── MOBILE ── */
   @media(max-width:900px) {
@@ -241,7 +251,12 @@
     </div>
     <div class="h-meta">
       <div class="hm"><div class="hm-l">Date</div><div class="hm-v" style="color:var(--gold)">25 Feb 2026</div></div>
-      <div class="hm"><div class="hm-l">Time (EST)</div><div class="hm-v" style="color:var(--green)">10:43 PM</div></div>
+      <div class="live-clock-wrap">
+        <div class="lc-label">TIME</div>
+        <div class="lc-time" id="liveClock">--:-- --</div>
+        <div class="lc-date" id="liveDate">25 Feb 2026</div>
+        <div class="lc-last">Report: 25 Feb 2026 10:53 PM EST</div>
+      </div>
       <div class="hm"><div class="hm-l">Session</div><div class="hm-v" style="color:var(--green)">▲ EVENING</div></div>
       <div class="hm"><div class="hm-l">Next Update</div><div class="hm-v" style="color:var(--accent2)">9:30 AM (Next Day)</div></div>
     </div>
@@ -384,50 +399,6 @@
       <tr>
         <td style="color:#a07850;font-size:11px">3</td>
         <td>
-          <div class="sn">Johnson & Johnson</div>
-          <div class="ss">JNJ</div>
-          <div class="sec">Healthcare</div>
-        </td>
-        <td><div class="pv">$245.17</div></td>
-        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
-        <td>
-          <div class="scn" style="color:#2dd4bf">74</div>
-          <div class="scb" style="background:#14b8a6"></div>
-        </td>
-        <td class="up">+3.0%</td>
-        <td>
-          <span class="ts ts-real">📍 Real S/R</span>
-          <div class="t1">$252.63</div>
-          <div class="t2">T2: $262.74</div>
-        </td>
-        <td>
-          <div class="sl1">$232.91</div>
-          <div class="sl2">-5.0%</div>
-          <span class="sb sb-beta">🔒 Beta Cap</span>
-        </td>
-        <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">$3.73</div>
-          <div style="font-size:8px;color:var(--muted)">1.5% · 1.0×</div>
-        </td>
-        <td><span class="sdist-far">17.9%</span></td>
-        <td>
-          <div class="rv" style="color:#93c5fd">69</div>
-          <div class="rsb">Neutral</div>
-        </td>
-        <td><div class="rv adx-strong">36</div><div class="rsb">Strong</div></td>
-        <td><div class="rv vol-norm">0.8×</div><div class="rsb">Avg Vol</div></td>
-        <td class="rrv" style="color:#f87171">0.6×</td>
-        <td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600">-0.8%</td>
-        <td style="color:#4ade80;font-size:11px">0.35</td>
-        <td style="color:#4ade80;font-size:11px">22.3</td>
-        <td style="color:#4ade80;font-size:11px">211.00%</td>
-        <td><span class="ab ab-b">Buy</span></td>
-        <td><div class="earn">14 Apr 2026</div></td>
-        <td><span class="qb qb-gd">Good</span></td>
-      </tr>
-      <tr>
-        <td style="color:#a07850;font-size:11px">4</td>
-        <td>
           <div class="sn">Micron Technology</div>
           <div class="ss">MU</div>
           <div class="sec">Technology</div>
@@ -470,7 +441,7 @@
         <td><span class="qb qb-gd">Good</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">5</td>
+        <td style="color:#a07850;font-size:11px">4</td>
         <td>
           <div class="sn">Procter & Gamble</div>
           <div class="ss">PG</div>
@@ -514,7 +485,7 @@
         <td><span class="qb qb-av">Average</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">6</td>
+        <td style="color:#a07850;font-size:11px">5</td>
         <td>
           <div class="sn">Lam Research</div>
           <div class="ss">LRCX</div>
@@ -558,7 +529,7 @@
         <td><span class="qb qb-gd">Good</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">7</td>
+        <td style="color:#a07850;font-size:11px">6</td>
         <td>
           <div class="sn">Verizon</div>
           <div class="ss">VZ</div>
@@ -602,7 +573,7 @@
         <td><span class="qb qb-av">Average</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">8</td>
+        <td style="color:#a07850;font-size:11px">7</td>
         <td>
           <div class="sn">Broadcom</div>
           <div class="ss">AVGO</div>
@@ -646,7 +617,7 @@
         <td><span class="qb qb-gd">Good</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">9</td>
+        <td style="color:#a07850;font-size:11px">8</td>
         <td>
           <div class="sn">AbbVie</div>
           <div class="ss">ABBV</div>
@@ -690,7 +661,7 @@
         <td><span class="qb qb-av">Average</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">10</td>
+        <td style="color:#a07850;font-size:11px">9</td>
         <td>
           <div class="sn">McDonald's</div>
           <div class="ss">MCD</div>
@@ -734,7 +705,7 @@
         <td><span class="qb qb-av">Average</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">11</td>
+        <td style="color:#a07850;font-size:11px">10</td>
         <td>
           <div class="sn">GE Aerospace</div>
           <div class="ss">GE</div>
@@ -778,7 +749,7 @@
         <td><span class="qb qb-av">Average</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">12</td>
+        <td style="color:#a07850;font-size:11px">11</td>
         <td>
           <div class="sn">Coca-Cola Company</div>
           <div class="ss">KO</div>
@@ -822,7 +793,7 @@
         <td><span class="qb qb-po">Poor</span></td>
       </tr>
       <tr>
-        <td style="color:#a07850;font-size:11px">13</td>
+        <td style="color:#a07850;font-size:11px">12</td>
         <td>
           <div class="sn">Applied Materials</div>
           <div class="ss">AMAT</div>
@@ -863,6 +834,50 @@
         <td style="color:#4ade80;font-size:11px">47.00%</td>
         <td><span class="ab ab-b">Buy</span></td>
         <td><div class="earn">14 May 2026</div></td>
+        <td><span class="qb qb-gd">Good</span></td>
+      </tr>
+      <tr>
+        <td style="color:#a07850;font-size:11px">13</td>
+        <td>
+          <div class="sn">Johnson & Johnson</div>
+          <div class="ss">JNJ</div>
+          <div class="sec">Healthcare</div>
+        </td>
+        <td><div class="pv">$245.17</div></td>
+        <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
+        <td>
+          <div class="scn" style="color:#2dd4bf">66</div>
+          <div class="scb" style="background:#14b8a6"></div>
+        </td>
+        <td class="up">+3.0%</td>
+        <td>
+          <span class="ts ts-real">📍 Real S/R</span>
+          <div class="t1">$252.61</div>
+          <div class="t2">T2: $262.71</div>
+        </td>
+        <td>
+          <div class="sl1">$232.91</div>
+          <div class="sl2">-5.0%</div>
+          <span class="sb sb-beta">🔒 Beta Cap</span>
+        </td>
+        <td>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">$3.72</div>
+          <div style="font-size:8px;color:var(--muted)">1.5% · 1.0×</div>
+        </td>
+        <td><span class="sdist-far">18.3%</span></td>
+        <td>
+          <div class="rv" style="color:#f87171">71</div>
+          <div class="rsb">Overbought</div>
+        </td>
+        <td><div class="rv adx-strong">36</div><div class="rsb">Strong</div></td>
+        <td><div class="rv vol-norm">0.8×</div><div class="rsb">Avg Vol</div></td>
+        <td class="rrv" style="color:#f87171">0.6×</td>
+        <td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600">-0.8%</td>
+        <td style="color:#4ade80;font-size:11px">0.35</td>
+        <td style="color:#4ade80;font-size:11px">22.3</td>
+        <td style="color:#4ade80;font-size:11px">211.00%</td>
+        <td><span class="ab ab-b">Buy</span></td>
+        <td><div class="earn">14 Apr 2026</div></td>
         <td><span class="qb qb-gd">Good</span></td>
       </tr>
       <tr>
@@ -1361,4 +1376,19 @@
   · 12M S/R · ATR Stops · Sector · ADX · Vol · Earnings v5
   · Next Update: <strong>9:30 AM (Next Day) EST</strong> · 25 Feb 2026
 </footer>
+<script>
+function updateClock() {
+  var now = new Date();
+  var est = new Date(now.toLocaleString('en-US', {timeZone:'America/New_York'}));
+  var h = est.getHours(), m = est.getMinutes(), s = est.getSeconds();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  var pad = n => String(n).padStart(2,'0');
+  document.getElementById('liveClock').textContent = pad(h)+':'+pad(m)+' '+ampm+' EST';
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('liveDate').textContent = pad(est.getDate())+' '+months[est.getMonth()]+' '+est.getFullYear();
+}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
 </body></html>

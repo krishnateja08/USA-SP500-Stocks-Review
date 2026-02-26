@@ -813,6 +813,16 @@ class SP500CompleteAnalyzer:
     padding:14px; font-size:10px; color:var(--muted); letter-spacing:1px;
   }}
   footer strong {{ color:var(--accent2); }}
+  /* ── LIVE CLOCK ── */
+  .live-clock-wrap {{
+    display:flex; flex-direction:column; align-items:center;
+    padding:6px 16px; border-left:1px solid var(--border2);
+    min-width:120px;
+  }}
+  .lc-label {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
+  .lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }}
+  .lc-date  {{ font-family:'JetBrains Mono',monospace; font-size:9px;  color:var(--muted); margin-top:1px; }}
+  .lc-last  {{ font-size:8px; color:var(--accent2); margin-top:3px; letter-spacing:0.5px; }}
 
   /* ── MOBILE ── */
   @media(max-width:900px) {{
@@ -851,7 +861,12 @@ class SP500CompleteAnalyzer:
     </div>
     <div class="h-meta">
       <div class="hm"><div class="hm-l">Date</div><div class="hm-v" style="color:var(--gold)">{now.strftime('%d %b %Y')}</div></div>
-      <div class="hm"><div class="hm-l">Time (EST)</div><div class="hm-v" style="color:var(--green)">{now.strftime('%I:%M %p')}</div></div>
+      <div class="live-clock-wrap">
+        <div class="lc-label">TIME</div>
+        <div class="lc-time" id="liveClock">--:-- --</div>
+        <div class="lc-date" id="liveDate">{now.strftime('%d %b %Y')}</div>
+        <div class="lc-last">Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      </div>
       <div class="hm"><div class="hm-l">Session</div><div class="hm-v" style="color:var(--green)">▲ {time_of_day.upper()}</div></div>
       <div class="hm"><div class="hm-l">Next Update</div><div class="hm-v" style="color:var(--accent2)">{next_update}</div></div>
     </div>
@@ -1117,6 +1132,21 @@ class SP500CompleteAnalyzer:
   · 12M S/R · ATR Stops · Sector · ADX · Vol · Earnings v5
   · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
 </footer>
+<script>
+function updateClock() {{
+  var now = new Date();
+  var est = new Date(now.toLocaleString('en-US', {{timeZone:'America/New_York'}}));
+  var h = est.getHours(), m = est.getMinutes(), s = est.getSeconds();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  var pad = n => String(n).padStart(2,'0');
+  document.getElementById('liveClock').textContent = pad(h)+':'+pad(m)+' '+ampm+' EST';
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('liveDate').textContent = pad(est.getDate())+' '+months[est.getMonth()]+' '+est.getFullYear();
+}}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
 </body></html>"""
         return html
 
