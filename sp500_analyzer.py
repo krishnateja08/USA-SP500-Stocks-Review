@@ -154,7 +154,32 @@ class SP500CompleteAnalyzer:
         except Exception:
             pass
         return "N/A"
-
+    def fetch_index_data(self):
+    """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
+    indices = {
+        'DJI': '^DJI',
+        'NDX': '^NDX',
+        'SPX': '^GSPC',
+    }
+    result = {}
+    for label, sym in indices.items():
+        try:
+            d     = yf.Ticker(sym).history(period='2d')
+            price = d['Close'].iloc[-1]
+            prev  = d['Close'].iloc[-2]
+            chg   = price - prev
+            pct   = chg / prev * 100
+            arrow = '▲' if chg >= 0 else '▼'
+            cls   = 'up' if chg >= 0 else 'dn'
+            sign  = '+' if chg >= 0 else ''
+            result[label] = {
+                'price': f"{price:,.2f}",
+                'chg':   f"{arrow} {sign}{pct:.2f}%",
+                'cls':   cls,
+            }
+        except Exception:
+            result[label] = {'price': 'N/A', 'chg': '—', 'cls': ''}
+    return result
     # =========================================================================
     #  RESISTANCE & SUPPORT
     # =========================================================================
@@ -511,6 +536,7 @@ class SP500CompleteAnalyzer:
         top_buys, top_sells = self.get_top_recommendations()
 
         now         = self.get_est_time()
+        idx_data    = self.fetch_index_data()
         time_of_day = "Morning" if now.hour < 12 else "Evening"
         next_update = "4:30 PM" if now.hour < 12 else "9:30 AM (Next Day)"
 
@@ -771,20 +797,20 @@ class SP500CompleteAnalyzer:
     <div class="idx-strip">
       <div class="idx-item">
         <span class="idx-name">DJI</span>
-        <span class="idx-price" id="idxDJI">—</span>
-        <span class="idx-chg" id="idxDJIchg">—</span>
+        <span class="idx-price">{idx_data['DJI']['price']}</span>
+        <span class="idx-chg {idx_data['DJI']['cls']}">{idx_data['DJI']['chg']}</span>
       </div>
       <div class="idx-sep"></div>
       <div class="idx-item">
         <span class="idx-name">NDX</span>
-        <span class="idx-price" id="idxNDX">—</span>
-        <span class="idx-chg" id="idxNDXchg">—</span>
+        <span class="idx-price">{idx_data['NDX']['price']}</span>
+        <span class="idx-chg {idx_data['NDX']['cls']}">{idx_data['NDX']['chg']}</span>
       </div>
       <div class="idx-sep"></div>
       <div class="idx-item">
         <span class="idx-name">SPX</span>
-        <span class="idx-price" id="idxSPX">—</span>
-        <span class="idx-chg" id="idxSPXchg">—</span>
+        <span class="idx-price">{idx_data['SPX']['price']}</span>
+        <span class="idx-chg {idx_data['SPX']['cls']}">{idx_data['SPX']['chg']}</span>
       </div>
     </div>
 
@@ -1075,37 +1101,6 @@ function updateClock() {{
 }}
 updateClock();
 setInterval(updateClock, 1000);
-
-/* ── DJI / NDX / SPX LIVE PRICES ── */
-async function fetchIndices() {{
-  var indices = [
-    {{ sym:'^DJI',  priceId:'idxDJI',  chgId:'idxDJIchg'  }},
-    {{ sym:'^NDX',  priceId:'idxNDX',  chgId:'idxNDXchg'  }},
-    {{ sym:'^GSPC', priceId:'idxSPX',  chgId:'idxSPXchg'  }},
-  ];
-  for (var idx of indices) {{
-    try {{
-      var r    = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + idx.sym + '?interval=1d&range=2d', {{cache:'no-store'}});
-      var d    = await r.json();
-      var meta = d.chart.result[0].meta;
-      var price = meta.regularMarketPrice;
-      var prev  = meta.chartPreviousClose;
-      var chg   = price - prev;
-      var pct   = (chg / prev * 100);
-      var sign  = chg >= 0 ? '+' : '';
-      var cls   = chg >= 0 ? 'up' : 'dn';
-      var arrow = chg >= 0 ? '▲' : '▼';
-      document.getElementById(idx.priceId).textContent = price.toLocaleString('en-US', {{minimumFractionDigits:2, maximumFractionDigits:2}});
-      var el = document.getElementById(idx.chgId);
-      el.textContent = arrow + ' ' + sign + pct.toFixed(2) + '%';
-      el.className   = 'idx-chg ' + cls;
-    }} catch(e) {{
-      console.warn('Index fetch failed:', idx.sym, e);
-    }}
-  }}
-}}
-fetchIndices();
-setInterval(fetchIndices, 60000);
 </script>
 
 </body></html>"""
