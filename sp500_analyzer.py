@@ -2,16 +2,19 @@
 S&P 500 COMPLETE STOCK ANALYZER
 Technical + Fundamental Analysis with Email Delivery
 Theme: Sunset Warm
-VERSION 4: 12-Month S/R Lookback + Round Number Levels + 52W High as Resistance
-         + ATR-Based Stop Loss Near Real S/R Zones
-         + Dynamic Target Promotion
-         + Relaxed Filters
+VERSION 5:
+  - Full width + mobile responsive layout
+  - NEW columns: Sector, Vol/Avg, ADX, Analyst Consensus,
+                 Support Distance %, Earnings Date
+  - 12-Month S/R lookback + round numbers + 52W levels
+  - ATR-Based Stop Loss Near Real S/R Zones
+  - Dynamic Target Promotion
 """
 
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 import pytz
 import warnings
 import smtplib
@@ -82,8 +85,7 @@ class SP500CompleteAnalyzer:
     #  UTILITY
     # =========================================================================
     def get_est_time(self):
-        est = pytz.timezone('US/Eastern')
-        return datetime.now(est)
+        return datetime.now(pytz.timezone('US/Eastern'))
 
     def calculate_rsi(self, prices, period=14):
         delta = prices.diff()
@@ -100,128 +102,145 @@ class SP500CompleteAnalyzer:
         return macd.iloc[-1], signal.iloc[-1]
 
     def calculate_atr(self, df, period=14):
+        high  = df['High']
+        low   = df['Low']
+        close = df['Close']
+        tr    = pd.concat([high - low,
+                           abs(high - close.shift(1)),
+                           abs(low  - close.shift(1))], axis=1).max(axis=1)
+        return round(tr.ewm(alpha=1 / period, adjust=False).mean().iloc[-1], 2)
+
+    # =========================================================================
+    #  NEW: ADX — Average Directional Index (trend strength 0-100)
+    # =========================================================================
+    def calculate_adx(self, df, period=14):
         """
-        ATR = Average True Range using Wilder's smoothing.
-        True Range = max(High-Low, |High-PrevClose|, |Low-PrevClose|)
-        Represents the stock's normal daily movement in $ terms.
+        ADX measures trend STRENGTH (not direction).
+        < 20 = weak / sideways
+        20-25 = emerging trend
+        25-40 = strong trend
+        > 40  = very strong trend
         """
         high  = df['High']
         low   = df['Low']
         close = df['Close']
-        tr1   = high - low
-        tr2   = abs(high - close.shift(1))
-        tr3   = abs(low  - close.shift(1))
-        true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        atr = true_range.ewm(alpha=1 / period, adjust=False).mean()
-        return round(atr.iloc[-1], 2)
+
+        plus_dm  = high.diff()
+        minus_dm = low.diff().abs()
+        plus_dm[plus_dm < 0]   = 0
+        minus_dm[minus_dm < 0] = 0
+        plus_dm[plus_dm < minus_dm]  = 0
+        minus_dm[minus_dm < plus_dm] = 0
+
+        tr = pd.concat([high - low,
+                        abs(high - close.shift(1)),
+                        abs(low  - close.shift(1))], axis=1).max(axis=1)
+
+        atr14      = tr.ewm(alpha=1/period, adjust=False).mean()
+        plus_di    = 100 * (plus_dm.ewm(alpha=1/period, adjust=False).mean() / atr14)
+        minus_di   = 100 * (minus_dm.ewm(alpha=1/period, adjust=False).mean() / atr14)
+        dx         = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
+        adx        = dx.ewm(alpha=1/period, adjust=False).mean()
+        return round(adx.iloc[-1], 1)
+
+    # =========================================================================
+    #  NEW: Volume vs 20-day Average
+    # =========================================================================
+    def calculate_volume_ratio(self, df):
+        """
+        Returns today's volume as a multiple of the 20-day average.
+        > 1.5x = high conviction move
+        < 0.7x = low volume / weak signal
+        """
+        avg_vol = df['Volume'].tail(20).mean()
+        if avg_vol == 0:
+            return 1.0
+        return round(df['Volume'].iloc[-1] / avg_vol, 2)
+
+    # =========================================================================
+    #  NEW: Earnings Date
+    # =========================================================================
+    def get_earnings_date(self, info):
+        """
+        Returns next earnings date as a formatted string.
+        Tries earningsTimestamp first, then earningsDate calendar.
+        """
+        try:
+            ts = info.get('earningsTimestamp') or \
+                 info.get('earningsTimestampStart') or \
+                 info.get('earningsDate')
+            if ts:
+                if isinstance(ts, (list, tuple)):
+                    ts = ts[0]
+                if isinstance(ts, (int, float)):
+                    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+                    return dt.strftime('%d %b %Y')
+                if hasattr(ts, 'strftime'):
+                    return ts.strftime('%d %b %Y')
+        except Exception:
+            pass
+        return "N/A"
 
     # =========================================================================
     #  IMPROVED RESISTANCE — 12 months + 52W high + round numbers
     # =========================================================================
     def find_resistance_levels(self, df, current_price, num_levels=5):
-        """
-        Multi-source resistance detection:
-          Source 1 — Swing highs from last 6 months
-          Source 2 — Swing highs from last 12 months (extended lookback)
-          Source 3 — 52-week high (always a key resistance)
-          Source 4 — Psychological round number levels above price
-
-        All sources are pooled, de-duped, clustered within 1.5%,
-        then filtered to only levels ABOVE current price, nearest first.
-        This ensures we almost always find 2+ real levels (Real S/R badge).
-        """
         window      = 5
         swing_highs = []
 
-        # ── Source 1: Last 6 months ──────────────────────────────────────────
-        highs_6m = df.tail(180)['High'].values
-        for i in range(window, len(highs_6m) - window):
-            if highs_6m[i] > max(highs_6m[i - window:i]) and \
-               highs_6m[i] > max(highs_6m[i + 1:i + window + 1]):
-                swing_highs.append(highs_6m[i])
+        for src_days in [180, 252]:
+            highs = df.tail(src_days)['High'].values
+            for i in range(window, len(highs) - window):
+                if highs[i] > max(highs[i-window:i]) and \
+                   highs[i] > max(highs[i+1:i+window+1]):
+                    swing_highs.append(highs[i])
 
-        # ── Source 2: Last 12 months (full year) ─────────────────────────────
-        highs_12m = df.tail(252)['High'].values
-        for i in range(window, len(highs_12m) - window):
-            if highs_12m[i] > max(highs_12m[i - window:i]) and \
-               highs_12m[i] > max(highs_12m[i + 1:i + window + 1]):
-                swing_highs.append(highs_12m[i])
-
-        # ── Source 3: 52-week high is always a resistance level ───────────────
         high_52w = df['High'].tail(252).max()
         if high_52w > current_price * 1.005:
             swing_highs.append(high_52w)
 
-        # ── Source 4: Psychological round number levels ───────────────────────
-        # Round numbers (e.g. $100, $150, $200, $250) act as natural
-        # resistance because traders cluster orders at these levels.
-        # We calculate the right magnitude based on stock price.
         magnitude = 10 ** (len(str(int(current_price))) - 2)
-        step      = magnitude * 5   # e.g. $5 steps for $50 stock, $50 steps for $500 stock
+        step      = magnitude * 5
         level     = current_price
-        for _ in range(20):         # check next 20 round levels
+        for _ in range(20):
             level += step
-            if level <= current_price * 1.30:   # only within 30% above price
+            if level <= current_price * 1.30:
                 swing_highs.append(level)
 
         if not swing_highs:
             return []
 
-        # ── Cluster nearby levels within 1.5% ────────────────────────────────
         swing_highs = sorted(set([round(h, 2) for h in swing_highs]))
         clusters, cluster = [], [swing_highs[0]]
-        for level in swing_highs[1:]:
-            if (level - cluster[-1]) / cluster[-1] < 0.015:
-                cluster.append(level)
+        for lv in swing_highs[1:]:
+            if (lv - cluster[-1]) / cluster[-1] < 0.015:
+                cluster.append(lv)
             else:
-                clusters.append(cluster)
-                cluster = [level]
+                clusters.append(cluster); cluster = [lv]
         clusters.append(cluster)
 
-        resistance_levels = [
-            {'level': round(sum(c) / len(c), 2), 'strength': len(c)}
-            for c in clusters
-            if sum(c) / len(c) > current_price * 1.005
-        ]
-
-        return sorted(resistance_levels, key=lambda x: x['level'])[:num_levels]
+        res = [{'level': round(sum(c)/len(c), 2), 'strength': len(c)}
+               for c in clusters if sum(c)/len(c) > current_price * 1.005]
+        return sorted(res, key=lambda x: x['level'])[:num_levels]
 
     # =========================================================================
     #  IMPROVED SUPPORT — 12 months + 52W low + round numbers
     # =========================================================================
     def find_support_levels(self, df, current_price, num_levels=5):
-        """
-        Multi-source support detection:
-          Source 1 — Swing lows from last 6 months
-          Source 2 — Swing lows from last 12 months (extended lookback)
-          Source 3 — 52-week low (always a key support)
-          Source 4 — Psychological round number levels below price
-
-        All sources pooled, clustered, filtered to levels BELOW price.
-        """
         window     = 5
         swing_lows = []
 
-        # ── Source 1: Last 6 months ──────────────────────────────────────────
-        lows_6m = df.tail(180)['Low'].values
-        for i in range(window, len(lows_6m) - window):
-            if lows_6m[i] < min(lows_6m[i - window:i]) and \
-               lows_6m[i] < min(lows_6m[i + 1:i + window + 1]):
-                swing_lows.append(lows_6m[i])
+        for src_days in [180, 252]:
+            lows = df.tail(src_days)['Low'].values
+            for i in range(window, len(lows) - window):
+                if lows[i] < min(lows[i-window:i]) and \
+                   lows[i] < min(lows[i+1:i+window+1]):
+                    swing_lows.append(lows[i])
 
-        # ── Source 2: Last 12 months ──────────────────────────────────────────
-        lows_12m = df.tail(252)['Low'].values
-        for i in range(window, len(lows_12m) - window):
-            if lows_12m[i] < min(lows_12m[i - window:i]) and \
-               lows_12m[i] < min(lows_12m[i + 1:i + window + 1]):
-                swing_lows.append(lows_12m[i])
-
-        # ── Source 3: 52-week low is always a support level ──────────────────
         low_52w = df['Low'].tail(252).min()
         if low_52w < current_price * 0.995:
             swing_lows.append(low_52w)
 
-        # ── Source 4: Psychological round number levels ───────────────────────
         magnitude = 10 ** (len(str(int(current_price))) - 2)
         step      = magnitude * 5
         level     = current_price
@@ -233,70 +252,52 @@ class SP500CompleteAnalyzer:
         if not swing_lows:
             return []
 
-        # ── Cluster nearby levels within 1.5% ────────────────────────────────
         swing_lows = sorted(set([round(l, 2) for l in swing_lows]))
         clusters, cluster = [], [swing_lows[0]]
-        for level in swing_lows[1:]:
-            if (level - cluster[-1]) / cluster[-1] < 0.015:
-                cluster.append(level)
+        for lv in swing_lows[1:]:
+            if (lv - cluster[-1]) / cluster[-1] < 0.015:
+                cluster.append(lv)
             else:
-                clusters.append(cluster)
-                cluster = [level]
+                clusters.append(cluster); cluster = [lv]
         clusters.append(cluster)
 
-        support_levels = [
-            {'level': round(sum(c) / len(c), 2), 'strength': len(c)}
-            for c in clusters
-            if sum(c) / len(c) < current_price * 0.995
-        ]
-
-        return sorted(support_levels, key=lambda x: x['level'], reverse=True)[:num_levels]
+        sup = [{'level': round(sum(c)/len(c), 2), 'strength': len(c)}
+               for c in clusters if sum(c)/len(c) < current_price * 0.995]
+        return sorted(sup, key=lambda x: x['level'], reverse=True)[:num_levels]
 
     # =========================================================================
-    #  DYNAMIC TARGET ASSIGNMENT
+    #  DYNAMIC TARGETS
     # =========================================================================
     def calculate_dynamic_targets(self, current_price, resistance_levels,
                                    support_levels, target_price, atr):
-        """
-        Assign T1 and T2 from real resistance levels above current price.
-        With 12-month lookback + round numbers, we should almost always
-        find 2+ levels → "Real S/R Levels" badge.
-
-        Also enforces 2×ATR minimum distance for T1 (meaningful upside).
-        """
-        valid         = [r['level'] for r in resistance_levels
-                         if r['level'] > current_price * 1.005]
-        targets_hit   = 0
-        min_target    = current_price + (atr * 2)
+        valid      = [r['level'] for r in resistance_levels
+                      if r['level'] > current_price * 1.005]
+        min_target = current_price + (atr * 2)
+        targets_hit = 0
 
         if len(valid) >= 2:
-            t1            = valid[0]
-            t2            = valid[1]
+            t1, t2        = valid[0], valid[1]
             target_status = "Real S/R Levels"
         elif len(valid) == 1:
-            t1            = valid[0]
-            t2            = round(target_price, 2) \
-                            if target_price and target_price > t1 * 1.01 \
-                            else round(t1 * 1.04, 2)
+            t1 = valid[0]
+            t2 = round(target_price, 2) if target_price and target_price > t1 * 1.01 \
+                 else round(t1 * 1.04, 2)
             target_status = "Partial Real Levels"
         else:
-            if target_price and target_price > current_price * 1.005:
-                t1 = round(target_price, 2)
-            else:
-                t1 = round(current_price * 1.03, 2)
+            t1 = round(target_price, 2) if target_price and target_price > current_price * 1.005 \
+                 else round(current_price * 1.03, 2)
             t2            = round(t1 * 1.04, 2)
             target_status = "ATH Zone — Projected"
 
-        # Enforce 2×ATR minimum — push T1 out if too close
         if t1 < min_target:
             t1            = round(min_target, 2)
             t2            = round(t1 * 1.04, 2)
-            target_status += " (ATR Adjusted)"
+            target_status += " (ATR Adj)"
 
         return round(t1, 2), round(t2, 2), targets_hit, target_status
 
     # =========================================================================
-    #  FUNDAMENTAL SCORE (0–100)
+    #  FUNDAMENTAL SCORE
     # =========================================================================
     def get_fundamental_score(self, info):
         score = 0
@@ -304,51 +305,51 @@ class SP500CompleteAnalyzer:
         pb    = info.get('priceToBook', 0)
         peg   = info.get('pegRatio', 0)
 
-        if pe  and 0 < pe < 25:        score += 10
-        elif pe  and 25 <= pe < 35:    score += 5
-        if pb  and 0 < pb < 3:         score += 5
-        elif pb  and 3 <= pb < 5:      score += 3
-        if peg and 0 < peg < 1:        score += 10
-        elif peg and 1 <= peg < 2:     score += 5
+        if pe  and 0 < pe < 25:      score += 10
+        elif pe  and 25 <= pe < 35:  score += 5
+        if pb  and 0 < pb < 3:       score += 5
+        elif pb  and 3 <= pb < 5:    score += 3
+        if peg and 0 < peg < 1:      score += 10
+        elif peg and 1 <= peg < 2:   score += 5
 
-        roe           = info.get('returnOnEquity', 0)
-        roa           = info.get('returnOnAssets', 0)
-        profit_margin = info.get('profitMargins', 0)
+        roe = info.get('returnOnEquity', 0)
+        roa = info.get('returnOnAssets', 0)
+        pm  = info.get('profitMargins', 0)
 
-        if roe and roe > 0.15:                       score += 10
-        elif roe and roe > 0.10:                     score += 5
-        if roa and roa > 0.05:                       score += 5
-        elif roa and roa > 0.02:                     score += 3
-        if profit_margin and profit_margin > 0.10:   score += 10
-        elif profit_margin and profit_margin > 0.05: score += 5
+        if roe and roe > 0.15:   score += 10
+        elif roe and roe > 0.10: score += 5
+        if roa and roa > 0.05:   score += 5
+        elif roa and roa > 0.02: score += 3
+        if pm  and pm  > 0.10:   score += 10
+        elif pm  and pm  > 0.05: score += 5
 
-        revenue_growth  = info.get('revenueGrowth', 0)
-        earnings_growth = info.get('earningsGrowth', 0)
+        rg = info.get('revenueGrowth', 0)
+        eg = info.get('earningsGrowth', 0)
 
-        if revenue_growth and revenue_growth > 0.15:     score += 10
-        elif revenue_growth and revenue_growth > 0.10:   score += 7
-        elif revenue_growth and revenue_growth > 0.05:   score += 5
-        if earnings_growth and earnings_growth > 0.15:   score += 10
-        elif earnings_growth and earnings_growth > 0.10: score += 7
-        elif earnings_growth and earnings_growth > 0.05: score += 5
+        if rg and rg > 0.15:   score += 10
+        elif rg and rg > 0.10: score += 7
+        elif rg and rg > 0.05: score += 5
+        if eg and eg > 0.15:   score += 10
+        elif eg and eg > 0.10: score += 7
+        elif eg and eg > 0.05: score += 5
 
-        debt_to_equity = info.get('debtToEquity', 0)
-        current_ratio  = info.get('currentRatio', 0)
-        free_cashflow  = info.get('freeCashflow', 0)
+        de = info.get('debtToEquity', 0)
+        cr = info.get('currentRatio', 0)
+        fc = info.get('freeCashflow', 0)
 
-        if debt_to_equity is not None:
-            if debt_to_equity < 50:    score += 10
-            elif debt_to_equity < 100: score += 5
+        if de is not None:
+            if de < 50:   score += 10
+            elif de < 100: score += 5
         else:
             score += 5
-        if current_ratio and current_ratio > 1.5:   score += 10
-        elif current_ratio and current_ratio > 1.0: score += 5
-        if free_cashflow and free_cashflow > 0:     score += 5
+        if cr and cr > 1.5:  score += 10
+        elif cr and cr > 1.0: score += 5
+        if fc and fc > 0:    score += 5
 
         return min(score, 100)
 
     # =========================================================================
-    #  MAIN STOCK ANALYSIS
+    #  MAIN ANALYSIS
     # =========================================================================
     def analyze_stock(self, symbol, name):
         try:
@@ -361,22 +362,20 @@ class SP500CompleteAnalyzer:
 
             current_price = df['Close'].iloc[-1]
 
-            # ── Moving Averages ───────────────────────────────────────────────
-            sma_20  = df['Close'].rolling(window=20).mean().iloc[-1]
-            sma_50  = df['Close'].rolling(window=50).mean().iloc[-1]
-            sma_200 = df['Close'].rolling(window=200).mean().iloc[-1]
+            sma_20  = df['Close'].rolling(20).mean().iloc[-1]
+            sma_50  = df['Close'].rolling(50).mean().iloc[-1]
+            sma_200 = df['Close'].rolling(200).mean().iloc[-1]
 
-            # ── Indicators ────────────────────────────────────────────────────
             rsi          = self.calculate_rsi(df['Close'])
             macd, signal = self.calculate_macd(df['Close'])
             atr          = self.calculate_atr(df)
             atr_pct      = round((atr / current_price) * 100, 2)
+            adx          = self.calculate_adx(df)
+            vol_ratio    = self.calculate_volume_ratio(df)
 
-            # ── 52-week range ──────────────────────────────────────────────────
             high_52w = df['High'].tail(252).max()
             low_52w  = df['Low'].tail(252).min()
 
-            # ── Real S/R — 12 months + 52W + round numbers ────────────────────
             resistance_levels = self.find_resistance_levels(df, current_price)
             support_levels    = self.find_support_levels(df, current_price)
 
@@ -385,7 +384,9 @@ class SP500CompleteAnalyzer:
             nearest_support    = support_levels[0]['level'] if support_levels \
                                  else df.tail(60)['Low'].quantile(0.10)
 
-            # ── Technical Score (-6 to +6) ────────────────────────────────────
+            # Support distance %
+            support_dist_pct = round(((current_price - nearest_support) / current_price) * 100, 2)
+
             tech_score = 0
             tech_score += 1 if current_price > sma_20  else -1
             tech_score += 1 if current_price > sma_50  else -1
@@ -403,7 +404,11 @@ class SP500CompleteAnalyzer:
             else:
                 tech_score -= 1;  macd_signal = "Bearish"
 
-            # ── Fundamental data ───────────────────────────────────────────────
+            # ADX bonus
+            if adx > 25:
+                tech_score = min(tech_score + 1, 6)
+
+            # ── Fundamental data ──────────────────────────────────────────────
             pe_ratio         = info.get('trailingPE', info.get('forwardPE', 0))
             pb_ratio         = info.get('priceToBook', 0)
             peg_ratio        = info.get('pegRatio', 0)
@@ -421,9 +426,18 @@ class SP500CompleteAnalyzer:
             beta             = info.get('beta', 1.0)
             target_price     = info.get('targetMeanPrice', None)
 
+            # NEW fields
+            sector           = info.get('sector', 'N/A')
+            analyst_key      = info.get('recommendationKey', 'N/A')
+            analyst_map      = {
+                'strongBuy': 'Strong Buy', 'buy': 'Buy',
+                'hold': 'Hold', 'sell': 'Sell', 'strongSell': 'Strong Sell'
+            }
+            analyst_label    = analyst_map.get(analyst_key, analyst_key.title() if analyst_key else 'N/A')
+            earnings_date    = self.get_earnings_date(info)
+
             fund_score = self.get_fundamental_score(info)
 
-            # ── Combined score & rating ────────────────────────────────────────
             tech_score_normalized = ((tech_score + 6) / 12) * 100
             combined_score        = (tech_score_normalized * 0.5) + (fund_score * 0.5)
 
@@ -438,7 +452,6 @@ class SP500CompleteAnalyzer:
             else:
                 rating = "⭐ STRONG SELL";         recommendation = "STRONG SELL"
 
-            # ── Beta → ATR multiplier + max stop % ────────────────────────────
             stock_beta = beta if beta else 1.0
             if stock_beta < 0.8:
                 atr_multiplier = 1.0;  max_sl_pct = 5.0
@@ -449,46 +462,37 @@ class SP500CompleteAnalyzer:
             else:
                 atr_multiplier = 2.0;  max_sl_pct = 12.0
 
-            # ═════════════════════════════════════════════════════════════════
-            #  ATR STOP LOSS NEAR S/R ZONE
-            # ═════════════════════════════════════════════════════════════════
             if recommendation in ["STRONG BUY", "BUY"]:
-
-                # ATR stop: below support by ATR × multiplier
                 atr_stop       = nearest_support - (atr * atr_multiplier)
                 min_allowed_sl = current_price * (1 - max_sl_pct / 100)
                 stop_loss      = max(atr_stop, min_allowed_sl)
                 sl_percentage  = ((current_price - stop_loss) / current_price) * 100
                 stop_type      = "ATR Stop" if atr_stop >= min_allowed_sl else "Beta Cap"
 
-                # Dynamic targets from real resistance
                 target_1, target_2, targets_hit, target_status = \
                     self.calculate_dynamic_targets(
                         current_price, resistance_levels,
-                        support_levels, target_price, atr
-                    )
+                        support_levels, target_price, atr)
 
-                # Downgrade to HOLD if T1 already hit
                 if target_1 <= current_price * 1.005:
-                    recommendation = "HOLD"
-                    rating         = "⭐⭐⭐ HOLD"
+                    recommendation = "HOLD"; rating = "⭐⭐⭐ HOLD"
 
                 upside = ((target_1 - current_price) / current_price) * 100
 
-            else:   # SELL / STRONG SELL
+            else:
                 atr_stop       = nearest_resistance + (atr * atr_multiplier)
                 max_allowed_sl = current_price * (1 + max_sl_pct / 100)
                 stop_loss      = min(atr_stop, max_allowed_sl)
                 sl_percentage  = ((stop_loss - current_price) / current_price) * 100
                 stop_type      = "ATR Stop" if atr_stop <= max_allowed_sl else "Beta Cap"
 
-                valid_supports = [s['level'] for s in support_levels
-                                  if s['level'] < current_price * 0.995]
-                if len(valid_supports) >= 2:
-                    target_1 = valid_supports[0];  target_2 = valid_supports[1]
+                valid_sups = [s['level'] for s in support_levels
+                              if s['level'] < current_price * 0.995]
+                if len(valid_sups) >= 2:
+                    target_1, target_2 = valid_sups[0], valid_sups[1]
                     target_status = "Real S/R Levels"
-                elif len(valid_supports) == 1:
-                    target_1 = valid_supports[0];  target_2 = round(target_1 * 0.96, 2)
+                elif len(valid_sups) == 1:
+                    target_1 = valid_sups[0]; target_2 = round(target_1 * 0.96, 2)
                     target_status = "Partial Real Levels"
                 else:
                     target_1 = round(current_price * 0.96, 2)
@@ -498,39 +502,28 @@ class SP500CompleteAnalyzer:
                 targets_hit = 0
                 upside      = ((current_price - target_1) / current_price) * 100
 
-            # ── Risk : Reward ──────────────────────────────────────────────────
             risk        = abs(current_price - stop_loss)
             reward      = abs(target_1 - current_price)
             risk_reward = round(reward / risk, 2) if risk > 0 else 0
 
-            # ── Quality ────────────────────────────────────────────────────────
             if fund_score >= 80:   quality = "Excellent"
             elif fund_score >= 60: quality = "Good"
             elif fund_score >= 40: quality = "Average"
             else:                  quality = "Poor"
 
             return {
-                'Symbol': symbol, 'Name': name,
-                'Price':  round(current_price, 2),
-
-                'RSI':             round(rsi, 2),
-                'RSI_Signal':      rsi_signal,
-                'MACD':            macd_signal,
-                'SMA_20':          round(sma_20, 2),
-                'SMA_50':          round(sma_50, 2),
-                'SMA_200':         round(sma_200, 2),
-                'Support':         round(nearest_support, 2),
-                'Resistance':      round(nearest_resistance, 2),
-                '52W_High':        round(high_52w, 2),
-                '52W_Low':         round(low_52w, 2),
-                'Tech_Score':      tech_score,
-                'Tech_Score_Norm': round(tech_score_normalized, 1),
-
-                'ATR':            atr,
-                'ATR_Pct':        atr_pct,
-                'ATR_Multiplier': atr_multiplier,
-                'Stop_Type':      stop_type,
-
+                'Symbol': symbol, 'Name': name, 'Price': round(current_price, 2),
+                'Sector': sector,
+                'RSI': round(rsi, 2), 'RSI_Signal': rsi_signal,
+                'MACD': macd_signal,
+                'ADX': adx,
+                'Vol_Ratio': vol_ratio,
+                'SMA_20': round(sma_20, 2), 'SMA_50': round(sma_50, 2), 'SMA_200': round(sma_200, 2),
+                'Support': round(nearest_support, 2), 'Resistance': round(nearest_resistance, 2),
+                'Support_Dist_Pct': support_dist_pct,
+                '52W_High': round(high_52w, 2), '52W_Low': round(low_52w, 2),
+                'Tech_Score': tech_score, 'Tech_Score_Norm': round(tech_score_normalized, 1),
+                'ATR': atr, 'ATR_Pct': atr_pct, 'ATR_Multiplier': atr_multiplier, 'Stop_Type': stop_type,
                 'PE_Ratio':         round(pe_ratio, 2)           if pe_ratio else 0,
                 'PB_Ratio':         round(pb_ratio, 2)           if pb_ratio else 0,
                 'PEG_Ratio':        round(peg_ratio, 2)          if peg_ratio else 0,
@@ -546,22 +539,16 @@ class SP500CompleteAnalyzer:
                 'Current_Ratio':    round(current_ratio, 2)     if current_ratio else 0,
                 'Market_Cap':       round(market_cap / 1e9, 2)  if market_cap else 0,
                 'Beta':             round(beta, 2)               if beta else 1.0,
-                'Fund_Score':       round(fund_score, 1),
-                'Quality':          quality,
-
-                'Combined_Score':  round(combined_score, 1),
-                'Rating':          rating,
-                'Recommendation':  recommendation,
-
-                'Stop_Loss':     round(stop_loss, 2),
-                'SL_Percentage': round(sl_percentage, 2),
-                'Target_1':      round(target_1, 2),
-                'Target_2':      round(target_2, 2),
-                'Target_Price':  round(target_price, 2) if target_price else 0,
-                'Upside':        round(upside, 2),
-                'Risk_Reward':   risk_reward,
-                'Targets_Hit':   targets_hit,
-                'Target_Status': target_status,
+                'Fund_Score':       round(fund_score, 1), 'Quality': quality,
+                'Combined_Score':   round(combined_score, 1),
+                'Rating': rating, 'Recommendation': recommendation,
+                'Stop_Loss': round(stop_loss, 2), 'SL_Percentage': round(sl_percentage, 2),
+                'Target_1': round(target_1, 2), 'Target_2': round(target_2, 2),
+                'Target_Price': round(target_price, 2) if target_price else 0,
+                'Upside': round(upside, 2), 'Risk_Reward': risk_reward,
+                'Targets_Hit': targets_hit, 'Target_Status': target_status,
+                'Analyst': analyst_label,
+                'Earnings_Date': earnings_date,
             }
 
         except Exception:
@@ -572,14 +559,14 @@ class SP500CompleteAnalyzer:
     # =========================================================================
     def analyze_all_stocks(self):
         print(f"🔍 Analyzing {len(self.sp500_stocks)} stocks...")
-        print("⏳ This will take approximately 2-3 minutes...\n")
+        print("⏳ ~2-3 minutes...\n")
         for idx, (symbol, name) in enumerate(self.sp500_stocks.items(), 1):
             result = self.analyze_stock(symbol, name)
             if result:
                 self.results.append(result)
             if idx % 10 == 0:
                 print(f"  [{idx}/{len(self.sp500_stocks)}] {name}")
-        print(f"\n✅ Analysis complete: {len(self.results)} stocks analyzed\n")
+        print(f"\n✅ {len(self.results)} stocks analyzed\n")
 
     # =========================================================================
     #  TOP RECOMMENDATIONS
@@ -587,34 +574,25 @@ class SP500CompleteAnalyzer:
     def get_top_recommendations(self):
         df = pd.DataFrame(self.results)
 
-        # ── BUY ──
         all_buys = df[df['Recommendation'].isin(['STRONG BUY', 'BUY'])]
-        print(f"\n📊 Filter Debug — BUY:")
-        print(f"   Total BUY rated:       {len(all_buys)}")
+        print(f"\n📊 BUY Filter Debug:")
         f1 = all_buys[all_buys['Upside'] > 0.5]
-        print(f"   After Upside > 0.5%:   {len(f1)}")
         f2 = f1[f1['Risk_Reward'] >= 0.5]
-        print(f"   After R:R >= 0.5:      {len(f2)}")
         f3 = f2[f2['Target_1'] > f2['Price']]
-        print(f"   After Target > Price:  {len(f3)}  ← final pool")
+        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} final")
         top_buys = f3.nlargest(20, 'Combined_Score')
 
-        # ── SELL ──
         all_sells = df[df['Recommendation'].isin(['STRONG SELL', 'SELL'])]
-        print(f"\n📊 Filter Debug — SELL:")
-        print(f"   Total SELL rated:      {len(all_sells)}")
         s1 = all_sells[all_sells['Upside'] > 0.5]
-        print(f"   After Downside > 0.5%: {len(s1)}")
         s2 = s1[s1['Risk_Reward'] >= 0.5]
-        print(f"   After R:R >= 0.5:      {len(s2)}")
         s3 = s2[s2['Target_1'] < s2['Price']]
-        print(f"   After Target < Price:  {len(s3)}  ← final pool\n")
+        print(f"   SELL: {len(all_sells)} → {len(s3)} final\n")
         top_sells = s3.nsmallest(20, 'Combined_Score')
 
         return top_buys, top_sells
 
     # =========================================================================
-    #  HTML REPORT — Sunset Warm Theme
+    #  HTML — Full Width + Mobile Responsive
     # =========================================================================
     def generate_email_html(self):
         df = pd.DataFrame(self.results)
@@ -634,144 +612,304 @@ class SP500CompleteAnalyzer:
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Top US Market Influencers — {time_of_day} Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{{
+  :root {{
     --bg:#0f0a05; --bg2:#160d05; --card:#1d1108; --card2:#241508;
     --accent:#ff6b2b; --accent2:#ff8c55;
     --green:#22c55e; --red:#ef4444; --blue:#60a5fa;
-    --gold:#f59e0b; --teal:#2dd4bf;
+    --gold:#f59e0b; --teal:#2dd4bf; --purple:#a78bfa;
     --text:#f5ddb8; --text2:#fff8ee;
-    --sym:#ffb366; --t2-price:#ffd080; --muted:#a07850;
+    --sym:#ffb366; --t2c:#ffd080; --muted:#a07850;
     --border:#3d2010; --border2:#4d2a14;
   }}
-  *{{ margin:0; padding:0; box-sizing:border-box; }}
-  body{{
+  *, *::before, *::after {{ margin:0; padding:0; box-sizing:border-box; }}
+
+  body {{
     background:var(--bg); color:var(--text);
     font-family:'Plus Jakarta Sans',sans-serif;
-    min-height:100vh; font-size:14px;
+    font-size:13px; line-height:1.4;
     background-image:
-      radial-gradient(ellipse at 0% 0%,rgba(255,107,43,0.08) 0%,transparent 50%),
-      radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.05) 0%,transparent 40%);
+      radial-gradient(ellipse at 0% 0%,rgba(255,107,43,0.07) 0%,transparent 50%),
+      radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.04) 0%,transparent 40%);
   }}
-  header{{ background:linear-gradient(180deg,#1a0e06,var(--bg2)); border-bottom:2px solid var(--accent); box-shadow:0 2px 20px rgba(255,107,43,0.15); }}
-  .h-top{{ max-width:1420px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:15px 28px; gap:20px; flex-wrap:wrap; }}
-  .brand{{ display:flex; align-items:center; gap:12px; }}
-  .brand-icon{{ width:38px; height:38px; background:linear-gradient(135deg,var(--accent),var(--gold)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }}
-  .brand-t{{ font-size:clamp(13px,2vw,19px); font-weight:800; color:var(--text2); }}
-  .brand-s{{ font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }}
-  .h-right{{ display:flex; gap:0; flex-wrap:wrap; }}
-  .hr{{ padding:8px 16px; border-left:1px solid var(--border2); text-align:right; }}
-  .hr-l{{ font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
-  .hr-v{{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; margin-top:2px; }}
-  .ticker{{ background:#0a0602; border-bottom:1px solid var(--border); overflow:hidden; }}
-  .ticker-inner{{ max-width:1420px; margin:0 auto; display:flex; padding:0 28px; overflow-x:auto; }}
-  .ti{{ display:flex; gap:6px; align-items:center; padding:6px 12px; border-right:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap; }}
-  .ti-s{{ color:var(--accent2); font-weight:700; }} .ti-p{{ color:var(--text2); }}
-  .ti-u{{ color:var(--green); }} .ti-d{{ color:var(--red); }}
-  .kpi-band{{ background:var(--card); border-bottom:1px solid var(--border2); }}
-  .kpi-inner{{ max-width:1420px; margin:0 auto; display:grid; grid-template-columns:repeat(5,1fr); }}
-  .kc{{ padding:15px 20px; border-right:1px solid var(--border); text-align:center; }}
-  .kc:last-child{{ border-right:none; }}
-  .kn{{ font-size:30px; font-weight:800; line-height:1; }}
-  .kl{{ font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:4px; }}
-  .kbar{{ height:2px; border-radius:1px; margin:4px auto 0; width:40px; }}
-  .main{{ max-width:1420px; margin:0 auto; padding:24px 28px; }}
-  .sh{{ display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }}
-  .sh-icon{{ width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }}
-  .shi-buy{{ background:rgba(34,197,94,0.15); }} .shi-sell{{ background:rgba(239,68,68,0.15); }}
-  .sh-title{{ font-size:16px; font-weight:800; color:var(--text2); }}
-  .sh-divider{{ flex:1; height:1px; background:var(--border); min-width:20px; }}
-  .sh-count{{ font-size:10px; color:var(--muted); }}
-  .tbl-wrap{{ overflow-x:auto; border:1px solid var(--border2); border-radius:8px; margin-bottom:28px; background:var(--card); box-shadow:0 4px 24px rgba(0,0,0,0.3); -webkit-overflow-scrolling:touch; }}
-  table{{ width:100%; border-collapse:collapse; min-width:1000px; }}
-  th{{ font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#c8a060; padding:10px 12px; background:var(--card2); border-bottom:1px solid var(--border2); text-align:left; white-space:nowrap; }}
-  td{{ padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }}
-  tr:hover td{{ background:rgba(255,107,43,0.06); }}
-  tr:nth-child(even) td{{ background:rgba(29,17,8,0.5); }}
-  tr:last-child td{{ border-bottom:none; }}
-  .sn{{ font-size:14px; font-weight:700; color:var(--text2); }}
-  .ss{{ font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; color:var(--sym); letter-spacing:1px; margin-top:2px; }}
-  .pv{{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:600; color:var(--gold); }}
-  .rt{{ display:inline-block; font-size:9px; font-weight:700; padding:4px 9px; border-radius:4px; white-space:nowrap; letter-spacing:0.5px; }}
-  .rt-sb{{ background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.35); }}
-  .rt-b{{ background:rgba(96,165,250,0.15);  color:#93c5fd; border:1px solid rgba(96,165,250,0.35); }}
-  .rt-s{{ background:rgba(239,68,68,0.15);   color:#f87171; border:1px solid rgba(239,68,68,0.35); }}
-  .rt-ss{{ background:rgba(239,68,68,0.22);  color:#fca5a5; border:1px solid rgba(239,68,68,0.5); }}
-  .scn{{ font-size:22px; font-weight:800; }}
-  .scb{{ height:3px; border-radius:2px; margin-top:4px; width:40px; }}
-  .up{{ color:#4ade80; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }}
-  .dn{{ color:#f87171; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }}
-  .t1{{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--text2); }}
-  .t2{{ font-size:10px; font-weight:500; color:var(--t2-price); margin-top:2px; }}
-  .sl1{{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:#f87171; }}
-  .sl2{{ font-size:10px; color:var(--muted); margin-top:2px; }}
-  .rv{{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }}
-  .rsb{{ font-size:9px; color:var(--muted); }}
-  .rrv{{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }}
-  .qb{{ font-size:9px; font-weight:700; padding:3px 8px; border-radius:4px; }}
-  .qb-ex{{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
-  .qb-gd{{ background:rgba(96,165,250,0.15); color:#93c5fd; }}
-  .qb-av{{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
-  .qb-po{{ background:rgba(239,68,68,0.15);  color:#f87171; }}
-  .ts-badge{{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; letter-spacing:0.5px; display:inline-block; margin-bottom:3px; }}
-  .ts-pending{{ background:rgba(34,197,94,0.15);   color:#4ade80; }}
-  .ts-hit1{{   background:rgba(34,197,94,0.2);    color:#4ade80; }}
-  .ts-hit2{{   background:rgba(45,212,191,0.2);   color:#2dd4bf; }}
-  .ts-ath{{    background:rgba(96,165,250,0.15);  color:#93c5fd; }}
-  .ts-partial{{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
-  .atr-badge{{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; display:inline-block; margin-top:2px; }}
-  .atr-stop{{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
-  .beta-cap{{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
-  .disc{{ background:var(--card); border:1px solid var(--border2); border-left:3px solid var(--accent); padding:14px 18px; margin:20px 0; font-size:12px; color:var(--muted); line-height:1.7; }}
-  .disc strong{{ color:#f87171; }}
-  footer{{ background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2)); border-top:2px solid var(--accent); text-align:center; padding:18px; font-size:11px; color:var(--muted); letter-spacing:1px; }}
-  footer strong{{ color:var(--accent2); }}
-  @media(max-width:1200px){{ .kpi-inner{{ grid-template-columns:repeat(3,1fr); }} }}
-  @media(max-width:768px){{ .kpi-inner{{ grid-template-columns:repeat(2,1fr); }} .main{{ padding:14px; }} }}
+
+  /* ── HEADER ── */
+  header {{ background:linear-gradient(180deg,#1c0e06,var(--bg2)); border-bottom:2px solid var(--accent); }}
+  .h-top {{
+    width:100%; display:flex; align-items:center;
+    justify-content:space-between; padding:12px 16px;
+    gap:12px; flex-wrap:wrap;
+  }}
+  .brand {{ display:flex; align-items:center; gap:10px; min-width:0; }}
+  .brand-icon {{
+    width:36px; height:36px; flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--gold));
+    border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-size:17px;
+  }}
+  .brand-t {{ font-size:clamp(12px,1.8vw,17px); font-weight:800; color:var(--text2); white-space:nowrap; }}
+  .brand-s {{ font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }}
+  .h-meta {{ display:flex; flex-wrap:wrap; gap:0; }}
+  .hm {{ padding:6px 14px; border-left:1px solid var(--border2); text-align:right; }}
+  .hm-l {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
+  .hm-v {{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; margin-top:1px; }}
+
+  /* ── TICKER ── */
+  .ticker {{ background:#080502; border-bottom:1px solid var(--border); }}
+  .ticker-inner {{ display:flex; padding:0 16px; overflow-x:auto; scrollbar-width:none; }}
+  .ticker-inner::-webkit-scrollbar {{ display:none; }}
+  .ti {{
+    display:flex; gap:5px; align-items:center;
+    padding:5px 10px; border-right:1px solid var(--border);
+    font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap;
+  }}
+  .ti-s {{ color:var(--accent2); font-weight:700; }}
+  .ti-p {{ color:var(--text2); }}
+  .ti-u {{ color:var(--green); }}
+  .ti-d {{ color:var(--red); }}
+
+  /* ── KPI BAND ── */
+  .kpi-band {{ background:var(--card); border-bottom:1px solid var(--border2); }}
+  .kpi-inner {{
+    display:grid; grid-template-columns:repeat(5,1fr);
+    width:100%;
+  }}
+  .kc {{ padding:12px 10px; border-right:1px solid var(--border); text-align:center; }}
+  .kc:last-child {{ border-right:none; }}
+  .kn {{ font-size:clamp(20px,4vw,30px); font-weight:800; line-height:1; }}
+  .kl {{ font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:3px; }}
+  .kbar {{ height:2px; border-radius:1px; margin:3px auto 0; width:32px; }}
+
+  /* ── MAIN ── */
+  .main {{ width:100%; padding:12px 16px; }}
+
+  /* ── SECTION HEADER ── */
+  .sh {{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:10px; flex-wrap:wrap;
+  }}
+  .sh-icon {{
+    width:28px; height:28px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; flex-shrink:0;
+  }}
+  .shi-buy  {{ background:rgba(34,197,94,0.15); }}
+  .shi-sell {{ background:rgba(239,68,68,0.15); }}
+  .sh-title {{ font-size:15px; font-weight:800; color:var(--text2); }}
+  .sh-divider {{ flex:1; height:1px; background:var(--border); min-width:10px; }}
+  .sh-count {{ font-size:9px; color:var(--muted); white-space:nowrap; }}
+
+  /* ── TABLE WRAPPER ── */
+  .tbl-wrap {{
+    width:100%; overflow-x:auto;
+    border:1px solid var(--border2); border-radius:8px;
+    margin-bottom:20px; background:var(--card);
+    box-shadow:0 4px 24px rgba(0,0,0,0.3);
+    -webkit-overflow-scrolling:touch;
+  }}
+  table {{ width:100%; border-collapse:collapse; min-width:1100px; }}
+  th {{
+    font-size:8px; font-weight:700; letter-spacing:1.5px;
+    text-transform:uppercase; color:#c8a060;
+    padding:8px 9px; background:var(--card2);
+    border-bottom:1px solid var(--border2);
+    text-align:left; white-space:nowrap;
+  }}
+  td {{
+    padding:8px 9px; border-bottom:1px solid var(--border);
+    vertical-align:middle; white-space:nowrap;
+  }}
+  tr:hover td {{ background:rgba(255,107,43,0.05); }}
+  tr:nth-child(even) td {{ background:rgba(0,0,0,0.15); }}
+  tr:last-child td {{ border-bottom:none; }}
+
+  /* ── CELL COMPONENTS ── */
+  .sn {{ font-size:13px; font-weight:700; color:var(--text2); }}
+  .ss {{ font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:var(--sym); letter-spacing:1px; margin-top:2px; }}
+  .sec {{ font-size:8px; color:var(--muted); margin-top:2px; max-width:120px; overflow:hidden; text-overflow:ellipsis; }}
+  .pv {{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--gold); }}
+
+  .rt {{ display:inline-block; font-size:8px; font-weight:700; padding:3px 7px; border-radius:3px; white-space:nowrap; letter-spacing:0.5px; }}
+  .rt-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.3); }}
+  .rt-b  {{ background:rgba(96,165,250,0.15); color:#93c5fd; border:1px solid rgba(96,165,250,0.3); }}
+  .rt-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.3); }}
+  .rt-ss {{ background:rgba(239,68,68,0.22);  color:#fca5a5; border:1px solid rgba(239,68,68,0.4); }}
+
+  .scn {{ font-size:20px; font-weight:800; }}
+  .scb {{ height:3px; border-radius:2px; margin-top:3px; width:36px; }}
+
+  .up {{ color:#4ade80; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
+  .dn {{ color:#f87171; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
+
+  .t1 {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--text2); }}
+  .t2 {{ font-size:9px; color:var(--t2c); margin-top:1px; }}
+
+  .sl1 {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#f87171; }}
+  .sl2 {{ font-size:9px; color:var(--muted); margin-top:1px; }}
+
+  .rv  {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
+  .rsb {{ font-size:8px; color:var(--muted); }}
+  .rrv {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
+
+  .qb    {{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; }}
+  .qb-ex {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
+  .qb-gd {{ background:rgba(96,165,250,0.15); color:#93c5fd; }}
+  .qb-av {{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
+  .qb-po {{ background:rgba(239,68,68,0.15);  color:#f87171; }}
+
+  /* Target status badge */
+  .ts {{ font-size:7px; font-weight:700; padding:2px 5px; border-radius:3px; letter-spacing:0.5px; display:inline-block; margin-bottom:2px; }}
+  .ts-real    {{ background:rgba(34,197,94,0.15);   color:#4ade80; }}
+  .ts-partial {{ background:rgba(245,158,11,0.15);  color:#fbbf24; }}
+  .ts-ath     {{ background:rgba(96,165,250,0.15);  color:#93c5fd; }}
+  .ts-hit1    {{ background:rgba(34,197,94,0.2);    color:#4ade80; }}
+  .ts-hit2    {{ background:rgba(45,212,191,0.2);   color:#2dd4bf; }}
+
+  /* Stop type badge */
+  .sb {{ font-size:7px; font-weight:700; padding:2px 5px; border-radius:3px; display:inline-block; margin-top:2px; }}
+  .sb-atr  {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
+  .sb-beta {{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
+
+  /* Analyst badge */
+  .ab {{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; white-space:nowrap; }}
+  .ab-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
+  .ab-b  {{ background:rgba(96,165,250,0.15); color:#93c5fd; }}
+  .ab-h  {{ background:rgba(160,120,80,0.2);  color:#c8a060; }}
+  .ab-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; }}
+
+  /* ADX badge */
+  .adx-strong {{ color:#4ade80; font-weight:700; }}
+  .adx-mid    {{ color:#fbbf24; font-weight:600; }}
+  .adx-weak   {{ color:#a07850; }}
+
+  /* Vol badge */
+  .vol-high {{ color:#4ade80; font-weight:700; }}
+  .vol-norm {{ color:var(--text); }}
+  .vol-low  {{ color:#a07850; }}
+
+  /* Earnings date */
+  .earn {{ font-size:9px; color:var(--teal); font-family:'JetBrains Mono',monospace; }}
+
+  /* Support dist */
+  .sdist-close {{ color:#4ade80; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
+  .sdist-mid   {{ color:#fbbf24; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
+  .sdist-far   {{ color:#f87171; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
+
+  /* ── DISCLAIMER ── */
+  .disc {{
+    background:var(--card); border:1px solid var(--border2);
+    border-left:3px solid var(--accent); padding:12px 16px;
+    margin:16px 0; font-size:11px; color:var(--muted); line-height:1.7;
+  }}
+  .disc strong {{ color:#f87171; }}
+
+  /* ── FOOTER ── */
+  footer {{
+    background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2));
+    border-top:2px solid var(--accent); text-align:center;
+    padding:14px; font-size:10px; color:var(--muted); letter-spacing:1px;
+  }}
+  footer strong {{ color:var(--accent2); }}
+
+  /* ── MOBILE ── */
+  @media(max-width:900px) {{
+    .kpi-inner {{ grid-template-columns:repeat(3,1fr); }}
+    .hm:nth-child(n+4) {{ display:none; }}
+  }}
+  @media(max-width:600px) {{
+    .kpi-inner {{ grid-template-columns:repeat(2,1fr); }}
+    .brand-t {{ font-size:12px; }}
+    .hm:nth-child(n+3) {{ display:none; }}
+    .main {{ padding:8px; }}
+    .h-top {{ padding:10px 10px; }}
+    th {{ font-size:7px; padding:6px 7px; letter-spacing:0.5px; }}
+    td {{ padding:7px 7px; }}
+    .sn {{ font-size:12px; }}
+    .kn {{ font-size:18px; }}
+    .kl {{ font-size:7px; }}
+  }}
+  @media(max-width:400px) {{
+    .kpi-inner {{ grid-template-columns:repeat(2,1fr); }}
+    .kc:last-child {{ display:none; }}
+  }}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
   <div class="h-top">
     <div class="brand">
       <div class="brand-icon">🌅</div>
       <div>
         <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-        <div class="brand-s">12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental v4</div>
+        <div class="brand-s">12M S/R · ATR Stops · Tech &amp; Fundamental v5</div>
       </div>
     </div>
-    <div class="h-right">
-      <div class="hr"><div class="hr-l">Date</div><div class="hr-v" style="color:var(--gold)">{now.strftime('%d %b %Y')}</div></div>
-      <div class="hr"><div class="hr-l">Time</div><div class="hr-v" style="color:var(--green)">{now.strftime('%I:%M %p')} EST</div></div>
-      <div class="hr"><div class="hr-l">Session</div><div class="hr-v" style="color:var(--green)">▲ {time_of_day.upper()}</div></div>
-      <div class="hr"><div class="hr-l">Next</div><div class="hr-v" style="color:var(--accent2)">{next_update}</div></div>
+    <div class="h-meta">
+      <div class="hm"><div class="hm-l">Date</div><div class="hm-v" style="color:var(--gold)">{now.strftime('%d %b %Y')}</div></div>
+      <div class="hm"><div class="hm-l">Time (EST)</div><div class="hm-v" style="color:var(--green)">{now.strftime('%I:%M %p')}</div></div>
+      <div class="hm"><div class="hm-l">Session</div><div class="hm-v" style="color:var(--green)">▲ {time_of_day.upper()}</div></div>
+      <div class="hm"><div class="hm-l">Next Update</div><div class="hm-v" style="color:var(--accent2)">{next_update}</div></div>
     </div>
   </div>
   <div class="ticker"><div class="ticker-inner">
 """
-        for t in self.results[:7]:
+        for t in self.results[:8]:
             pct  = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
             cls  = "ti-u" if pct >= 0 else "ti-d"
             sign = "+" if pct >= 0 else ""
-            html += f'    <div class="ti"><span class="ti-s">{t["Symbol"]}</span><span class="ti-p">${t["Price"]:,.2f}</span><span class="{cls}">{sign}{pct:.1f}%</span></div>\n'
+            html += f'<div class="ti"><span class="ti-s">{t["Symbol"]}</span><span class="ti-p">${t["Price"]:,.2f}</span><span class="{cls}">{sign}{pct:.1f}%</span></div>'
 
         html += f"""  </div></div>
 </header>
 
-<div class="kpi-band"><div class="kpi-inner">
-  <div class="kc"><div class="kn" style="color:var(--accent2)">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
-  <div class="kc"><div class="kn" style="color:var(--green)">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
-  <div class="kc"><div class="kn" style="color:var(--teal)">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:var(--teal)"></div></div>
-  <div class="kc"><div class="kn" style="color:var(--red)">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:var(--red)"></div></div>
-  <div class="kc"><div class="kn" style="color:var(--blue)">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
-</div></div>
+<!-- KPI BAND -->
+<div class="kpi-band">
+  <div class="kpi-inner">
+    <div class="kc"><div class="kn" style="color:var(--accent2)">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
+    <div class="kc"><div class="kn" style="color:var(--green)">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
+    <div class="kc"><div class="kn" style="color:var(--teal)">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:var(--teal)"></div></div>
+    <div class="kc"><div class="kn" style="color:var(--red)">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:var(--red)"></div></div>
+    <div class="kc"><div class="kn" style="color:var(--blue)">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
+  </div>
+</div>
 
+<!-- MAIN -->
 <div class="main">
 """
+
+        # ── helpers ──────────────────────────────────────────────────────────
+        def analyst_badge(label):
+            m = {'Strong Buy':'ab-sb','Buy':'ab-b','Hold':'ab-h',
+                 'Sell':'ab-s','Strong Sell':'ab-s'}
+            cls = m.get(label, 'ab-h')
+            return f'<span class="ab {cls}">{label}</span>'
+
+        def adx_cell(v):
+            if v >= 30:   cls = "adx-strong"; lbl = "Strong"
+            elif v >= 20: cls = "adx-mid";    lbl = "Moderate"
+            else:         cls = "adx-weak";   lbl = "Weak"
+            return f'<div class="rv {cls}">{v:.0f}</div><div class="rsb">{lbl}</div>'
+
+        def vol_cell(v):
+            cls = "vol-high" if v >= 1.5 else ("vol-low" if v < 0.7 else "vol-norm")
+            lbl = "High Vol" if v >= 1.5 else ("Low Vol" if v < 0.7 else "Avg Vol")
+            return f'<div class="rv {cls}">{v:.1f}×</div><div class="rsb">{lbl}</div>'
+
+        def sdist_cell(v):
+            cls = "sdist-close" if v <= 3 else ("sdist-mid" if v <= 8 else "sdist-far")
+            return f'<span class="{cls}">{v:.1f}%</span>'
+
+        def target_badge(ts, th):
+            if th == 2:           return 'ts-hit2',   '✅ T1+T2 Hit'
+            elif th == 1:         return 'ts-hit1',   '✅ T1 Hit'
+            elif 'ATH' in ts:     return 'ts-ath',    '🚀 ATH Zone'
+            elif 'Partial' in ts: return 'ts-partial','⚡ Partial S/R'
+            else:                 return 'ts-real',   '📍 Real S/R'
 
         # ── BUY TABLE ─────────────────────────────────────────────────────────
         if not top_buys.empty:
@@ -779,14 +917,31 @@ class SP500CompleteAnalyzer:
     <div class="sh-icon shi-buy">▲</div>
     <span class="sh-title">Top 20 Buy Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
+    <span class="sh-count">12M S/R · ATR Stop · Sector · Vol · ADX · Earnings</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
-      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-      <th>Upside</th><th>Target (S/R)</th><th>Stop Loss</th>
-      <th>ATR</th><th>RSI</th><th>R:R</th>
-      <th>52W Hi%</th><th>Beta</th><th>P/E</th><th>Div%</th><th>Quality</th>
+      <th>#</th>
+      <th>Stock / Sector</th>
+      <th>Price</th>
+      <th>Rating</th>
+      <th>Score</th>
+      <th>Upside</th>
+      <th>Target (S/R)</th>
+      <th>Stop Loss</th>
+      <th>ATR</th>
+      <th>Sup Dist</th>
+      <th>RSI</th>
+      <th>ADX</th>
+      <th>Vol/Avg</th>
+      <th>R:R</th>
+      <th>52W Hi%</th>
+      <th>Beta</th>
+      <th>P/E</th>
+      <th>Div%</th>
+      <th>Analyst</th>
+      <th>Earnings</th>
+      <th>Quality</th>
     </tr></thead><tbody>
 """
             for i, (_, row) in enumerate(top_buys.iterrows(), 1):
@@ -805,46 +960,55 @@ class SP500CompleteAnalyzer:
                 div   = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
                 divc  = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
                 qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
-
-                ts = row.get('Target_Status', '')
-                th = row.get('Targets_Hit', 0)
-                if th == 2:           tbcls, tbtxt = "ts-hit2",   "✅ T1+T2 Hit"
-                elif th == 1:         tbcls, tbtxt = "ts-hit1",   "✅ T1 Hit"
-                elif "ATH" in ts:     tbcls, tbtxt = "ts-ath",    "🚀 ATH Zone"
-                elif "Partial" in ts: tbcls, tbtxt = "ts-partial","⚡ Partial S/R"
-                else:                 tbcls, tbtxt = "ts-pending","📍 Real S/R"
-
-                st    = row.get('Stop_Type', 'ATR Stop')
-                acls  = "atr-stop" if st == "ATR Stop" else "beta-cap"
-                albl  = f"{'📐' if st == 'ATR Stop' else '🔒'} {st}"
+                tbcls, tbtxt = target_badge(row.get('Target_Status',''), row.get('Targets_Hit',0))
+                st    = row.get('Stop_Type','ATR Stop')
+                scls  = "sb-atr" if st == "ATR Stop" else "sb-beta"
+                slbl  = f"{'📐' if st=='ATR Stop' else '🔒'} {st}"
+                sec   = row.get('Sector', 'N/A')
+                ed    = row.get('Earnings_Date', 'N/A')
 
                 html += f"""      <tr>
-        <td style="color:#a07850">{i}</td>
-        <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
+        <td style="color:#a07850;font-size:11px">{i}</td>
+        <td>
+          <div class="sn">{row['Name']}</div>
+          <div class="ss">{row['Symbol']}</div>
+          <div class="sec">{sec}</div>
+        </td>
         <td><div class="pv">${row['Price']:,.2f}</div></td>
         <td><span class="rt {rtag}">{row['Rating']}</span></td>
-        <td><div class="scn" style="color:{sc_c}">{row['Combined_Score']:.0f}</div><div class="scb" style="background:{sc_b}"></div></td>
+        <td>
+          <div class="scn" style="color:{sc_c}">{row['Combined_Score']:.0f}</div>
+          <div class="scb" style="background:{sc_b}"></div>
+        </td>
         <td class="{upcls}">{row['Upside']:+.1f}%</td>
         <td>
-          <span class="ts-badge {tbcls}">{tbtxt}</span>
+          <span class="ts {tbcls}">{tbtxt}</span>
           <div class="t1">${row['Target_1']:,.2f}</div>
           <div class="t2">T2: ${row['Target_2']:,.2f}</div>
         </td>
         <td>
           <div class="sl1">${row['Stop_Loss']:,.2f}</div>
           <div class="sl2">-{row['SL_Percentage']:.1f}%</div>
-          <span class="atr-badge {acls}">{albl}</span>
+          <span class="sb {scls}">{slbl}</span>
         </td>
         <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
-          <div style="font-size:9px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
+          <div style="font-size:8px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
         </td>
-        <td><div class="rv" style="color:{rsic}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
+        <td>{sdist_cell(row.get('Support_Dist_Pct', 0))}</td>
+        <td>
+          <div class="rv" style="color:{rsic}">{row['RSI']:.0f}</div>
+          <div class="rsb">{row['RSI_Signal']}</div>
+        </td>
+        <td>{adx_cell(row.get('ADX', 0))}</td>
+        <td>{vol_cell(row.get('Vol_Ratio', 1.0))}</td>
         <td class="rrv" style="color:{rrc}">{rr:.1f}×</td>
-        <td style="color:{w52c};font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">{w52:+.1f}%</td>
+        <td style="color:{w52c};font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600">{w52:+.1f}%</td>
         <td style="color:{betac};font-size:11px">{row['Beta']:.2f}</td>
         <td style="color:{pec};font-size:11px">{pe}</td>
-        <td style="color:{divc}">{div}</td>
+        <td style="color:{divc};font-size:11px">{div}</td>
+        <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
+        <td><div class="earn">{ed}</div></td>
         <td><span class="qb {qcls}">{row['Quality']}</span></td>
       </tr>
 """
@@ -856,13 +1020,29 @@ class SP500CompleteAnalyzer:
     <div class="sh-icon shi-sell">▼</div>
     <span class="sh-title">Top 20 Sell Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
+    <span class="sh-count">12M S/R · ATR Stop · Sector · Vol · ADX · Earnings</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
-      <th>#</th><th>Stock</th><th>Price</th><th>Rating</th><th>Score</th>
-      <th>RSI</th><th>MACD</th><th>Downside</th><th>Target (S/R)</th>
-      <th>Stop Loss</th><th>ATR</th><th>R:R</th><th>Beta</th><th>P/E</th><th>Quality</th>
+      <th>#</th>
+      <th>Stock / Sector</th>
+      <th>Price</th>
+      <th>Rating</th>
+      <th>Score</th>
+      <th>RSI</th>
+      <th>MACD</th>
+      <th>ADX</th>
+      <th>Downside</th>
+      <th>Target (S/R)</th>
+      <th>Stop Loss</th>
+      <th>ATR</th>
+      <th>Vol/Avg</th>
+      <th>R:R</th>
+      <th>Beta</th>
+      <th>P/E</th>
+      <th>Analyst</th>
+      <th>Earnings</th>
+      <th>Quality</th>
     </tr></thead><tbody>
 """
             for i, (_, row) in enumerate(top_sells.iterrows(), 1):
@@ -877,38 +1057,47 @@ class SP500CompleteAnalyzer:
                 pec   = "#a07850" if row['PE_Ratio'] <= 0 else ("#f87171" if row['PE_Ratio'] > 40 else ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80"))
                 qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
                 ts    = row.get('Target_Status','')
-                tbcls = "ts-pending"
-                tbtxt = "📍 Real S/R" if "Real" in ts else ("⚡ Partial S/R" if "Partial" in ts else "🔮 Projected")
+                tbcls, tbtxt = target_badge(ts, 0)
                 st    = row.get('Stop_Type','ATR Stop')
-                acls  = "atr-stop" if st == "ATR Stop" else "beta-cap"
-                albl  = f"{'📐' if st == 'ATR Stop' else '🔒'} {st}"
+                scls  = "sb-atr" if st == "ATR Stop" else "sb-beta"
+                slbl  = f"{'📐' if st=='ATR Stop' else '🔒'} {st}"
+                sec   = row.get('Sector', 'N/A')
+                ed    = row.get('Earnings_Date', 'N/A')
 
                 html += f"""      <tr>
-        <td style="color:#a07850">{i}</td>
-        <td><div class="sn">{row['Name']}</div><div class="ss">{row['Symbol']}</div></td>
+        <td style="color:#a07850;font-size:11px">{i}</td>
+        <td>
+          <div class="sn">{row['Name']}</div>
+          <div class="ss">{row['Symbol']}</div>
+          <div class="sec">{sec}</div>
+        </td>
         <td><div class="pv">${row['Price']:,.2f}</div></td>
         <td><span class="rt {rtag}">{row['Rating']}</span></td>
         <td><div class="scn" style="color:#f87171">{row['Combined_Score']:.0f}</div><div class="scb" style="background:#ef4444"></div></td>
         <td><div class="rv" style="color:{rsic}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
-        <td style="color:{mcdcl};font-weight:600">{row['MACD']}</td>
+        <td style="color:{mcdcl};font-weight:600;font-size:11px">{row['MACD']}</td>
+        <td>{adx_cell(row.get('ADX', 0))}</td>
         <td class="{dncls}">{row['Upside']:+.1f}%</td>
         <td>
-          <span class="ts-badge {tbcls}">{tbtxt}</span>
+          <span class="ts {tbcls}">{tbtxt}</span>
           <div class="t1">${row['Target_1']:,.2f}</div>
           <div class="t2">T2: ${row['Target_2']:,.2f}</div>
         </td>
         <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">${row['Stop_Loss']:,.2f}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#fbbf24">${row['Stop_Loss']:,.2f}</div>
           <div class="sl2">+{row['SL_Percentage']:.1f}%</div>
-          <span class="atr-badge {acls}">{albl}</span>
+          <span class="sb {scls}">{slbl}</span>
         </td>
         <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
-          <div style="font-size:9px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
+          <div style="font-size:8px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
         </td>
+        <td>{vol_cell(row.get('Vol_Ratio', 1.0))}</td>
         <td class="rrv" style="color:{rrc}">{rr:.1f}×</td>
         <td style="color:{betac};font-size:11px">{row['Beta']:.2f}</td>
         <td style="color:{pec};font-size:11px">{pe}</td>
+        <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
+        <td><div class="earn">{ed}</div></td>
         <td><span class="qb {qcls}">{row['Quality']}</span></td>
       </tr>
 """
@@ -916,8 +1105,8 @@ class SP500CompleteAnalyzer:
 
         html += f"""  <div class="disc">
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
-    Stop losses use ATR-based positioning near real 12-month swing S/R zones + psychological round levels.
-    Targets derived from 12-month swing highs/lows, 52-week extremes, and round number levels.
+    Stop losses are ATR-based near real 12-month S/R zones. Targets derived from swing highs/lows,
+    52-week extremes and round number levels. Earnings dates are estimates.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
@@ -925,7 +1114,7 @@ class SP500CompleteAnalyzer:
 
 <footer>
   <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-  · 12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental Analysis v4
+  · 12M S/R · ATR Stops · Sector · ADX · Vol · Earnings v5
   · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
 </footer>
 </body></html>"""
@@ -939,25 +1128,20 @@ class SP500CompleteAnalyzer:
             from_email = os.environ.get('GMAIL_USER')
             password   = os.environ.get('GMAIL_APP_PASSWORD')
             if not from_email or not password:
-                print("❌ Set GMAIL_USER and GMAIL_APP_PASSWORD env vars")
-                return False
+                print("❌ Set GMAIL_USER and GMAIL_APP_PASSWORD"); return False
             now = self.get_est_time()
             tod = "Morning" if now.hour < 12 else "Evening"
             msg = MIMEMultipart('alternative')
             msg['From']    = from_email
             msg['To']      = to_email
-            msg['Subject'] = f"🌅 US Market Report — {tod} {now.strftime('%d %b %Y')} · 12M S/R + ATR Stops"
+            msg['Subject'] = f"🌅 US Market Report v5 — {tod} {now.strftime('%d %b %Y')}"
             msg.attach(MIMEText(self.generate_email_html(), 'html'))
             srv = smtplib.SMTP('smtp.gmail.com', 587)
-            srv.starttls()
-            srv.login(from_email, password)
-            srv.send_message(msg)
-            srv.quit()
-            print(f"✅ Email sent to {to_email}")
-            return True
+            srv.starttls(); srv.login(from_email, password)
+            srv.send_message(msg); srv.quit()
+            print(f"✅ Email sent to {to_email}"); return True
         except Exception as e:
-            print(f"❌ Email error: {e}")
-            return False
+            print(f"❌ Email error: {e}"); return False
 
     # =========================================================================
     #  ENTRY
@@ -965,15 +1149,13 @@ class SP500CompleteAnalyzer:
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v4 — 12-Month S/R + ATR Stop Loss")
-        print(f"   Started: {now.strftime('%d %b %Y, %I:%M %p EST')}")
+        print("📊 S&P 500 ANALYZER v5 — Full Width + Mobile + New Columns")
+        print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
         if send_email_flag and recipient_email:
             self.send_email(recipient_email)
-        print("=" * 70)
-        print("✅ DONE")
-        print("=" * 70)
+        print("=" * 70); print("✅ DONE"); print("=" * 70)
 
 
 # =============================================================================
@@ -983,9 +1165,7 @@ def main():
     analyzer  = SP500CompleteAnalyzer()
     recipient = os.environ.get('RECIPIENT_EMAIL')
     analyzer.generate_complete_report(
-        send_email_flag=bool(recipient),
-        recipient_email=recipient
-    )
+        send_email_flag=bool(recipient), recipient_email=recipient)
 
 if __name__ == "__main__":
     analyzer = SP500CompleteAnalyzer()
