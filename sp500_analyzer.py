@@ -154,7 +154,7 @@ class SP500CompleteAnalyzer:
         except Exception:
             pass
         return "N/A"
-  def fetch_index_data(self):
+    def fetch_index_data(self):
         """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
         indices = {
             'DJI': '^DJI',
