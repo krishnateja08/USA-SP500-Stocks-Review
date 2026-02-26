@@ -2,11 +2,10 @@
 S&P 500 COMPLETE STOCK ANALYZER
 Technical + Fundamental Analysis with Email Delivery
 Theme: Sunset Warm
-VERSION 3: ATR-Based Stop Loss Near Real S/R Zones
+VERSION 4: 12-Month S/R Lookback + Round Number Levels + 52W High as Resistance
+         + ATR-Based Stop Loss Near Real S/R Zones
          + Dynamic Target Promotion
          + Relaxed Filters
-         + Stop Type Label (ATR Stop vs Beta Cap)
-         + 2×ATR Minimum Target Validation
 """
 
 import yfinance as yf
@@ -100,52 +99,76 @@ class SP500CompleteAnalyzer:
         signal = macd.ewm(span=9, adjust=False).mean()
         return macd.iloc[-1], signal.iloc[-1]
 
-    # =========================================================================
-    #  ATR — Average True Range (stock's daily volatility)
-    # =========================================================================
     def calculate_atr(self, df, period=14):
         """
-        ATR = average of the True Range over last N days.
+        ATR = Average True Range using Wilder's smoothing.
         True Range = max(High-Low, |High-PrevClose|, |Low-PrevClose|)
-        Tells us the stock's normal daily movement in $ terms.
-        Uses Wilder's exponential smoothing (industry standard).
+        Represents the stock's normal daily movement in $ terms.
         """
         high  = df['High']
         low   = df['Low']
         close = df['Close']
-
-        tr1 = high - low
-        tr2 = abs(high - close.shift(1))
-        tr3 = abs(low  - close.shift(1))
-
+        tr1   = high - low
+        tr2   = abs(high - close.shift(1))
+        tr3   = abs(low  - close.shift(1))
         true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
         atr = true_range.ewm(alpha=1 / period, adjust=False).mean()
         return round(atr.iloc[-1], 2)
 
     # =========================================================================
-    #  REAL SUPPORT & RESISTANCE FROM 6-MONTH PRICE ACTION
+    #  IMPROVED RESISTANCE — 12 months + 52W high + round numbers
     # =========================================================================
     def find_resistance_levels(self, df, current_price, num_levels=5):
         """
-        Swing high detection from last 6 months.
-        A swing high = candle whose High > 5 candles on both sides.
-        Nearby levels clustered within 1.5% → one zone.
-        Returns only levels ABOVE current price, nearest first.
-        """
-        data   = df.tail(180).copy()
-        highs  = data['High'].values
-        window = 5
+        Multi-source resistance detection:
+          Source 1 — Swing highs from last 6 months
+          Source 2 — Swing highs from last 12 months (extended lookback)
+          Source 3 — 52-week high (always a key resistance)
+          Source 4 — Psychological round number levels above price
 
+        All sources are pooled, de-duped, clustered within 1.5%,
+        then filtered to only levels ABOVE current price, nearest first.
+        This ensures we almost always find 2+ real levels (Real S/R badge).
+        """
+        window      = 5
         swing_highs = []
-        for i in range(window, len(highs) - window):
-            if highs[i] > max(highs[i - window:i]) and \
-               highs[i] > max(highs[i + 1:i + window + 1]):
-                swing_highs.append(highs[i])
+
+        # ── Source 1: Last 6 months ──────────────────────────────────────────
+        highs_6m = df.tail(180)['High'].values
+        for i in range(window, len(highs_6m) - window):
+            if highs_6m[i] > max(highs_6m[i - window:i]) and \
+               highs_6m[i] > max(highs_6m[i + 1:i + window + 1]):
+                swing_highs.append(highs_6m[i])
+
+        # ── Source 2: Last 12 months (full year) ─────────────────────────────
+        highs_12m = df.tail(252)['High'].values
+        for i in range(window, len(highs_12m) - window):
+            if highs_12m[i] > max(highs_12m[i - window:i]) and \
+               highs_12m[i] > max(highs_12m[i + 1:i + window + 1]):
+                swing_highs.append(highs_12m[i])
+
+        # ── Source 3: 52-week high is always a resistance level ───────────────
+        high_52w = df['High'].tail(252).max()
+        if high_52w > current_price * 1.005:
+            swing_highs.append(high_52w)
+
+        # ── Source 4: Psychological round number levels ───────────────────────
+        # Round numbers (e.g. $100, $150, $200, $250) act as natural
+        # resistance because traders cluster orders at these levels.
+        # We calculate the right magnitude based on stock price.
+        magnitude = 10 ** (len(str(int(current_price))) - 2)
+        step      = magnitude * 5   # e.g. $5 steps for $50 stock, $50 steps for $500 stock
+        level     = current_price
+        for _ in range(20):         # check next 20 round levels
+            level += step
+            if level <= current_price * 1.30:   # only within 30% above price
+                swing_highs.append(level)
 
         if not swing_highs:
             return []
 
-        swing_highs = sorted(swing_highs)
+        # ── Cluster nearby levels within 1.5% ────────────────────────────────
+        swing_highs = sorted(set([round(h, 2) for h in swing_highs]))
         clusters, cluster = [], [swing_highs[0]]
         for level in swing_highs[1:]:
             if (level - cluster[-1]) / cluster[-1] < 0.015:
@@ -160,27 +183,58 @@ class SP500CompleteAnalyzer:
             for c in clusters
             if sum(c) / len(c) > current_price * 1.005
         ]
+
         return sorted(resistance_levels, key=lambda x: x['level'])[:num_levels]
 
+    # =========================================================================
+    #  IMPROVED SUPPORT — 12 months + 52W low + round numbers
+    # =========================================================================
     def find_support_levels(self, df, current_price, num_levels=5):
         """
-        Swing low detection from last 6 months.
-        Mirror of find_resistance_levels but for lows BELOW price.
-        """
-        data   = df.tail(180).copy()
-        lows   = data['Low'].values
-        window = 5
+        Multi-source support detection:
+          Source 1 — Swing lows from last 6 months
+          Source 2 — Swing lows from last 12 months (extended lookback)
+          Source 3 — 52-week low (always a key support)
+          Source 4 — Psychological round number levels below price
 
+        All sources pooled, clustered, filtered to levels BELOW price.
+        """
+        window     = 5
         swing_lows = []
-        for i in range(window, len(lows) - window):
-            if lows[i] < min(lows[i - window:i]) and \
-               lows[i] < min(lows[i + 1:i + window + 1]):
-                swing_lows.append(lows[i])
+
+        # ── Source 1: Last 6 months ──────────────────────────────────────────
+        lows_6m = df.tail(180)['Low'].values
+        for i in range(window, len(lows_6m) - window):
+            if lows_6m[i] < min(lows_6m[i - window:i]) and \
+               lows_6m[i] < min(lows_6m[i + 1:i + window + 1]):
+                swing_lows.append(lows_6m[i])
+
+        # ── Source 2: Last 12 months ──────────────────────────────────────────
+        lows_12m = df.tail(252)['Low'].values
+        for i in range(window, len(lows_12m) - window):
+            if lows_12m[i] < min(lows_12m[i - window:i]) and \
+               lows_12m[i] < min(lows_12m[i + 1:i + window + 1]):
+                swing_lows.append(lows_12m[i])
+
+        # ── Source 3: 52-week low is always a support level ──────────────────
+        low_52w = df['Low'].tail(252).min()
+        if low_52w < current_price * 0.995:
+            swing_lows.append(low_52w)
+
+        # ── Source 4: Psychological round number levels ───────────────────────
+        magnitude = 10 ** (len(str(int(current_price))) - 2)
+        step      = magnitude * 5
+        level     = current_price
+        for _ in range(20):
+            level -= step
+            if level >= current_price * 0.70 and level > 0:
+                swing_lows.append(level)
 
         if not swing_lows:
             return []
 
-        swing_lows = sorted(swing_lows)
+        # ── Cluster nearby levels within 1.5% ────────────────────────────────
+        swing_lows = sorted(set([round(l, 2) for l in swing_lows]))
         clusters, cluster = [], [swing_lows[0]]
         for level in swing_lows[1:]:
             if (level - cluster[-1]) / cluster[-1] < 0.015:
@@ -195,52 +249,48 @@ class SP500CompleteAnalyzer:
             for c in clusters
             if sum(c) / len(c) < current_price * 0.995
         ]
+
         return sorted(support_levels, key=lambda x: x['level'], reverse=True)[:num_levels]
 
     # =========================================================================
-    #  DYNAMIC TARGET ASSIGNMENT FROM REAL RESISTANCE LEVELS
+    #  DYNAMIC TARGET ASSIGNMENT
     # =========================================================================
     def calculate_dynamic_targets(self, current_price, resistance_levels,
                                    support_levels, target_price, atr):
         """
         Assign T1 and T2 from real resistance levels above current price.
-        Also validates that T1 is at least 2×ATR away (meaningful upside).
+        With 12-month lookback + round numbers, we should almost always
+        find 2+ levels → "Real S/R Levels" badge.
 
-        Cases:
-          2+ real levels above  → T1 = nearest, T2 = next
-          1 real level above    → T1 = that level, T2 = analyst / +4%
-          0 real levels (ATH)   → T1 = analyst target / +3%, T2 = +6%
-
-        Always guarantees T1 > current_price + 2×ATR (minimum viable target).
+        Also enforces 2×ATR minimum distance for T1 (meaningful upside).
         """
-        valid = [r['level'] for r in resistance_levels
-                 if r['level'] > current_price * 1.005]
-
+        valid         = [r['level'] for r in resistance_levels
+                         if r['level'] > current_price * 1.005]
         targets_hit   = 0
-        min_target    = current_price + (atr * 2)  # 2×ATR minimum
+        min_target    = current_price + (atr * 2)
 
         if len(valid) >= 2:
-            t1 = valid[0]
-            t2 = valid[1]
+            t1            = valid[0]
+            t2            = valid[1]
             target_status = "Real S/R Levels"
         elif len(valid) == 1:
-            t1 = valid[0]
-            t2 = round(target_price, 2) if target_price and target_price > t1 * 1.01 \
-                 else round(t1 * 1.04, 2)
+            t1            = valid[0]
+            t2            = round(target_price, 2) \
+                            if target_price and target_price > t1 * 1.01 \
+                            else round(t1 * 1.04, 2)
             target_status = "Partial Real Levels"
         else:
-            # ATH zone
             if target_price and target_price > current_price * 1.005:
                 t1 = round(target_price, 2)
             else:
                 t1 = round(current_price * 1.03, 2)
-            t2 = round(t1 * 1.04, 2)
+            t2            = round(t1 * 1.04, 2)
             target_status = "ATH Zone — Projected"
 
-        # Enforce 2×ATR minimum — if T1 too close, push it out
+        # Enforce 2×ATR minimum — push T1 out if too close
         if t1 < min_target:
-            t1 = round(min_target, 2)
-            t2 = round(t1 * 1.04, 2)
+            t1            = round(min_target, 2)
+            t2            = round(t1 * 1.04, 2)
             target_status += " (ATR Adjusted)"
 
         return round(t1, 2), round(t2, 2), targets_hit, target_status
@@ -250,10 +300,9 @@ class SP500CompleteAnalyzer:
     # =========================================================================
     def get_fundamental_score(self, info):
         score = 0
-
-        pe  = info.get('trailingPE', info.get('forwardPE', 0))
-        pb  = info.get('priceToBook', 0)
-        peg = info.get('pegRatio', 0)
+        pe    = info.get('trailingPE', info.get('forwardPE', 0))
+        pb    = info.get('priceToBook', 0)
+        peg   = info.get('pegRatio', 0)
 
         if pe  and 0 < pe < 25:        score += 10
         elif pe  and 25 <= pe < 35:    score += 5
@@ -312,24 +361,22 @@ class SP500CompleteAnalyzer:
 
             current_price = df['Close'].iloc[-1]
 
-            # ── Moving Averages ──────────────────────────────────────────────
+            # ── Moving Averages ───────────────────────────────────────────────
             sma_20  = df['Close'].rolling(window=20).mean().iloc[-1]
             sma_50  = df['Close'].rolling(window=50).mean().iloc[-1]
             sma_200 = df['Close'].rolling(window=200).mean().iloc[-1]
 
-            # ── Indicators ───────────────────────────────────────────────────
+            # ── Indicators ────────────────────────────────────────────────────
             rsi          = self.calculate_rsi(df['Close'])
             macd, signal = self.calculate_macd(df['Close'])
+            atr          = self.calculate_atr(df)
+            atr_pct      = round((atr / current_price) * 100, 2)
 
-            # ── ATR — daily volatility in $ terms ────────────────────────────
-            atr     = self.calculate_atr(df)
-            atr_pct = round((atr / current_price) * 100, 2)
-
-            # ── 52-week range ────────────────────────────────────────────────
+            # ── 52-week range ──────────────────────────────────────────────────
             high_52w = df['High'].tail(252).max()
             low_52w  = df['Low'].tail(252).min()
 
-            # ── Real S/R from 6 months of price action ───────────────────────
+            # ── Real S/R — 12 months + 52W + round numbers ────────────────────
             resistance_levels = self.find_resistance_levels(df, current_price)
             support_levels    = self.find_support_levels(df, current_price)
 
@@ -338,12 +385,11 @@ class SP500CompleteAnalyzer:
             nearest_support    = support_levels[0]['level'] if support_levels \
                                  else df.tail(60)['Low'].quantile(0.10)
 
-            # ── Technical Score (-6 to +6) ───────────────────────────────────
+            # ── Technical Score (-6 to +6) ────────────────────────────────────
             tech_score = 0
-
-            tech_score += 1  if current_price > sma_20  else -1
-            tech_score += 1  if current_price > sma_50  else -1
-            tech_score += 2  if current_price > sma_200 else -2  # weighted
+            tech_score += 1 if current_price > sma_20  else -1
+            tech_score += 1 if current_price > sma_50  else -1
+            tech_score += 2 if current_price > sma_200 else -2
 
             if rsi < 30:
                 tech_score += 2;  rsi_signal = "Oversold"
@@ -357,7 +403,7 @@ class SP500CompleteAnalyzer:
             else:
                 tech_score -= 1;  macd_signal = "Bearish"
 
-            # ── Fundamental Data ─────────────────────────────────────────────
+            # ── Fundamental data ───────────────────────────────────────────────
             pe_ratio         = info.get('trailingPE', info.get('forwardPE', 0))
             pb_ratio         = info.get('priceToBook', 0)
             peg_ratio        = info.get('pegRatio', 0)
@@ -377,7 +423,7 @@ class SP500CompleteAnalyzer:
 
             fund_score = self.get_fundamental_score(info)
 
-            # ── Combined Score & Initial Rating ──────────────────────────────
+            # ── Combined score & rating ────────────────────────────────────────
             tech_score_normalized = ((tech_score + 6) / 12) * 100
             combined_score        = (tech_score_normalized * 0.5) + (fund_score * 0.5)
 
@@ -392,68 +438,50 @@ class SP500CompleteAnalyzer:
             else:
                 rating = "⭐ STRONG SELL";         recommendation = "STRONG SELL"
 
-            # ═════════════════════════════════════════════════════════════════
-            #  ATR-BASED STOP LOSS NEAR S/R ZONES
-            #  Beta determines the ATR multiplier AND the max loss cap.
-            # ═════════════════════════════════════════════════════════════════
+            # ── Beta → ATR multiplier + max stop % ────────────────────────────
             stock_beta = beta if beta else 1.0
-
             if stock_beta < 0.8:
-                atr_multiplier = 1.0;   max_sl_pct = 5.0
+                atr_multiplier = 1.0;  max_sl_pct = 5.0
             elif stock_beta < 1.2:
-                atr_multiplier = 1.2;   max_sl_pct = 7.0
+                atr_multiplier = 1.2;  max_sl_pct = 7.0
             elif stock_beta < 1.8:
-                atr_multiplier = 1.5;   max_sl_pct = 10.0
+                atr_multiplier = 1.5;  max_sl_pct = 10.0
             else:
-                atr_multiplier = 2.0;   max_sl_pct = 12.0
+                atr_multiplier = 2.0;  max_sl_pct = 12.0
 
-            # ── BUY Stop Loss ─────────────────────────────────────────────────
+            # ═════════════════════════════════════════════════════════════════
+            #  ATR STOP LOSS NEAR S/R ZONE
+            # ═════════════════════════════════════════════════════════════════
             if recommendation in ["STRONG BUY", "BUY"]:
 
-                # ATR stop: place below support by ATR × multiplier
-                # Logic: if price breaks support AND moves another full ATR,
-                #        the support is genuinely broken → exit
+                # ATR stop: below support by ATR × multiplier
                 atr_stop       = nearest_support - (atr * atr_multiplier)
-
-                # Safety cap: never risk more than max_sl_pct% of price
                 min_allowed_sl = current_price * (1 - max_sl_pct / 100)
-
-                # Use whichever is HIGHER (closer to price = tighter risk)
                 stop_loss      = max(atr_stop, min_allowed_sl)
                 sl_percentage  = ((current_price - stop_loss) / current_price) * 100
+                stop_type      = "ATR Stop" if atr_stop >= min_allowed_sl else "Beta Cap"
 
-                # Label which logic triggered
-                stop_type = "ATR Stop" if atr_stop >= min_allowed_sl else "Beta Cap"
-
-                # ── Dynamic targets from real resistance ──────────────────────
+                # Dynamic targets from real resistance
                 target_1, target_2, targets_hit, target_status = \
                     self.calculate_dynamic_targets(
                         current_price, resistance_levels,
                         support_levels, target_price, atr
                     )
 
-                # Validation: downgrade to HOLD if T1 already hit
+                # Downgrade to HOLD if T1 already hit
                 if target_1 <= current_price * 1.005:
                     recommendation = "HOLD"
                     rating         = "⭐⭐⭐ HOLD"
 
                 upside = ((target_1 - current_price) / current_price) * 100
 
-            # ── SELL Stop Loss ────────────────────────────────────────────────
-            else:
-                # ATR stop: place above resistance by ATR × multiplier
+            else:   # SELL / STRONG SELL
                 atr_stop       = nearest_resistance + (atr * atr_multiplier)
-
-                # Safety cap
                 max_allowed_sl = current_price * (1 + max_sl_pct / 100)
-
-                # Use whichever is LOWER (closer to price)
                 stop_loss      = min(atr_stop, max_allowed_sl)
                 sl_percentage  = ((stop_loss - current_price) / current_price) * 100
+                stop_type      = "ATR Stop" if atr_stop <= max_allowed_sl else "Beta Cap"
 
-                stop_type = "ATR Stop" if atr_stop <= max_allowed_sl else "Beta Cap"
-
-                # Targets = support levels below price
                 valid_supports = [s['level'] for s in support_levels
                                   if s['level'] < current_price * 0.995]
                 if len(valid_supports) >= 2:
@@ -470,23 +498,21 @@ class SP500CompleteAnalyzer:
                 targets_hit = 0
                 upside      = ((current_price - target_1) / current_price) * 100
 
-            # ── Risk : Reward ─────────────────────────────────────────────────
+            # ── Risk : Reward ──────────────────────────────────────────────────
             risk        = abs(current_price - stop_loss)
             reward      = abs(target_1 - current_price)
             risk_reward = round(reward / risk, 2) if risk > 0 else 0
 
-            # ── Quality ───────────────────────────────────────────────────────
+            # ── Quality ────────────────────────────────────────────────────────
             if fund_score >= 80:   quality = "Excellent"
             elif fund_score >= 60: quality = "Good"
             elif fund_score >= 40: quality = "Average"
             else:                  quality = "Poor"
 
             return {
-                # Identity
                 'Symbol': symbol, 'Name': name,
                 'Price':  round(current_price, 2),
 
-                # Technical
                 'RSI':             round(rsi, 2),
                 'RSI_Signal':      rsi_signal,
                 'MACD':            macd_signal,
@@ -500,37 +526,33 @@ class SP500CompleteAnalyzer:
                 'Tech_Score':      tech_score,
                 'Tech_Score_Norm': round(tech_score_normalized, 1),
 
-                # ATR
-                'ATR':             atr,
-                'ATR_Pct':         atr_pct,
-                'ATR_Multiplier':  atr_multiplier,
-                'Stop_Type':       stop_type,
+                'ATR':            atr,
+                'ATR_Pct':        atr_pct,
+                'ATR_Multiplier': atr_multiplier,
+                'Stop_Type':      stop_type,
 
-                # Fundamental
-                'PE_Ratio':         round(pe_ratio, 2)          if pe_ratio else 0,
-                'PB_Ratio':         round(pb_ratio, 2)          if pb_ratio else 0,
-                'PEG_Ratio':        round(peg_ratio, 2)         if peg_ratio else 0,
-                'ROE':              round(roe * 100, 2)         if roe else 0,
-                'ROA':              round(roa * 100, 2)         if roa else 0,
-                'Profit_Margin':    round(profit_margin * 100, 2)   if profit_margin else 0,
+                'PE_Ratio':         round(pe_ratio, 2)           if pe_ratio else 0,
+                'PB_Ratio':         round(pb_ratio, 2)           if pb_ratio else 0,
+                'PEG_Ratio':        round(peg_ratio, 2)          if peg_ratio else 0,
+                'ROE':              round(roe * 100, 2)          if roe else 0,
+                'ROA':              round(roa * 100, 2)          if roa else 0,
+                'Profit_Margin':    round(profit_margin * 100, 2)    if profit_margin else 0,
                 'Operating_Margin': round(operating_margin * 100, 2) if operating_margin else 0,
-                'EPS':              round(eps, 2)               if eps else 0,
-                'Dividend_Yield':   round(dividend_yield * 100, 2)  if dividend_yield else 0,
-                'Revenue_Growth':   round(revenue_growth * 100, 2)  if revenue_growth else 0,
-                'Earnings_Growth':  round(earnings_growth * 100, 2) if earnings_growth else 0,
-                'Debt_to_Equity':   round(debt_to_equity, 2)   if debt_to_equity else 0,
-                'Current_Ratio':    round(current_ratio, 2)    if current_ratio else 0,
-                'Market_Cap':       round(market_cap / 1e9, 2) if market_cap else 0,
-                'Beta':             round(beta, 2)              if beta else 1.0,
+                'EPS':              round(eps, 2)                if eps else 0,
+                'Dividend_Yield':   round(dividend_yield * 100, 2)   if dividend_yield else 0,
+                'Revenue_Growth':   round(revenue_growth * 100, 2)   if revenue_growth else 0,
+                'Earnings_Growth':  round(earnings_growth * 100, 2)  if earnings_growth else 0,
+                'Debt_to_Equity':   round(debt_to_equity, 2)    if debt_to_equity else 0,
+                'Current_Ratio':    round(current_ratio, 2)     if current_ratio else 0,
+                'Market_Cap':       round(market_cap / 1e9, 2)  if market_cap else 0,
+                'Beta':             round(beta, 2)               if beta else 1.0,
                 'Fund_Score':       round(fund_score, 1),
                 'Quality':          quality,
 
-                # Combined
-                'Combined_Score': round(combined_score, 1),
-                'Rating':         rating,
-                'Recommendation': recommendation,
+                'Combined_Score':  round(combined_score, 1),
+                'Rating':          rating,
+                'Recommendation':  recommendation,
 
-                # Trading
                 'Stop_Loss':     round(stop_loss, 2),
                 'SL_Percentage': round(sl_percentage, 2),
                 'Target_1':      round(target_1, 2),
@@ -546,7 +568,7 @@ class SP500CompleteAnalyzer:
             return None
 
     # =========================================================================
-    #  ANALYZE ALL STOCKS
+    #  ANALYZE ALL
     # =========================================================================
     def analyze_all_stocks(self):
         print(f"🔍 Analyzing {len(self.sp500_stocks)} stocks...")
@@ -560,7 +582,7 @@ class SP500CompleteAnalyzer:
         print(f"\n✅ Analysis complete: {len(self.results)} stocks analyzed\n")
 
     # =========================================================================
-    #  TOP RECOMMENDATIONS — relaxed filters + debug
+    #  TOP RECOMMENDATIONS
     # =========================================================================
     def get_top_recommendations(self):
         df = pd.DataFrame(self.results)
@@ -608,7 +630,6 @@ class SP500CompleteAnalyzer:
         sell_count        = len(df[df['Recommendation'] == 'SELL'])
         strong_sell_count = len(df[df['Recommendation'] == 'STRONG SELL'])
 
-        # ── CSS ───────────────────────────────────────────────────────────────
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -648,10 +669,8 @@ class SP500CompleteAnalyzer:
   .ticker{{ background:#0a0602; border-bottom:1px solid var(--border); overflow:hidden; }}
   .ticker-inner{{ max-width:1420px; margin:0 auto; display:flex; padding:0 28px; overflow-x:auto; }}
   .ti{{ display:flex; gap:6px; align-items:center; padding:6px 12px; border-right:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap; }}
-  .ti-s{{ color:var(--accent2); font-weight:700; }}
-  .ti-p{{ color:var(--text2); }}
-  .ti-u{{ color:var(--green); }}
-  .ti-d{{ color:var(--red); }}
+  .ti-s{{ color:var(--accent2); font-weight:700; }} .ti-p{{ color:var(--text2); }}
+  .ti-u{{ color:var(--green); }} .ti-d{{ color:var(--red); }}
   .kpi-band{{ background:var(--card); border-bottom:1px solid var(--border2); }}
   .kpi-inner{{ max-width:1420px; margin:0 auto; display:grid; grid-template-columns:repeat(5,1fr); }}
   .kc{{ padding:15px 20px; border-right:1px solid var(--border); text-align:center; }}
@@ -662,8 +681,7 @@ class SP500CompleteAnalyzer:
   .main{{ max-width:1420px; margin:0 auto; padding:24px 28px; }}
   .sh{{ display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }}
   .sh-icon{{ width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }}
-  .shi-buy{{ background:rgba(34,197,94,0.15); }}
-  .shi-sell{{ background:rgba(239,68,68,0.15); }}
+  .shi-buy{{ background:rgba(34,197,94,0.15); }} .shi-sell{{ background:rgba(239,68,68,0.15); }}
   .sh-title{{ font-size:16px; font-weight:800; color:var(--text2); }}
   .sh-divider{{ flex:1; height:1px; background:var(--border); min-width:20px; }}
   .sh-count{{ font-size:10px; color:var(--muted); }}
@@ -699,10 +717,10 @@ class SP500CompleteAnalyzer:
   .qb-av{{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
   .qb-po{{ background:rgba(239,68,68,0.15);  color:#f87171; }}
   .ts-badge{{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; letter-spacing:0.5px; display:inline-block; margin-bottom:3px; }}
-  .ts-pending{{ background:rgba(160,120,80,0.2); color:#c8a060; }}
-  .ts-hit1{{ background:rgba(34,197,94,0.2);   color:#4ade80; }}
-  .ts-hit2{{ background:rgba(45,212,191,0.2);  color:#2dd4bf; }}
-  .ts-ath{{ background:rgba(96,165,250,0.15);  color:#93c5fd; }}
+  .ts-pending{{ background:rgba(34,197,94,0.15);   color:#4ade80; }}
+  .ts-hit1{{   background:rgba(34,197,94,0.2);    color:#4ade80; }}
+  .ts-hit2{{   background:rgba(45,212,191,0.2);   color:#2dd4bf; }}
+  .ts-ath{{    background:rgba(96,165,250,0.15);  color:#93c5fd; }}
   .ts-partial{{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
   .atr-badge{{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; display:inline-block; margin-top:2px; }}
   .atr-stop{{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
@@ -717,14 +735,13 @@ class SP500CompleteAnalyzer:
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="h-top">
     <div class="brand">
       <div class="brand-icon">🌅</div>
       <div>
         <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-        <div class="brand-s">ATR Stop Loss · Real S/R Targets · Technical &amp; Fundamental</div>
+        <div class="brand-s">12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental v4</div>
       </div>
     </div>
     <div class="h-right">
@@ -745,7 +762,6 @@ class SP500CompleteAnalyzer:
         html += f"""  </div></div>
 </header>
 
-<!-- KPI BAND -->
 <div class="kpi-band"><div class="kpi-inner">
   <div class="kc"><div class="kn" style="color:var(--accent2)">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
   <div class="kc"><div class="kn" style="color:var(--green)">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
@@ -754,7 +770,6 @@ class SP500CompleteAnalyzer:
   <div class="kc"><div class="kn" style="color:var(--blue)">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
 </div></div>
 
-<!-- MAIN -->
 <div class="main">
 """
 
@@ -764,7 +779,7 @@ class SP500CompleteAnalyzer:
     <div class="sh-icon shi-buy">▲</div>
     <span class="sh-title">Top 20 Buy Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">ATR Stop · Real S/R Targets · Sorted by Score</span>
+    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
@@ -791,19 +806,17 @@ class SP500CompleteAnalyzer:
                 divc  = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
                 qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
 
-                # Target badge
                 ts = row.get('Target_Status', '')
                 th = row.get('Targets_Hit', 0)
-                if th == 2:       tbadge_cls, tbadge_txt = "ts-hit2",   "✅ T1+T2 Hit"
-                elif th == 1:     tbadge_cls, tbadge_txt = "ts-hit1",   "✅ T1 Hit"
-                elif "ATH" in ts: tbadge_cls, tbadge_txt = "ts-ath",    "🚀 ATH Zone"
-                elif "Partial" in ts: tbadge_cls, tbadge_txt = "ts-partial", "⚡ Partial S/R"
-                else:             tbadge_cls, tbadge_txt = "ts-pending","📍 Real S/R"
+                if th == 2:           tbcls, tbtxt = "ts-hit2",   "✅ T1+T2 Hit"
+                elif th == 1:         tbcls, tbtxt = "ts-hit1",   "✅ T1 Hit"
+                elif "ATH" in ts:     tbcls, tbtxt = "ts-ath",    "🚀 ATH Zone"
+                elif "Partial" in ts: tbcls, tbtxt = "ts-partial","⚡ Partial S/R"
+                else:                 tbcls, tbtxt = "ts-pending","📍 Real S/R"
 
-                # ATR / stop type badge
-                stop_type   = row.get('Stop_Type', 'ATR Stop')
-                atr_cls     = "atr-stop" if stop_type == "ATR Stop" else "beta-cap"
-                atr_lbl     = f"{'📐' if stop_type == 'ATR Stop' else '🔒'} {stop_type}"
+                st    = row.get('Stop_Type', 'ATR Stop')
+                acls  = "atr-stop" if st == "ATR Stop" else "beta-cap"
+                albl  = f"{'📐' if st == 'ATR Stop' else '🔒'} {st}"
 
                 html += f"""      <tr>
         <td style="color:#a07850">{i}</td>
@@ -813,14 +826,14 @@ class SP500CompleteAnalyzer:
         <td><div class="scn" style="color:{sc_c}">{row['Combined_Score']:.0f}</div><div class="scb" style="background:{sc_b}"></div></td>
         <td class="{upcls}">{row['Upside']:+.1f}%</td>
         <td>
-          <span class="ts-badge {tbadge_cls}">{tbadge_txt}</span>
+          <span class="ts-badge {tbcls}">{tbtxt}</span>
           <div class="t1">${row['Target_1']:,.2f}</div>
           <div class="t2">T2: ${row['Target_2']:,.2f}</div>
         </td>
         <td>
           <div class="sl1">${row['Stop_Loss']:,.2f}</div>
           <div class="sl2">-{row['SL_Percentage']:.1f}%</div>
-          <div><span class="atr-badge {atr_cls}">{atr_lbl}</span></div>
+          <span class="atr-badge {acls}">{albl}</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
@@ -843,7 +856,7 @@ class SP500CompleteAnalyzer:
     <div class="sh-icon shi-sell">▼</div>
     <span class="sh-title">Top 20 Sell Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">ATR Stop · Real S/R Targets · Sorted by Score</span>
+    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
@@ -864,11 +877,11 @@ class SP500CompleteAnalyzer:
                 pec   = "#a07850" if row['PE_Ratio'] <= 0 else ("#f87171" if row['PE_Ratio'] > 40 else ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80"))
                 qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
                 ts    = row.get('Target_Status','')
-                tbadge_cls = "ts-pending"
-                tbadge_txt = "📍 Real S/R" if "Real" in ts else "⚡ Projected"
-                stop_type  = row.get('Stop_Type','ATR Stop')
-                atr_cls    = "atr-stop" if stop_type == "ATR Stop" else "beta-cap"
-                atr_lbl    = f"{'📐' if stop_type == 'ATR Stop' else '🔒'} {stop_type}"
+                tbcls = "ts-pending"
+                tbtxt = "📍 Real S/R" if "Real" in ts else ("⚡ Partial S/R" if "Partial" in ts else "🔮 Projected")
+                st    = row.get('Stop_Type','ATR Stop')
+                acls  = "atr-stop" if st == "ATR Stop" else "beta-cap"
+                albl  = f"{'📐' if st == 'ATR Stop' else '🔒'} {st}"
 
                 html += f"""      <tr>
         <td style="color:#a07850">{i}</td>
@@ -880,14 +893,14 @@ class SP500CompleteAnalyzer:
         <td style="color:{mcdcl};font-weight:600">{row['MACD']}</td>
         <td class="{dncls}">{row['Upside']:+.1f}%</td>
         <td>
-          <span class="ts-badge {tbadge_cls}">{tbadge_txt}</span>
+          <span class="ts-badge {tbcls}">{tbtxt}</span>
           <div class="t1">${row['Target_1']:,.2f}</div>
           <div class="t2">T2: ${row['Target_2']:,.2f}</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">${row['Stop_Loss']:,.2f}</div>
           <div class="sl2">+{row['SL_Percentage']:.1f}%</div>
-          <div><span class="atr-badge {atr_cls}">{atr_lbl}</span></div>
+          <span class="atr-badge {acls}">{albl}</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
@@ -903,7 +916,8 @@ class SP500CompleteAnalyzer:
 
         html += f"""  <div class="disc">
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
-    Stop losses are ATR-based near real 6-month S/R zones. Targets derived from real swing high/low levels.
+    Stop losses use ATR-based positioning near real 12-month swing S/R zones + psychological round levels.
+    Targets derived from 12-month swing highs/lows, 52-week extremes, and round number levels.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
@@ -911,7 +925,7 @@ class SP500CompleteAnalyzer:
 
 <footer>
   <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-  · ATR Stop Loss · Real S/R Targets · Technical &amp; Fundamental Analysis
+  · 12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental Analysis v4
   · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
 </footer>
 </body></html>"""
@@ -932,7 +946,7 @@ class SP500CompleteAnalyzer:
             msg = MIMEMultipart('alternative')
             msg['From']    = from_email
             msg['To']      = to_email
-            msg['Subject'] = f"🌅 US Market Report — {tod} {now.strftime('%d %b %Y')} · ATR Stops"
+            msg['Subject'] = f"🌅 US Market Report — {tod} {now.strftime('%d %b %Y')} · 12M S/R + ATR Stops"
             msg.attach(MIMEText(self.generate_email_html(), 'html'))
             srv = smtplib.SMTP('smtp.gmail.com', 587)
             srv.starttls()
@@ -951,7 +965,7 @@ class SP500CompleteAnalyzer:
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v3 — ATR Stop Loss + Real S/R Targets")
+        print("📊 S&P 500 ANALYZER v4 — 12-Month S/R + ATR Stop Loss")
         print(f"   Started: {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
@@ -968,8 +982,10 @@ class SP500CompleteAnalyzer:
 def main():
     analyzer  = SP500CompleteAnalyzer()
     recipient = os.environ.get('RECIPIENT_EMAIL')
-    analyzer.generate_complete_report(send_email_flag=bool(recipient),
-                                      recipient_email=recipient)
+    analyzer.generate_complete_report(
+        send_email_flag=bool(recipient),
+        recipient_email=recipient
+    )
 
 if __name__ == "__main__":
     analyzer = SP500CompleteAnalyzer()

@@ -37,10 +37,8 @@
   .ticker{ background:#0a0602; border-bottom:1px solid var(--border); overflow:hidden; }
   .ticker-inner{ max-width:1420px; margin:0 auto; display:flex; padding:0 28px; overflow-x:auto; }
   .ti{ display:flex; gap:6px; align-items:center; padding:6px 12px; border-right:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap; }
-  .ti-s{ color:var(--accent2); font-weight:700; }
-  .ti-p{ color:var(--text2); }
-  .ti-u{ color:var(--green); }
-  .ti-d{ color:var(--red); }
+  .ti-s{ color:var(--accent2); font-weight:700; } .ti-p{ color:var(--text2); }
+  .ti-u{ color:var(--green); } .ti-d{ color:var(--red); }
   .kpi-band{ background:var(--card); border-bottom:1px solid var(--border2); }
   .kpi-inner{ max-width:1420px; margin:0 auto; display:grid; grid-template-columns:repeat(5,1fr); }
   .kc{ padding:15px 20px; border-right:1px solid var(--border); text-align:center; }
@@ -51,8 +49,7 @@
   .main{ max-width:1420px; margin:0 auto; padding:24px 28px; }
   .sh{ display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
   .sh-icon{ width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-  .shi-buy{ background:rgba(34,197,94,0.15); }
-  .shi-sell{ background:rgba(239,68,68,0.15); }
+  .shi-buy{ background:rgba(34,197,94,0.15); } .shi-sell{ background:rgba(239,68,68,0.15); }
   .sh-title{ font-size:16px; font-weight:800; color:var(--text2); }
   .sh-divider{ flex:1; height:1px; background:var(--border); min-width:20px; }
   .sh-count{ font-size:10px; color:var(--muted); }
@@ -88,10 +85,10 @@
   .qb-av{ background:rgba(245,158,11,0.15); color:#fbbf24; }
   .qb-po{ background:rgba(239,68,68,0.15);  color:#f87171; }
   .ts-badge{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; letter-spacing:0.5px; display:inline-block; margin-bottom:3px; }
-  .ts-pending{ background:rgba(160,120,80,0.2); color:#c8a060; }
-  .ts-hit1{ background:rgba(34,197,94,0.2);   color:#4ade80; }
-  .ts-hit2{ background:rgba(45,212,191,0.2);  color:#2dd4bf; }
-  .ts-ath{ background:rgba(96,165,250,0.15);  color:#93c5fd; }
+  .ts-pending{ background:rgba(34,197,94,0.15);   color:#4ade80; }
+  .ts-hit1{   background:rgba(34,197,94,0.2);    color:#4ade80; }
+  .ts-hit2{   background:rgba(45,212,191,0.2);   color:#2dd4bf; }
+  .ts-ath{    background:rgba(96,165,250,0.15);  color:#93c5fd; }
   .ts-partial{ background:rgba(245,158,11,0.15); color:#fbbf24; }
   .atr-badge{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; display:inline-block; margin-top:2px; }
   .atr-stop{ background:rgba(34,197,94,0.15);  color:#4ade80; }
@@ -106,19 +103,18 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="h-top">
     <div class="brand">
       <div class="brand-icon">🌅</div>
       <div>
         <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-        <div class="brand-s">ATR Stop Loss · Real S/R Targets · Technical &amp; Fundamental</div>
+        <div class="brand-s">12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental v4</div>
       </div>
     </div>
     <div class="h-right">
       <div class="hr"><div class="hr-l">Date</div><div class="hr-v" style="color:var(--gold)">25 Feb 2026</div></div>
-      <div class="hr"><div class="hr-l">Time</div><div class="hr-v" style="color:var(--green)">10:22 PM EST</div></div>
+      <div class="hr"><div class="hr-l">Time</div><div class="hr-v" style="color:var(--green)">10:31 PM EST</div></div>
       <div class="hr"><div class="hr-l">Session</div><div class="hr-v" style="color:var(--green)">▲ EVENING</div></div>
       <div class="hr"><div class="hr-l">Next</div><div class="hr-v" style="color:var(--accent2)">9:30 AM (Next Day)</div></div>
     </div>
@@ -134,7 +130,6 @@
   </div></div>
 </header>
 
-<!-- KPI BAND -->
 <div class="kpi-band"><div class="kpi-inner">
   <div class="kc"><div class="kn" style="color:var(--accent2)">50</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
   <div class="kc"><div class="kn" style="color:var(--green)">0</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
@@ -143,13 +138,12 @@
   <div class="kc"><div class="kn" style="color:var(--blue)">14</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
 </div></div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="sh">
     <div class="sh-icon shi-buy">▲</div>
     <span class="sh-title">Top 20 Buy Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">ATR Stop · Real S/R Targets · Sorted by Score</span>
+    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
@@ -171,9 +165,9 @@
           <div class="t2">T2: $298.59</div>
         </td>
         <td>
-          <div class="sl1">$258.16</div>
+          <div class="sl1">$258.15</div>
           <div class="sl2">-5.9%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$6.44</div>
@@ -195,14 +189,14 @@
         <td><div class="scn" style="color:#2dd4bf">72</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+8.5%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$212.18</div>
-          <div class="t2">T2: $254.54</div>
+          <div class="t2">T2: $245.56</div>
         </td>
         <td>
           <div class="sl1">$172.09</div>
           <div class="sl2">-12.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$5.88</div>
@@ -231,7 +225,7 @@
         <td>
           <div class="sl1">$386.10</div>
           <div class="sl2">-10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$23.77</div>
@@ -253,14 +247,14 @@
         <td><div class="scn" style="color:#2dd4bf">72</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+9.2%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$272.30</div>
           <div class="t2">T2: $283.19</div>
         </td>
         <td>
           <div class="sl1">$224.53</div>
           <div class="sl2">-10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$11.41</div>
@@ -282,14 +276,14 @@
         <td><div class="scn" style="color:#2dd4bf">70</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+3.0%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$252.63</div>
           <div class="t2">T2: $262.74</div>
         </td>
         <td>
           <div class="sl1">$232.91</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$3.73</div>
@@ -311,14 +305,14 @@
         <td><div class="scn" style="color:#2dd4bf">68</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+3.7%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$169.49</div>
           <div class="t2">T2: $176.27</div>
         </td>
         <td>
           <div class="sl1">$155.22</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$3.05</div>
@@ -340,14 +334,14 @@
         <td><div class="scn" style="color:#2dd4bf">68</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+3.3%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$343.95</div>
           <div class="t2">T2: $357.71</div>
         </td>
         <td>
           <div class="sl1">$316.36</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$5.47</div>
@@ -369,14 +363,14 @@
         <td><div class="scn" style="color:#2dd4bf">68</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+4.2%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$51.29</div>
           <div class="t2">T2: $53.34</div>
         </td>
         <td>
           <div class="sl1">$46.77</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$1.03</div>
@@ -405,7 +399,7 @@
         <td>
           <div class="sl1">$305.82</div>
           <div class="sl2">-8.0%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$14.11</div>
@@ -425,23 +419,23 @@
         <td><div class="pv">$394.95</div></td>
         <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
         <td><div class="scn" style="color:#2dd4bf">68</div><div class="scb" style="background:#14b8a6"></div></td>
-        <td class="up">+7.9%</td>
+        <td class="up">+12.7%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
-          <div class="t1">$426.15</div>
-          <div class="t2">T2: $443.20</div>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
+          <div class="t1">$444.95</div>
+          <div class="t2">T2: $494.95</div>
         </td>
         <td>
           <div class="sl1">$355.46</div>
           <div class="sl2">-10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$15.60</div>
           <div style="font-size:9px;color:var(--muted)">4.0% · 1.5×</div>
         </td>
         <td><div class="rv" style="color:#f87171">88</div><div class="rsb">Overbought</div></td>
-        <td class="rrv" style="color:#f87171">0.8×</td>
+        <td class="rrv" style="color:#2dd4bf">1.3×</td>
         <td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">-0.3%</td>
         <td style="color:#f87171;font-size:11px">1.68</td>
         <td style="color:#f87171;font-size:11px">40.5</td>
@@ -463,7 +457,7 @@
         <td>
           <div class="sl1">$217.56</div>
           <div class="sl2">-4.1%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$5.96</div>
@@ -485,14 +479,14 @@
         <td><div class="scn" style="color:#2dd4bf">64</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+5.8%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$362.81</div>
           <div class="t2">T2: $377.32</div>
         </td>
         <td>
           <div class="sl1">$308.60</div>
           <div class="sl2">-10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$9.96</div>
@@ -512,23 +506,23 @@
         <td><div class="pv">$80.47</div></td>
         <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
         <td><div class="scn" style="color:#2dd4bf">63</div><div class="scb" style="background:#14b8a6"></div></td>
-        <td class="up">+3.1%</td>
+        <td class="up">+6.2%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
-          <div class="t1">$82.99</div>
-          <div class="t2">T2: $86.31</div>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
+          <div class="t1">$85.47</div>
+          <div class="t2">T2: $90.47</div>
         </td>
         <td>
           <div class="sl1">$76.45</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$1.26</div>
           <div style="font-size:9px;color:var(--muted)">1.6% · 1.0×</div>
         </td>
         <td><div class="rv" style="color:#93c5fd">66</div><div class="rsb">Neutral</div></td>
-        <td class="rrv" style="color:#f87171">0.6×</td>
+        <td class="rrv" style="color:#2dd4bf">1.2×</td>
         <td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">-0.8%</td>
         <td style="color:#4ade80;font-size:11px">0.36</td>
         <td style="color:#fbbf24;font-size:11px">26.6</td>
@@ -543,14 +537,14 @@
         <td><div class="scn" style="color:#2dd4bf">63</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+4.6%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
+          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
           <div class="t1">$128.12</div>
           <div class="t2">T2: $133.24</div>
         </td>
         <td>
           <div class="sl1">$116.34</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$2.83</div>
@@ -579,7 +573,7 @@
         <td>
           <div class="sl1">$141.67</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$3.48</div>
@@ -601,14 +595,14 @@
         <td><div class="scn" style="color:#2dd4bf">62</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+7.6%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$942.67</div>
           <div class="t2">T2: $980.38</div>
         </td>
         <td>
           <div class="sl1">$814.69</div>
           <div class="sl2">-7.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$33.33</div>
@@ -630,14 +624,14 @@
         <td><div class="scn" style="color:#2dd4bf">61</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+3.8%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$1,032.62</div>
           <div class="t2">T2: $1,073.92</div>
         </td>
         <td>
-          <div class="sl1">$945.77</div>
-          <div class="sl2">-4.9%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <div class="sl1">$949.24</div>
+          <div class="sl2">-4.6%</div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$18.93</div>
@@ -659,14 +653,14 @@
         <td><div class="scn" style="color:#2dd4bf">60</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+6.1%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$813.43</div>
           <div class="t2">T2: $845.97</div>
         </td>
         <td>
           <div class="sl1">$689.95</div>
           <div class="sl2">-10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$23.41</div>
@@ -688,14 +682,14 @@
         <td><div class="scn" style="color:#2dd4bf">60</div><div class="scb" style="background:#14b8a6"></div></td>
         <td class="up">+4.1%</td>
         <td>
-          <span class="ts-badge ts-partial">⚡ Partial S/R</span>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$176.07</div>
           <div class="t2">T2: $183.11</div>
         </td>
         <td>
           <div class="sl1">$160.71</div>
           <div class="sl2">-5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$3.45</div>
@@ -715,23 +709,23 @@
         <td><div class="pv">$508.27</div></td>
         <td><span class="rt rt-b">⭐⭐⭐⭐ BUY</span></td>
         <td><div class="scn" style="color:#2dd4bf">60</div><div class="scb" style="background:#14b8a6"></div></td>
-        <td class="up">+3.5%</td>
+        <td class="up">+9.8%</td>
         <td>
-          <span class="ts-badge ts-ath">🚀 ATH Zone</span>
-          <div class="t1">$526.33</div>
-          <div class="t2">T2: $547.38</div>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
+          <div class="t1">$558.27</div>
+          <div class="t2">T2: $608.27</div>
         </td>
         <td>
           <div class="sl1">$472.69</div>
           <div class="sl2">-7.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$9.03</div>
           <div style="font-size:9px;color:var(--muted)">1.8% · 1.2×</div>
         </td>
         <td><div class="rv" style="color:#f87171">71</div><div class="rsb">Overbought</div></td>
-        <td class="rrv" style="color:#f87171">0.5×</td>
+        <td class="rrv" style="color:#2dd4bf">1.4×</td>
         <td style="color:#f87171;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">-0.3%</td>
         <td style="color:#4ade80;font-size:11px">0.85</td>
         <td style="color:#fbbf24;font-size:11px">34.8</td>
@@ -743,7 +737,7 @@
     <div class="sh-icon shi-sell">▼</div>
     <span class="sh-title">Top 20 Sell Recommendations</span>
     <div class="sh-divider"></div>
-    <span class="sh-count">ATR Stop · Real S/R Targets · Sorted by Score</span>
+    <span class="sh-count">12-Month S/R · ATR Stop · Sorted by Score</span>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr>
@@ -768,7 +762,7 @@
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$341.40</div>
           <div class="sl2">+4.4%</div>
-          <div><span class="atr-badge atr-stop">📐 ATR Stop</span></div>
+          <span class="atr-badge atr-stop">📐 ATR Stop</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$10.14</div>
@@ -787,22 +781,22 @@
         <td><div class="scn" style="color:#f87171">34</div><div class="scb" style="background:#ef4444"></div></td>
         <td><div class="rv" style="color:#fbbf24">30</div><div class="rsb">Neutral</div></td>
         <td style="color:#f87171;font-weight:600">Bearish</td>
-        <td class="dn">+4.0%</td>
+        <td class="dn">+9.5%</td>
         <td>
-          <span class="ts-badge ts-pending">⚡ Projected</span>
-          <div class="t1">$489.01</div>
-          <div class="t2">T2: $468.64</div>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
+          <div class="t1">$461.16</div>
+          <div class="t2">T2: $409.39</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$545.05</div>
           <div class="sl2">+7.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$13.48</div>
           <div style="font-size:9px;color:var(--muted)">2.6% · 1.2×</div>
         </td>
-        <td class="rrv" style="color:#f87171">0.6×</td>
+        <td class="rrv" style="color:#fbbf24">1.4×</td>
         <td style="color:#4ade80;font-size:11px">0.82</td>
         <td style="color:#fbbf24;font-size:11px">30.1</td>
         <td><span class="qb qb-gd">Good</span></td>
@@ -815,22 +809,22 @@
         <td><div class="scn" style="color:#f87171">35</div><div class="scb" style="background:#ef4444"></div></td>
         <td><div class="rv" style="color:#fbbf24">36</div><div class="rsb">Neutral</div></td>
         <td style="color:#f87171;font-weight:600">Bearish</td>
-        <td class="dn">+4.0%</td>
+        <td class="dn">+5.2%</td>
         <td>
-          <span class="ts-badge ts-pending">⚡ Projected</span>
-          <div class="t1">$300.47</div>
-          <div class="t2">T2: $287.95</div>
+          <span class="ts-badge ts-pending">📍 Real S/R</span>
+          <div class="t1">$296.78</div>
+          <div class="t2">T2: $262.99</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$328.64</div>
           <div class="sl2">+5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$7.49</div>
           <div style="font-size:9px;color:var(--muted)">2.4% · 1.0×</div>
         </td>
-        <td class="rrv" style="color:#f87171">0.8×</td>
+        <td class="rrv" style="color:#fbbf24">1.0×</td>
         <td style="color:#4ade80;font-size:11px">0.78</td>
         <td style="color:#fbbf24;font-size:11px">28.8</td>
         <td><span class="qb qb-gd">Good</span></td>
@@ -843,16 +837,16 @@
         <td><div class="scn" style="color:#f87171">36</div><div class="scb" style="background:#ef4444"></div></td>
         <td><div class="rv" style="color:#fbbf24">51</div><div class="rsb">Neutral</div></td>
         <td style="color:#4ade80;font-weight:600">Bullish</td>
-        <td class="dn">+8.6%</td>
+        <td class="dn">+8.2%</td>
         <td>
           <span class="ts-badge ts-pending">📍 Real S/R</span>
-          <div class="t1">$135.25</div>
-          <div class="t2">T2: $129.84</div>
+          <div class="t1">$135.78</div>
+          <div class="t2">T2: $120.45</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$162.68</div>
           <div class="sl2">+10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$8.30</div>
@@ -875,12 +869,12 @@
         <td>
           <span class="ts-badge ts-pending">📍 Real S/R</span>
           <div class="t1">$266.29</div>
-          <div class="t2">T2: $231.57</div>
+          <div class="t2">T2: $243.94</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$298.41</div>
           <div class="sl2">+5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$9.45</div>
@@ -899,22 +893,22 @@
         <td><div class="scn" style="color:#f87171">42</div><div class="scb" style="background:#ef4444"></div></td>
         <td><div class="rv" style="color:#fbbf24">45</div><div class="rsb">Neutral</div></td>
         <td style="color:#f87171;font-weight:600">Bearish</td>
-        <td class="dn">+9.8%</td>
+        <td class="dn">+10.2%</td>
         <td>
           <span class="ts-badge ts-pending">📍 Real S/R</span>
-          <div class="t1">$42.28</div>
-          <div class="t2">T2: $36.63</div>
+          <div class="t1">$42.08</div>
+          <div class="t2">T2: $36.76</div>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$51.57</div>
           <div class="sl2">+10.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$2.64</div>
           <div style="font-size:9px;color:var(--muted)">5.6% · 1.5×</div>
         </td>
-        <td class="rrv" style="color:#f87171">1.0×</td>
+        <td class="rrv" style="color:#fbbf24">1.0×</td>
         <td style="color:#fbbf24;font-size:11px">1.38</td>
         <td style="color:#f87171;font-size:11px">47.3</td>
         <td><span class="qb qb-po">Poor</span></td>
@@ -936,7 +930,7 @@
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#fbbf24">$132.04</div>
           <div class="sl2">+5.0%</div>
-          <div><span class="atr-badge beta-cap">🔒 Beta Cap</span></div>
+          <span class="atr-badge beta-cap">🔒 Beta Cap</span>
         </td>
         <td>
           <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--teal)">$3.38</div>
@@ -950,7 +944,8 @@
     </tbody></table></div>
   <div class="disc">
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
-    Stop losses are ATR-based near real 6-month S/R zones. Targets derived from real swing high/low levels.
+    Stop losses use ATR-based positioning near real 12-month swing S/R zones + psychological round levels.
+    Targets derived from 12-month swing highs/lows, 52-week extremes, and round number levels.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
@@ -958,7 +953,7 @@
 
 <footer>
   <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-  · ATR Stop Loss · Real S/R Targets · Technical &amp; Fundamental Analysis
+  · 12-Month S/R · ATR Stop Loss · Technical &amp; Fundamental Analysis v4
   · Next Update: <strong>9:30 AM (Next Day) EST</strong> · 25 Feb 2026
 </footer>
 </body></html>
