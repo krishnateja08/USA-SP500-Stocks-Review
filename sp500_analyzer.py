@@ -814,15 +814,15 @@ class SP500CompleteAnalyzer:
   }}
   footer strong {{ color:var(--accent2); }}
   /* ── LIVE CLOCK ── */
-  .live-clock-wrap {
+  .live-clock-wrap {{
     display:flex; flex-direction:column; align-items:center;
     padding:6px 16px; border-left:1px solid var(--border2);
     min-width:120px;
-  }
-  .lc-label { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
-  .lc-time  { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }
-  .lc-date  { font-family:'JetBrains Mono',monospace; font-size:9px;  color:var(--muted); margin-top:1px; }
-  .lc-last  { font-size:8px; color:var(--accent2); margin-top:3px; letter-spacing:0.5px; }
+  }}
+  .lc-label {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
+  .lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }}
+  .lc-date  {{ font-family:'JetBrains Mono',monospace; font-size:9px;  color:var(--muted); margin-top:1px; }}
+  .lc-last  {{ font-size:8px; color:var(--accent2); margin-top:3px; letter-spacing:0.5px; }}
 
   /* ── MOBILE ── */
   @media(max-width:900px) {{
