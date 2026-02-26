@@ -154,32 +154,32 @@ class SP500CompleteAnalyzer:
         except Exception:
             pass
         return "N/A"
-    def fetch_index_data(self):
-    """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
-    indices = {
-        'DJI': '^DJI',
-        'NDX': '^NDX',
-        'SPX': '^GSPC',
-    }
-    result = {}
-    for label, sym in indices.items():
-        try:
-            d     = yf.Ticker(sym).history(period='2d')
-            price = d['Close'].iloc[-1]
-            prev  = d['Close'].iloc[-2]
-            chg   = price - prev
-            pct   = chg / prev * 100
-            arrow = '▲' if chg >= 0 else '▼'
-            cls   = 'up' if chg >= 0 else 'dn'
-            sign  = '+' if chg >= 0 else ''
-            result[label] = {
-                'price': f"{price:,.2f}",
-                'chg':   f"{arrow} {sign}{pct:.2f}%",
-                'cls':   cls,
-            }
-        except Exception:
-            result[label] = {'price': 'N/A', 'chg': '—', 'cls': ''}
-    return result
+  def fetch_index_data(self):
+        """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
+        indices = {
+            'DJI': '^DJI',
+            'NDX': '^NDX',
+            'SPX': '^GSPC',
+        }
+        result = {}
+        for label, sym in indices.items():
+            try:
+                d     = yf.Ticker(sym).history(period='2d')
+                price = d['Close'].iloc[-1]
+                prev  = d['Close'].iloc[-2]
+                chg   = price - prev
+                pct   = chg / prev * 100
+                arrow = '▲' if chg >= 0 else '▼'
+                cls   = 'up' if chg >= 0 else 'dn'
+                sign  = '+' if chg >= 0 else ''
+                result[label] = {
+                    'price': f"{price:,.2f}",
+                    'chg':   f"{arrow} {sign}{pct:.2f}%",
+                    'cls':   cls,
+                }
+            except Exception:
+                result[label] = {'price': 'N/A', 'chg': '—', 'cls': ''}
+        return result
     # =========================================================================
     #  RESISTANCE & SUPPORT
     # =========================================================================
