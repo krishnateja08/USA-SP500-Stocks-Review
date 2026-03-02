@@ -1,8 +1,14 @@
 """
-S&P 500 COMPLETE STOCK ANALYZER
+S&P 500 COMPLETE STOCK ANALYZER v7
 Technical + Fundamental Analysis with Email Delivery
-Theme: Sunset Warm
-VERSION 6:
+Theme: Dark Slate (Redesigned)
+VERSION 7:
+  - New dark blue/charcoal theme from redesign sample
+  - Grouped column headers: Identity · Trade Setup · Risk · Momentum · Valuation · External
+  - Quick View / Detail View toggle (hides Momentum + Valuation in Quick mode)
+  - RSI mini progress bar
+  - Earnings row warning highlight + pulsing badge when within 14 days
+  - Tooltips on all column headers
   - Full width + mobile responsive layout
   - NEW columns: Sector, Vol/Avg, ADX, Analyst Consensus,
                  Support Distance %, Earnings Date
@@ -16,7 +22,7 @@ VERSION 6:
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import pytz
 import warnings
 import smtplib
@@ -154,6 +160,19 @@ class SP500CompleteAnalyzer:
         except Exception:
             pass
         return "N/A"
+
+    def is_earnings_soon(self, earnings_date_str, days=14):
+        """Returns True if earnings are within `days` days from now."""
+        if earnings_date_str == "N/A":
+            return False
+        try:
+            ed = datetime.strptime(earnings_date_str, '%d %b %Y')
+            now = datetime.now()
+            delta = (ed - now).days
+            return 0 <= delta <= days
+        except Exception:
+            return False
+
     def fetch_index_data(self):
         """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
         indices = {
@@ -180,6 +199,7 @@ class SP500CompleteAnalyzer:
             except Exception:
                 result[label] = {'price': 'N/A', 'chg': '—', 'cls': ''}
         return result
+
     # =========================================================================
     #  RESISTANCE & SUPPORT
     # =========================================================================
@@ -390,6 +410,7 @@ class SP500CompleteAnalyzer:
             }
             analyst_label    = analyst_map.get(analyst_key, analyst_key.title() if analyst_key else 'N/A')
             earnings_date    = self.get_earnings_date(info)
+            earn_soon        = self.is_earnings_soon(earnings_date)
             fund_score = self.get_fundamental_score(info)
             tech_score_normalized = ((tech_score + 6) / 12) * 100
             combined_score        = (tech_score_normalized * 0.5) + (fund_score * 0.5)
@@ -490,6 +511,7 @@ class SP500CompleteAnalyzer:
                 'Targets_Hit': targets_hit, 'Target_Status': target_status,
                 'Analyst': analyst_label,
                 'Earnings_Date': earnings_date,
+                'Earn_Soon': earn_soon,
             }
         except Exception:
             return None
@@ -529,7 +551,7 @@ class SP500CompleteAnalyzer:
         return top_buys, top_sells
 
     # =========================================================================
-    #  HTML — Full Width + Mobile Responsive + Index Strip + Live Clock
+    #  HTML — v7 Redesign: Dark Slate, Grouped Headers, Quick/Detail Toggle
     # =========================================================================
     def generate_email_html(self):
         df = pd.DataFrame(self.results)
@@ -552,555 +574,757 @@ class SP500CompleteAnalyzer:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Top US Market Influencers — {time_of_day} Report</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {{
-    --bg:#0f0a05; --bg2:#160d05; --card:#1d1108; --card2:#241508;
-    --accent:#ff6b2b; --accent2:#ff8c55;
-    --green:#22c55e; --red:#ef4444; --blue:#60a5fa;
-    --gold:#f59e0b; --teal:#2dd4bf; --purple:#a78bfa;
-    --text:#f5ddb8; --text2:#fff8ee;
-    --sym:#ffb366; --t2c:#ffd080; --muted:#a07850;
-    --border:#3d2010; --border2:#4d2a14;
-  }}
-  *, *::before, *::after {{ margin:0; padding:0; box-sizing:border-box; }}
+:root {{
+  --bg:      #07080c;
+  --surf:    #0d1117;
+  --card:    #101620;
+  --card2:   #141c28;
+  --border:  rgba(255,255,255,0.06);
+  --text:    #d8e8f5;
+  --muted:   #4a6070;
+  --accent:  #f59e0b;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --blue:    #60a5fa;
+  --teal:    #2dd4bf;
+  --purple:  #a78bfa;
+  --orange:  #f97316;
 
-  body {{
-    background:var(--bg); color:var(--text);
-    font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:13px; line-height:1.4;
-    background-image:
-      radial-gradient(ellipse at 0% 0%,rgba(255,107,43,0.07) 0%,transparent 50%),
-      radial-gradient(ellipse at 100% 100%,rgba(245,158,11,0.04) 0%,transparent 40%);
-  }}
+  --g-identity: rgba(245,158,11,0.08);
+  --g-trade:    rgba(34,197,94,0.07);
+  --g-risk:     rgba(239,68,68,0.06);
+  --g-momentum: rgba(96,165,250,0.07);
+  --g-value:    rgba(167,139,250,0.06);
+  --g-external: rgba(45,212,191,0.06);
+}}
+*, *::before, *::after {{ margin:0; padding:0; box-sizing:border-box; }}
 
-  /* ── HEADER ── */
-  header {{ background:linear-gradient(180deg,#1c0e06,var(--bg2)); border-bottom:2px solid var(--accent); }}
-  .h-top {{
-    width:100%; display:flex; align-items:center;
-    justify-content:space-between; padding:12px 16px;
-    gap:12px; flex-wrap:wrap;
-  }}
-  .brand {{ display:flex; align-items:center; gap:10px; min-width:0; }}
-  .brand-icon {{
-    width:36px; height:36px; flex-shrink:0;
-    background:linear-gradient(135deg,var(--accent),var(--gold));
-    border-radius:8px; display:flex; align-items:center;
-    justify-content:center; font-size:17px;
-  }}
-  .brand-t {{ font-size:clamp(12px,1.8vw,17px); font-weight:800; color:var(--text2); white-space:nowrap; }}
-  .brand-s {{ font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }}
-  .h-meta {{ display:flex; flex-wrap:wrap; gap:0; align-items:center; }}
-  .hm {{ padding:6px 14px; border-left:1px solid var(--border2); text-align:right; }}
-  .hm-l {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
-  .hm-v {{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; margin-top:1px; }}
+body {{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg); color:var(--text);
+  font-size:13px; line-height:1.4;
+  min-height:100vh;
+}}
+body::before {{
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(245,158,11,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,158,11,0.02) 1px, transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none; z-index:0;
+}}
 
-  /* ── INDEX STRIP ── */
-  .idx-strip {{
-    display:flex; align-items:center;
-    background:rgba(0,0,0,0.35); border:1px solid var(--border2);
-    border-radius:8px; padding:4px 0; margin:0 8px;
-  }}
-  .idx-item {{ display:flex; align-items:center; gap:8px; padding:6px 16px; }}
-  .idx-name {{
-    font-size:9px; font-weight:800; letter-spacing:2px;
-    color:var(--muted); text-transform:uppercase;
-  }}
-  .idx-price {{
-    font-family:'JetBrains Mono',monospace; font-size:13px;
-    font-weight:700; color:var(--text2);
-  }}
-  .idx-chg {{
-    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
-    color:var(--muted);
-  }}
-  .idx-chg.up {{ color:var(--green); }}
-  .idx-chg.dn {{ color:var(--red); }}
-  .idx-sep {{ width:1px; height:30px; background:var(--border2); }}
+.page {{ position:relative; z-index:1; padding:20px 16px 60px; max-width:1800px; margin:0 auto; }}
 
-  /* ── LIVE CLOCK ── */
-  .live-clock-wrap {{
-    display:flex; flex-direction:column; align-items:center;
-    padding:6px 16px; border-left:1px solid var(--border2);
-    min-width:130px;
-  }}
-  .lc-label {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
-  .lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }}
-  .lc-date  {{ font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); margin-top:1px; }}
-  .lc-last  {{ font-size:8px; color:var(--accent2); margin-top:3px; letter-spacing:0.3px; white-space:nowrap; }}
+/* ── HEADER ── */
+.hdr {{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:20px; flex-wrap:wrap; gap:12px;
+  background:linear-gradient(135deg,var(--card),var(--card2));
+  border:1px solid var(--border); border-radius:14px;
+  padding:16px 20px;
+}}
+.hdr-left {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; gap:12px; }}
+.hdr-icon {{
+  width:42px; height:42px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#ef4444);
+  border-radius:10px; display:flex; align-items:center;
+  justify-content:center; font-size:20px;
+}}
+.hdr-title {{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(13px,2vw,19px); font-weight:800; color:#fff;
+}}
+.hdr-sub {{ font-size:0.7em; color:var(--muted); margin-top:2px; letter-spacing:0.3px; }}
 
-  /* ── TICKER ── */
-  .ticker {{ background:#080502; border-bottom:1px solid var(--border); }}
-  .ticker-inner {{ display:flex; padding:0 16px; overflow-x:auto; scrollbar-width:none; }}
-  .ticker-inner::-webkit-scrollbar {{ display:none; }}
-  .ti {{
-    display:flex; gap:5px; align-items:center;
-    padding:5px 10px; border-right:1px solid var(--border);
-    font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap;
-  }}
-  .ti-s {{ color:var(--accent2); font-weight:700; }}
-  .ti-p {{ color:var(--text2); }}
-  .ti-u {{ color:var(--green); }}
-  .ti-d {{ color:var(--red); }}
+/* ── INDEX STRIP ── */
+.idx-strip {{
+  display:flex; align-items:center; gap:0;
+  background:rgba(0,0,0,0.3); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+}}
+.idx-item {{ display:flex; align-items:center; gap:10px; padding:8px 18px; }}
+.idx-name {{ font-size:9px; font-weight:800; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }}
+.idx-price {{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:#fff; }}
+.idx-chg {{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; }}
+.idx-chg.up {{ color:var(--green); }}
+.idx-chg.dn {{ color:var(--red); }}
+.idx-sep {{ width:1px; height:28px; background:var(--border); }}
 
-  /* ── KPI BAND ── */
-  .kpi-band {{ background:var(--card); border-bottom:1px solid var(--border2); }}
-  .kpi-inner {{ display:grid; grid-template-columns:repeat(5,1fr); width:100%; }}
-  .kc {{ padding:12px 10px; border-right:1px solid var(--border); text-align:center; }}
-  .kc:last-child {{ border-right:none; }}
-  .kn {{ font-size:clamp(20px,4vw,30px); font-weight:800; line-height:1; }}
-  .kl {{ font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:3px; }}
-  .kbar {{ height:2px; border-radius:1px; margin:3px auto 0; width:32px; }}
+/* ── LIVE CLOCK ── */
+.live-clock {{
+  display:flex; flex-direction:column; align-items:center;
+  padding:8px 18px; border-left:1px solid var(--border);
+}}
+.lc-label {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
+.lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }}
+.lc-date  {{ font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); margin-top:1px; }}
+.lc-last  {{ font-size:8px; color:var(--accent); margin-top:2px; white-space:nowrap; }}
 
-  /* ── MAIN ── */
-  .main {{ width:100%; padding:12px 16px; }}
+/* ── VIEW TOGGLE ── */
+.view-toggle {{
+  display:flex; gap:4px; background:var(--card);
+  border:1px solid var(--border); border-radius:8px; padding:3px;
+}}
+.vt-btn {{
+  padding:6px 16px; border-radius:6px; border:none; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700;
+  letter-spacing:0.5px; text-transform:uppercase;
+  background:transparent; color:var(--muted); transition:all 0.2s;
+}}
+.vt-btn.active {{ background:var(--accent); color:#000; }}
+.vt-btn:hover:not(.active) {{ color:var(--text); }}
 
-  /* ── SECTION HEADER ── */
-  .sh {{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }}
-  .sh-icon {{ width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }}
-  .shi-buy  {{ background:rgba(34,197,94,0.15); }}
-  .shi-sell {{ background:rgba(239,68,68,0.15); }}
-  .sh-title {{ font-size:15px; font-weight:800; color:var(--text2); }}
-  .sh-divider {{ flex:1; height:1px; background:var(--border); min-width:10px; }}
-  .sh-count {{ font-size:9px; color:var(--muted); white-space:nowrap; }}
+/* ── TICKER STRIP ── */
+.ticker {{
+  background:rgba(0,0,0,0.4); border:1px solid var(--border);
+  border-radius:8px; margin-bottom:14px; overflow:hidden;
+}}
+.ticker-inner {{ display:flex; overflow-x:auto; scrollbar-width:none; }}
+.ticker-inner::-webkit-scrollbar {{ display:none; }}
+.ti {{
+  display:flex; gap:6px; align-items:center;
+  padding:6px 14px; border-right:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap;
+}}
+.ti-s {{ color:var(--accent); font-weight:700; }}
+.ti-p {{ color:#fff; }}
+.ti-u {{ color:var(--green); }}
+.ti-d {{ color:var(--red); }}
 
-  /* ── TABLE WRAPPER ── */
-  .tbl-wrap {{
-    width:100%; overflow-x:auto;
-    border:1px solid var(--border2); border-radius:8px;
-    margin-bottom:20px; background:var(--card);
-    box-shadow:0 4px 24px rgba(0,0,0,0.3);
-    -webkit-overflow-scrolling:touch;
-  }}
-  table {{ width:100%; border-collapse:collapse; min-width:1100px; }}
-  th {{
-    font-size:8px; font-weight:700; letter-spacing:1.5px;
-    text-transform:uppercase; color:#c8a060;
-    padding:8px 9px; background:var(--card2);
-    border-bottom:1px solid var(--border2);
-    text-align:left; white-space:nowrap;
-  }}
-  td {{
-    padding:8px 9px; border-bottom:1px solid var(--border);
-    vertical-align:middle; white-space:nowrap;
-  }}
-  tr:hover td {{ background:rgba(255,107,43,0.05); }}
-  tr:nth-child(even) td {{ background:rgba(0,0,0,0.15); }}
-  tr:last-child td {{ border-bottom:none; }}
+/* ── KPI BAND ── */
+.kpi-band {{
+  display:grid; grid-template-columns:repeat(5,1fr);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; margin-bottom:20px; overflow:hidden;
+}}
+.kc {{ padding:14px 10px; border-right:1px solid var(--border); text-align:center; }}
+.kc:last-child {{ border-right:none; }}
+.kn {{ font-family:'Syne',sans-serif; font-size:clamp(22px,4vw,32px); font-weight:800; line-height:1; }}
+.kl {{ font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }}
+.kbar {{ height:2px; border-radius:1px; margin:5px auto 0; width:30px; }}
 
-  /* ── CELL COMPONENTS ── */
-  .sn {{ font-size:13px; font-weight:700; color:var(--text2); }}
-  .ss {{ font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:var(--sym); letter-spacing:1px; margin-top:2px; }}
-  .sec {{ font-size:8px; color:var(--muted); margin-top:2px; max-width:120px; overflow:hidden; text-overflow:ellipsis; }}
-  .pv {{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--gold); }}
-  .rt {{ display:inline-block; font-size:8px; font-weight:700; padding:3px 7px; border-radius:3px; white-space:nowrap; letter-spacing:0.5px; }}
-  .rt-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.3); }}
-  .rt-b  {{ background:rgba(96,165,250,0.15); color:#93c5fd; border:1px solid rgba(96,165,250,0.3); }}
-  .rt-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.3); }}
-  .rt-ss {{ background:rgba(239,68,68,0.22);  color:#fca5a5; border:1px solid rgba(239,68,68,0.4); }}
-  .scn {{ font-size:20px; font-weight:800; }}
-  .scb {{ height:3px; border-radius:2px; margin-top:3px; width:36px; }}
-  .up {{ color:#4ade80; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
-  .dn {{ color:#f87171; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
-  .t1 {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--text2); }}
-  .t2 {{ font-size:9px; color:var(--t2c); margin-top:1px; }}
-  .sl1 {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#f87171; }}
-  .sl2 {{ font-size:9px; color:var(--muted); margin-top:1px; }}
-  .rv  {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
-  .rsb {{ font-size:8px; color:var(--muted); }}
-  .rrv {{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; }}
-  .qb    {{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; }}
-  .qb-ex {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
-  .qb-gd {{ background:rgba(96,165,250,0.15); color:#93c5fd; }}
-  .qb-av {{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
-  .qb-po {{ background:rgba(239,68,68,0.15);  color:#f87171; }}
-  .ts {{ font-size:7px; font-weight:700; padding:2px 5px; border-radius:3px; letter-spacing:0.5px; display:inline-block; margin-bottom:2px; }}
-  .ts-real    {{ background:rgba(34,197,94,0.15);   color:#4ade80; }}
-  .ts-partial {{ background:rgba(245,158,11,0.15);  color:#fbbf24; }}
-  .ts-ath     {{ background:rgba(96,165,250,0.15);  color:#93c5fd; }}
-  .ts-hit1    {{ background:rgba(34,197,94,0.2);    color:#4ade80; }}
-  .ts-hit2    {{ background:rgba(45,212,191,0.2);   color:#2dd4bf; }}
-  .sb {{ font-size:7px; font-weight:700; padding:2px 5px; border-radius:3px; display:inline-block; margin-top:2px; }}
-  .sb-atr  {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
-  .sb-beta {{ background:rgba(245,158,11,0.15); color:#fbbf24; }}
-  .ab {{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; white-space:nowrap; }}
-  .ab-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; }}
-  .ab-b  {{ background:rgba(96,165,250,0.15); color:#93c5fd; }}
-  .ab-h  {{ background:rgba(160,120,80,0.2);  color:#c8a060; }}
-  .ab-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; }}
-  .adx-strong {{ color:#4ade80; font-weight:700; }}
-  .adx-mid    {{ color:#fbbf24; font-weight:600; }}
-  .adx-weak   {{ color:#a07850; }}
-  .vol-high {{ color:#4ade80; font-weight:700; }}
-  .vol-norm {{ color:var(--text); }}
-  .vol-low  {{ color:#a07850; }}
-  .earn {{ font-size:9px; color:var(--teal); font-family:'JetBrains Mono',monospace; }}
-  .sdist-close {{ color:#4ade80; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
-  .sdist-mid   {{ color:#fbbf24; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
-  .sdist-far   {{ color:#f87171; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }}
+/* ── LEGEND ── */
+.legend {{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:8px; padding:8px 16px; font-size:0.7em;
+  color:var(--muted); margin-bottom:14px;
+}}
+.leg-item {{ display:flex; align-items:center; gap:6px; }}
+.leg-dot {{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }}
 
-  /* ── DISCLAIMER ── */
-  .disc {{
-    background:var(--card); border:1px solid var(--border2);
-    border-left:3px solid var(--accent); padding:12px 16px;
-    margin:16px 0; font-size:11px; color:var(--muted); line-height:1.7;
-  }}
-  .disc strong {{ color:#f87171; }}
+/* ── SECTION TITLE ── */
+.sec-title {{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }}
+.sec-title-icon {{
+  width:28px; height:28px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center; font-size:13px;
+}}
+.sec-title-text {{ font-family:'Syne',sans-serif; font-size:1em; font-weight:800; color:#fff; }}
+.sec-title-line {{ flex:1; height:1px; background:var(--border); }}
+.sec-title-note {{ font-size:0.68em; color:var(--muted); }}
 
-  /* ── FOOTER ── */
-  footer {{
-    background:linear-gradient(90deg,var(--bg2),#1a1005,var(--bg2));
-    border-top:2px solid var(--accent); text-align:center;
-    padding:14px; font-size:10px; color:var(--muted); letter-spacing:1px;
-  }}
-  footer strong {{ color:var(--accent2); }}
+/* ── TABLE WRAPPER ── */
+.tbl-wrap {{
+  width:100%; overflow-x:auto;
+  border:1px solid var(--border); border-radius:12px;
+  background:var(--card);
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+  -webkit-overflow-scrolling:touch;
+  margin-bottom:28px;
+}}
+table {{ width:100%; border-collapse:collapse; min-width:1200px; }}
 
-  /* ── MOBILE ── */
-  @media(max-width:900px) {{
-    .kpi-inner {{ grid-template-columns:repeat(3,1fr); }}
-    .hm:nth-child(n+4) {{ display:none; }}
-    .idx-strip {{ display:none; }}
-  }}
-  @media(max-width:600px) {{
-    .kpi-inner {{ grid-template-columns:repeat(2,1fr); }}
-    .brand-t {{ font-size:12px; }}
-    .hm:nth-child(n+3) {{ display:none; }}
-    .main {{ padding:8px; }}
-    .h-top {{ padding:10px 10px; }}
-    th {{ font-size:7px; padding:6px 7px; letter-spacing:0.5px; }}
-    td {{ padding:7px 7px; }}
-    .sn {{ font-size:12px; }}
-    .kn {{ font-size:18px; }}
-    .kl {{ font-size:7px; }}
-    .live-clock-wrap {{ display:none; }}
-  }}
-  @media(max-width:400px) {{
-    .kpi-inner {{ grid-template-columns:repeat(2,1fr); }}
-    .kc:last-child {{ display:none; }}
-  }}
+/* ── GROUP HEADER ROW ── */
+.grp-row th {{
+  padding:5px 10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.58em; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; border-bottom:none; text-align:center;
+}}
+.grp-identity {{ background:var(--g-identity); color:var(--accent);  border-right:2px solid rgba(245,158,11,0.2); }}
+.grp-trade    {{ background:var(--g-trade);    color:var(--green);   border-right:2px solid rgba(34,197,94,0.2); }}
+.grp-risk     {{ background:var(--g-risk);     color:#f87171;        border-right:2px solid rgba(239,68,68,0.2); }}
+.grp-momentum {{ background:var(--g-momentum); color:var(--blue);    border-right:2px solid rgba(96,165,250,0.2); }}
+.grp-value    {{ background:var(--g-value);    color:var(--purple);  border-right:2px solid rgba(167,139,250,0.2); }}
+.grp-external {{ background:var(--g-external); color:var(--teal); }}
+
+/* ── COLUMN HEADERS ── */
+thead tr.col-hdr th {{
+  font-size:0.62em; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:#8090a0;
+  padding:8px 10px;
+  border-bottom:2px solid var(--border);
+  white-space:nowrap; text-align:left;
+  background:var(--card2);
+}}
+.gh-identity {{ border-right:2px solid rgba(245,158,11,0.15)!important; }}
+.gh-trade    {{ border-right:2px solid rgba(34,197,94,0.12)!important; }}
+.gh-risk     {{ border-right:2px solid rgba(239,68,68,0.12)!important; }}
+.gh-momentum {{ border-right:2px solid rgba(96,165,250,0.12)!important; }}
+.gh-value    {{ border-right:2px solid rgba(167,139,250,0.12)!important; }}
+
+/* ── TABLE ROWS ── */
+tbody tr {{ transition:background 0.15s; }}
+tbody tr:hover td {{ background:rgba(245,158,11,0.04); }}
+tbody tr:nth-child(even) td {{ background:rgba(0,0,0,0.15); }}
+tbody tr:nth-child(even):hover td {{ background:rgba(245,158,11,0.04); }}
+
+td {{
+  padding:10px 10px; border-bottom:1px solid var(--border);
+  vertical-align:middle; white-space:nowrap;
+}}
+tbody tr:last-child td {{ border-bottom:none; }}
+
+/* group separators on data cells */
+td.sep-identity {{ border-right:2px solid rgba(245,158,11,0.1); }}
+td.sep-trade    {{ border-right:2px solid rgba(34,197,94,0.08); }}
+td.sep-risk     {{ border-right:2px solid rgba(239,68,68,0.08); }}
+td.sep-momentum {{ border-right:2px solid rgba(96,165,250,0.08); }}
+td.sep-value    {{ border-right:2px solid rgba(167,139,250,0.08); }}
+
+/* ── CELL COMPONENTS ── */
+.c-num {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; color:var(--muted); text-align:center; }}
+.c-name {{ font-size:0.88em; font-weight:600; color:#fff; line-height:1.2; }}
+.c-sym  {{ font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700; color:var(--accent); letter-spacing:1px; margin-top:1px; }}
+.c-sector {{ font-size:0.65em; color:var(--muted); margin-top:1px; max-width:110px; overflow:hidden; text-overflow:ellipsis; }}
+
+/* Earnings warning */
+tr.earn-warning td {{ background:rgba(239,68,68,0.04)!important; }}
+tr.earn-warning td.earn-cell {{ background:rgba(239,68,68,0.1)!important; }}
+.earn-badge {{
+  font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700;
+  padding:2px 7px; border-radius:4px; display:inline-block; white-space:nowrap;
+}}
+.earn-soon {{ background:rgba(239,68,68,0.18); color:#f87171; border:1px solid rgba(239,68,68,0.3); animation:pulse 2s infinite; }}
+.earn-ok   {{ background:rgba(45,212,191,0.1); color:#2dd4bf; }}
+.earn-na   {{ color:var(--muted); font-size:0.65em; }}
+@keyframes pulse {{ 0%,100%{{opacity:1;}} 50%{{opacity:0.6;}} }}
+
+.c-price {{ font-family:'JetBrains Mono',monospace; font-size:0.9em; font-weight:600; color:#f59e0b; }}
+
+.rating {{
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.6em; font-weight:700;
+  padding:3px 8px; border-radius:4px; white-space:nowrap; letter-spacing:0.3px;
+}}
+.r-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.25); }}
+.r-b  {{ background:rgba(45,212,191,0.12); color:#2dd4bf; border:1px solid rgba(45,212,191,0.2); }}
+.r-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.25); }}
+.r-ss {{ background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }}
+
+.c-score-n   {{ font-family:'JetBrains Mono',monospace; font-size:1.15em; font-weight:800; line-height:1; }}
+.c-score-bar {{ height:3px; border-radius:2px; margin-top:4px; width:36px; }}
+
+.up {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#4ade80; }}
+.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#f87171; }}
+
+.ts-badge {{
+  display:inline-block; font-family:'JetBrains Mono',monospace;
+  font-size:0.58em; font-weight:700; padding:1px 5px; border-radius:3px;
+  margin-bottom:3px;
+}}
+.ts-real    {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
+.ts-partial {{ background:rgba(245,158,11,0.12); color:#fbbf24; }}
+.ts-ath     {{ background:rgba(96,165,250,0.12); color:#93c5fd; }}
+.ts-hit1    {{ background:rgba(34,197,94,0.2);   color:#4ade80; }}
+.ts-hit2    {{ background:rgba(45,212,191,0.2);  color:#2dd4bf; }}
+
+.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#fff; }}
+.c-t2 {{ font-size:0.68em; color:#a0c0d0; margin-top:1px; }}
+.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#f87171; }}
+.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#fbbf24; }}
+.c-slpct {{ font-size:0.65em; color:var(--muted); margin-top:1px; }}
+.sl-badge {{
+  display:inline-block; font-size:0.58em; font-weight:700;
+  padding:1px 5px; border-radius:3px; margin-top:2px;
+  font-family:'JetBrains Mono',monospace;
+}}
+.sl-atr  {{ background:rgba(34,197,94,0.1);  color:#4ade80; }}
+.sl-beta {{ background:rgba(245,158,11,0.1); color:#fbbf24; }}
+
+.c-rr {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:700; }}
+.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; color:var(--teal); }}
+.c-atr-sub {{ font-size:0.63em; color:var(--muted); margin-top:1px; }}
+.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
+.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
+
+/* RSI progress bar */
+.c-rsi {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:700; }}
+.c-rsi-lbl {{ font-size:0.62em; color:var(--muted); margin-top:1px; }}
+.rsi-track {{ width:36px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:3px; overflow:hidden; }}
+.rsi-fill  {{ height:100%; border-radius:2px; }}
+
+.c-macd {{ font-size:0.75em; font-weight:600; padding:2px 7px; border-radius:4px; font-family:'JetBrains Mono',monospace; display:inline-block; }}
+.macd-bull {{ background:rgba(34,197,94,0.1);  color:#4ade80; }}
+.macd-bear {{ background:rgba(239,68,68,0.1);  color:#f87171; }}
+
+.c-adx {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.c-adx-lbl {{ font-size:0.62em; margin-top:1px; }}
+.c-vol {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
+.c-vol-lbl {{ font-size:0.62em; color:var(--muted); margin-top:1px; }}
+.c-pe  {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
+.c-div {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; }}
+.c-52w {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; }}
+
+.analyst {{ font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700; padding:2px 7px; border-radius:4px; display:inline-block; }}
+.an-sb {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
+.an-b  {{ background:rgba(96,165,250,0.1);  color:#93c5fd; }}
+.an-h  {{ background:rgba(160,120,80,0.15); color:#c8a060; }}
+.an-s  {{ background:rgba(239,68,68,0.1);   color:#f87171; }}
+
+.qual {{ font-size:0.65em; font-weight:700; padding:2px 7px; border-radius:4px; }}
+.q-ex {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
+.q-gd {{ background:rgba(96,165,250,0.1);  color:#93c5fd; }}
+.q-av {{ background:rgba(245,158,11,0.1);  color:#fbbf24; }}
+.q-po {{ background:rgba(239,68,68,0.1);   color:#f87171; }}
+
+/* QUICK VIEW hidden cols */
+.detail-col {{ transition:opacity 0.2s; }}
+body.quick-view .detail-col {{ display:none; }}
+
+/* TOOLTIP */
+[data-tip] {{ position:relative; cursor:help; }}
+[data-tip]::after {{
+  content:attr(data-tip);
+  position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  background:#1a2030; border:1px solid var(--border);
+  color:var(--text); font-size:0.68em; padding:5px 9px; border-radius:6px;
+  white-space:nowrap; pointer-events:none; opacity:0;
+  transition:opacity 0.15s; z-index:100;
+  font-family:'DM Sans',sans-serif; font-weight:400;
+}}
+[data-tip]:hover::after {{ opacity:1; }}
+
+/* ── DISCLAIMER ── */
+.disc {{
+  background:var(--card); border:1px solid var(--border);
+  border-left:3px solid #f59e0b; padding:12px 16px;
+  margin:16px 0; font-size:11px; color:var(--muted); line-height:1.7;
+  border-radius:8px;
+}}
+.disc strong {{ color:#f87171; }}
+
+/* ── FOOTER ── */
+footer {{
+  background:var(--card); border-top:1px solid var(--border);
+  text-align:center; padding:14px; font-size:10px;
+  color:var(--muted); letter-spacing:1px; border-radius:0 0 12px 12px;
+}}
+footer strong {{ color:var(--accent); }}
+
+/* ── MOBILE ── */
+@media(max-width:900px) {{
+  .kpi-band {{ grid-template-columns:repeat(3,1fr); }}
+  .idx-strip {{ display:none; }}
+}}
+@media(max-width:600px) {{
+  .kpi-band {{ grid-template-columns:repeat(2,1fr); }}
+  .live-clock {{ display:none; }}
+  .hdr {{ padding:12px; }}
+  .page {{ padding:10px 8px 40px; }}
+}}
 </style>
 </head>
-<body>
+<body class="quick-view">
+
+<div class="page">
 
 <!-- HEADER -->
-<header>
-  <div class="h-top">
-    <div class="brand">
-      <div class="brand-icon">🌅</div>
-      <div>
-        <div class="brand-t">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-        <div class="brand-s">12M S/R · ATR Stops · Tech &amp; Fundamental v6</div>
-      </div>
-    </div>
-
-    <!-- ── INDEX STRIP: DJI / NDX / SPX ── -->
-    <div class="idx-strip">
-      <div class="idx-item">
-        <span class="idx-name">DJI</span>
-        <span class="idx-price">{idx_data['DJI']['price']}</span>
-        <span class="idx-chg {idx_data['DJI']['cls']}">{idx_data['DJI']['chg']}</span>
-      </div>
-      <div class="idx-sep"></div>
-      <div class="idx-item">
-        <span class="idx-name">NDX</span>
-        <span class="idx-price">{idx_data['NDX']['price']}</span>
-        <span class="idx-chg {idx_data['NDX']['cls']}">{idx_data['NDX']['chg']}</span>
-      </div>
-      <div class="idx-sep"></div>
-      <div class="idx-item">
-        <span class="idx-name">SPX</span>
-        <span class="idx-price">{idx_data['SPX']['price']}</span>
-        <span class="idx-chg {idx_data['SPX']['cls']}">{idx_data['SPX']['chg']}</span>
-      </div>
-    </div>
-
-    <div class="h-meta">
-      <div class="hm"><div class="hm-l">Date</div><div class="hm-v" style="color:var(--gold)">{now.strftime('%d %b %Y')}</div></div>
-      <div class="live-clock-wrap">
-        <div class="lc-label">TIME</div>
-        <div class="lc-time" id="liveClock">--:-- --</div>
-        <div class="lc-date" id="liveDate">{now.strftime('%d %b %Y')}</div>
-        <div class="lc-last">Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
-      </div>
-      <div class="hm"><div class="hm-l">Session</div><div class="hm-v" style="color:var(--green)">▲ {time_of_day.upper()}</div></div>
-      <div class="hm"><div class="hm-l">Next Update</div><div class="hm-v" style="color:var(--accent2)">{next_update}</div></div>
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-icon">🌅</div>
+    <div>
+      <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
+      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v7 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
     </div>
   </div>
-  <div class="ticker"><div class="ticker-inner">
+
+  <!-- Index Strip -->
+  <div class="idx-strip">
+    <div class="idx-item">
+      <span class="idx-name">DJI</span>
+      <span class="idx-price">{idx_data['DJI']['price']}</span>
+      <span class="idx-chg {idx_data['DJI']['cls']}">{idx_data['DJI']['chg']}</span>
+    </div>
+    <div class="idx-sep"></div>
+    <div class="idx-item">
+      <span class="idx-name">NDX</span>
+      <span class="idx-price">{idx_data['NDX']['price']}</span>
+      <span class="idx-chg {idx_data['NDX']['cls']}">{idx_data['NDX']['chg']}</span>
+    </div>
+    <div class="idx-sep"></div>
+    <div class="idx-item">
+      <span class="idx-name">SPX</span>
+      <span class="idx-price">{idx_data['SPX']['price']}</span>
+      <span class="idx-chg {idx_data['SPX']['cls']}">{idx_data['SPX']['chg']}</span>
+    </div>
+  </div>
+
+  <!-- Live Clock + View Toggle -->
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div class="live-clock" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;">
+      <div class="lc-label">EST TIME</div>
+      <div class="lc-time" id="liveClock">--:-- --</div>
+      <div class="lc-date" id="liveDate">{now.strftime('%d %b %Y')}</div>
+      <div class="lc-last">Next: {next_update}</div>
+    </div>
+    <div class="view-toggle">
+      <button class="vt-btn active" onclick="setView('quick',this)">⚡ Quick</button>
+      <button class="vt-btn" onclick="setView('detail',this)">🔍 Detail</button>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker"><div class="ticker-inner">
 """
-        for t in self.results[:8]:
+        for t in self.results[:10]:
             pct  = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
             cls  = "ti-u" if pct >= 0 else "ti-d"
             sign = "+" if pct >= 0 else ""
             html += f'<div class="ti"><span class="ti-s">{t["Symbol"]}</span><span class="ti-p">${t["Price"]:,.2f}</span><span class="{cls}">{sign}{pct:.1f}%</span></div>'
 
-        html += f"""  </div></div>
-</header>
+        html += f"""</div></div>
 
 <!-- KPI BAND -->
 <div class="kpi-band">
-  <div class="kpi-inner">
-    <div class="kc"><div class="kn" style="color:var(--accent2)">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:var(--accent)"></div></div>
-    <div class="kc"><div class="kn" style="color:var(--green)">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:var(--green)"></div></div>
-    <div class="kc"><div class="kn" style="color:var(--teal)">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:var(--teal)"></div></div>
-    <div class="kc"><div class="kn" style="color:var(--red)">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:var(--red)"></div></div>
-    <div class="kc"><div class="kn" style="color:var(--blue)">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:var(--blue)"></div></div>
-  </div>
+  <div class="kc"><div class="kn" style="color:#f59e0b">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:#f59e0b"></div></div>
+  <div class="kc"><div class="kn" style="color:#22c55e">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:#22c55e"></div></div>
+  <div class="kc"><div class="kn" style="color:#2dd4bf">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:#2dd4bf"></div></div>
+  <div class="kc"><div class="kn" style="color:#ef4444">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:#ef4444"></div></div>
+  <div class="kc"><div class="kn" style="color:#60a5fa">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:#60a5fa"></div></div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<!-- LEGEND -->
+<div class="legend">
+  <span style="font-weight:600;color:var(--text);">Legend:</span>
+  <div class="leg-item"><div class="leg-dot" style="background:#f59e0b;"></div> Identity</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#22c55e;"></div> Trade Setup</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#ef4444;"></div> Risk</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#60a5fa;"></div> Momentum (Detail)</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#a78bfa;"></div> Valuation (Detail)</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2dd4bf;"></div> External</div>
+  <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
+    <span style="color:#f87171;font-weight:600;">🔴 Pulsing row</span> = Earnings within 14 days — trade carefully
+  </span>
+</div>
 """
 
         # ── helpers ──────────────────────────────────────────────────────────
         def analyst_badge(label):
-            m = {'Strong Buy':'ab-sb','Buy':'ab-b','Hold':'ab-h',
-                 'Sell':'ab-s','Strong Sell':'ab-s'}
-            cls = m.get(label, 'ab-h')
-            return f'<span class="ab {cls}">{label}</span>'
+            m = {'Strong Buy': 'an-sb', 'Buy': 'an-b', 'Hold': 'an-h',
+                 'Sell': 'an-s', 'Strong Sell': 'an-s'}
+            cls = m.get(label, 'an-h')
+            return f'<span class="analyst {cls}">{label}</span>'
 
-        def adx_cell(v):
-            if v >= 30:   cls = "adx-strong"; lbl = "Strong"
-            elif v >= 20: cls = "adx-mid";    lbl = "Moderate"
-            else:         cls = "adx-weak";   lbl = "Weak"
-            return f'<div class="rv {cls}">{v:.0f}</div><div class="rsb">{lbl}</div>'
+        def adx_html(v):
+            c = "#4ade80" if v >= 30 else ("#fbbf24" if v >= 20 else "#a07850")
+            l = "Strong" if v >= 30 else ("Moderate" if v >= 20 else "Weak")
+            return f'<div class="c-adx" style="color:{c}">{v:.0f}</div><div class="c-adx-lbl" style="color:{c}">{l}</div>'
 
-        def vol_cell(v):
-            cls = "vol-high" if v >= 1.5 else ("vol-low" if v < 0.7 else "vol-norm")
-            lbl = "High Vol" if v >= 1.5 else ("Low Vol" if v < 0.7 else "Avg Vol")
-            return f'<div class="rv {cls}">{v:.1f}×</div><div class="rsb">{lbl}</div>'
+        def vol_html(v):
+            c = "#4ade80" if v >= 1.5 else ("#a07850" if v < 0.7 else "#d8e8f5")
+            l = "High Vol" if v >= 1.5 else ("Low Vol" if v < 0.7 else "Avg Vol")
+            return f'<div class="c-vol" style="color:{c}">{v:.1f}×</div><div class="c-vol-lbl">{l}</div>'
 
-        def sdist_cell(v):
-            cls = "sdist-close" if v <= 3 else ("sdist-mid" if v <= 8 else "sdist-far")
-            return f'<span class="{cls}">{v:.1f}%</span>'
+        def rsi_html(v, sig):
+            c = "#f87171" if v > 70 else ("#4ade80" if v < 30 else "#93c5fd")
+            return (f'<div class="c-rsi" style="color:{c}">{v:.0f}</div>'
+                    f'<div class="rsi-track"><div class="rsi-fill" style="width:{min(v,100):.0f}%;background:{c}"></div></div>'
+                    f'<div class="c-rsi-lbl">{sig}</div>')
 
-        def target_badge(ts, th):
-            if th == 2:           return 'ts-hit2',   '✅ T1+T2 Hit'
-            elif th == 1:         return 'ts-hit1',   '✅ T1 Hit'
-            elif 'ATH' in ts:     return 'ts-ath',    '🚀 ATH Zone'
+        def ts_badge(ts, th):
+            if th == 2:           return 'ts-hit2',  '✅ T1+T2 Hit'
+            elif th == 1:         return 'ts-hit1',  '✅ T1 Hit'
+            elif 'ATH' in ts:     return 'ts-ath',   '🚀 ATH Zone'
             elif 'Partial' in ts: return 'ts-partial','⚡ Partial S/R'
-            else:                 return 'ts-real',   '📍 Real S/R'
+            else:                 return 'ts-real',  '📍 Real S/R'
+
+        def sc_color(v):
+            return "#4ade80" if v >= 75 else ("#2dd4bf" if v >= 55 else "#fbbf24")
+
+        def earn_html(date_str, soon):
+            if date_str == "N/A":
+                return '<span class="earn-na">N/A</span>'
+            cls = "earn-soon" if soon else "earn-ok"
+            prefix = "⚠ " if soon else ""
+            return f'<span class="earn-badge {cls}">{prefix}{date_str}</span>'
 
         # ── BUY TABLE ─────────────────────────────────────────────────────────
         if not top_buys.empty:
-            html += """  <div class="sh">
-    <div class="sh-icon shi-buy">▲</div>
-    <span class="sh-title">Top 20 Buy Recommendations</span>
-    <div class="sh-divider"></div>
-    <span class="sh-count">12M S/R · ATR Stop · Sector · Vol · ADX · Earnings</span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr>
-      <th>#</th>
-      <th>Stock / Sector</th>
-      <th>Price</th>
-      <th>Rating</th>
-      <th>Score</th>
-      <th>Upside</th>
-      <th>Target (S/R)</th>
-      <th>Stop Loss</th>
-      <th>ATR</th>
-      <th>Sup Dist</th>
-      <th>RSI</th>
-      <th>ADX</th>
-      <th>Vol/Avg</th>
-      <th>R:R</th>
-      <th>52W Hi%</th>
-      <th>Beta</th>
-      <th>P/E</th>
-      <th>Div%</th>
-      <th>Analyst</th>
-      <th>Earnings</th>
-      <th>Quality</th>
-    </tr></thead><tbody>
+            html += """
+<div class="sec-title">
+  <div class="sec-title-icon" style="background:rgba(34,197,94,0.12);color:#4ade80;">▲</div>
+  <span class="sec-title-text">Top 20 Buy Recommendations</span>
+  <div class="sec-title-line"></div>
+  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips</span>
+</div>
+
+<div class="tbl-wrap"><table>
+  <thead>
+    <tr class="grp-row">
+      <th colspan="5" class="grp-identity">⬡ Identity</th>
+      <th colspan="4" class="grp-trade">▲ Trade Setup</th>
+      <th colspan="3" class="grp-risk">⚠ Risk</th>
+      <th colspan="4" class="grp-momentum detail-col">◎ Momentum</th>
+      <th colspan="3" class="grp-value detail-col">◈ Valuation</th>
+      <th colspan="3" class="grp-external">⊕ External</th>
+    </tr>
+    <tr class="col-hdr">
+      <th data-tip="Row number">#</th>
+      <th data-tip="Company name, ticker, and sector">Stock / Sector</th>
+      <th data-tip="Last closing price">Price</th>
+      <th data-tip="Algorithm rating from combined tech + fundamental score">Rating</th>
+      <th class="gh-identity" data-tip="Combined score 0–100 (50% tech + 50% fundamental)">Score</th>
+      <th data-tip="% gain to Target 1">Upside</th>
+      <th data-tip="T1 = nearest resistance · T2 = next resistance">Target T1/T2</th>
+      <th data-tip="ATR-based stop below support zone">Stop Loss</th>
+      <th class="gh-trade" data-tip="Reward ÷ Risk · ≥2× is ideal">R:R</th>
+      <th data-tip="Average True Range — daily volatility in $">ATR</th>
+      <th data-tip="Market sensitivity · &lt;1 = stable · &gt;1.5 = volatile">Beta</th>
+      <th class="gh-risk" data-tip="How far price is above nearest support">Sup Dist</th>
+      <th class="detail-col" data-tip="Relative Strength Index · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="MACD vs signal line direction">MACD</th>
+      <th class="detail-col" data-tip="Average Directional Index · &gt;25 = strong trend">ADX</th>
+      <th class="detail-col gh-momentum" data-tip="Today's volume ÷ 20-day avg · &gt;1.5× = high conviction">Vol/Avg</th>
+      <th class="detail-col" data-tip="Price-to-Earnings · &lt;25 = reasonable">P/E</th>
+      <th class="detail-col" data-tip="Annual dividend yield">Div%</th>
+      <th class="detail-col gh-value" data-tip="Fundamental quality rating">Quality</th>
+      <th data-tip="% below 52-week high">52W Hi%</th>
+      <th data-tip="Wall Street analyst consensus">Analyst</th>
+      <th class="earn-cell" data-tip="⚠ Row pulses red if earnings within 14 days">Earnings</th>
+    </tr>
+  </thead>
+  <tbody>
 """
             for i, (_, row) in enumerate(top_buys.iterrows(), 1):
-                rtag  = "rt-sb" if row['Recommendation'] == "STRONG BUY" else "rt-b"
-                sc_c  = "#4ade80" if row['Combined_Score'] >= 75 else ("#2dd4bf" if row['Combined_Score'] >= 55 else "#fbbf24")
-                sc_b  = "#22c55e" if row['Combined_Score'] >= 75 else ("#14b8a6" if row['Combined_Score'] >= 55 else "#f59e0b")
-                upcls = "up" if row['Upside'] >= 0 else "dn"
-                rsic  = "#f87171" if row['RSI'] > 70 else ("#4ade80" if row['RSI'] < 30 else "#93c5fd")
-                w52   = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
-                w52c  = "#f87171" if w52 >= -5 else ("#d4a85a" if w52 >= -20 else "#4ade80")
-                betac = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
-                rr    = row['Risk_Reward']
-                rrc   = "#4ade80" if rr >= 2 else ("#2dd4bf" if rr >= 1 else "#f87171")
-                pe    = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec   = "#a07850" if row['PE_Ratio'] <= 0 else ("#4ade80" if row['PE_Ratio'] < 25 else ("#fbbf24" if row['PE_Ratio'] < 40 else "#f87171"))
-                div   = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                divc  = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
-                qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
-                tbcls, tbtxt = target_badge(row.get('Target_Status',''), row.get('Targets_Hit',0))
-                st    = row.get('Stop_Type','ATR Stop')
-                scls  = "sb-atr" if st == "ATR Stop" else "sb-beta"
-                slbl  = f"{'📐' if st=='ATR Stop' else '🔒'} {st}"
-                sec   = row.get('Sector', 'N/A')
-                ed    = row.get('Earnings_Date', 'N/A')
-                html += f"""      <tr>
-        <td style="color:#a07850;font-size:11px">{i}</td>
-        <td>
-          <div class="sn">{row['Name']}</div>
-          <div class="ss">{row['Symbol']}</div>
-          <div class="sec">{sec}</div>
-        </td>
-        <td><div class="pv">${row['Price']:,.2f}</div></td>
-        <td><span class="rt {rtag}">{row['Rating']}</span></td>
-        <td>
-          <div class="scn" style="color:{sc_c}">{row['Combined_Score']:.0f}</div>
-          <div class="scb" style="background:{sc_b}"></div>
-        </td>
-        <td class="{upcls}">{row['Upside']:+.1f}%</td>
-        <td>
-          <span class="ts {tbcls}">{tbtxt}</span>
-          <div class="t1">${row['Target_1']:,.2f}</div>
-          <div class="t2">T2: ${row['Target_2']:,.2f}</div>
-        </td>
-        <td>
-          <div class="sl1">${row['Stop_Loss']:,.2f}</div>
-          <div class="sl2">-{row['SL_Percentage']:.1f}%</div>
-          <span class="sb {scls}">{slbl}</span>
-        </td>
-        <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
-          <div style="font-size:8px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
-        </td>
-        <td>{sdist_cell(row.get('Support_Dist_Pct', 0))}</td>
-        <td>
-          <div class="rv" style="color:{rsic}">{row['RSI']:.0f}</div>
-          <div class="rsb">{row['RSI_Signal']}</div>
-        </td>
-        <td>{adx_cell(row.get('ADX', 0))}</td>
-        <td>{vol_cell(row.get('Vol_Ratio', 1.0))}</td>
-        <td class="rrv" style="color:{rrc}">{rr:.1f}×</td>
-        <td style="color:{w52c};font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600">{w52:+.1f}%</td>
-        <td style="color:{betac};font-size:11px">{row['Beta']:.2f}</td>
-        <td style="color:{pec};font-size:11px">{pe}</td>
-        <td style="color:{divc};font-size:11px">{div}</td>
-        <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
-        <td><div class="earn">{ed}</div></td>
-        <td><span class="qb {qcls}">{row['Quality']}</span></td>
-      </tr>
+                rcls   = "r-sb" if row['Recommendation'] == "STRONG BUY" else "r-b"
+                sc     = sc_color(row['Combined_Score'])
+                upcls  = "up" if row['Upside'] >= 0 else "dn"
+                w52    = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                w52c   = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
+                betac  = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
+                rr     = row['Risk_Reward']
+                rrc    = "#4ade80" if rr >= 2 else ("#2dd4bf" if rr >= 1 else "#f87171")
+                pe_str = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
+                pec    = "#a07850" if row['PE_Ratio'] <= 0 else ("#4ade80" if row['PE_Ratio'] < 25 else ("#fbbf24" if row['PE_Ratio'] < 40 else "#f87171"))
+                div_str= f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
+                divc   = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
+                sdc    = "#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171")
+                qcls   = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
+                tbc, tbt = ts_badge(row.get('Target_Status', ''), row.get('Targets_Hit', 0))
+                sltype = row.get('Stop_Type', 'ATR Stop')
+                slcls  = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
+                sllbl  = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
+                soon   = row.get('Earn_Soon', False)
+                rowcls = "earn-warning" if soon else ""
+
+                html += f"""    <tr class="{rowcls}">
+      <td><div class="c-num">{i}</div></td>
+      <td>
+        <div class="c-name">{row['Name']}</div>
+        <div class="c-sym">{row['Symbol']}</div>
+        <div class="c-sector">{row.get('Sector','N/A')}</div>
+      </td>
+      <td><div class="c-price">${row['Price']:,.2f}</div></td>
+      <td><span class="rating {rcls}">{row['Rating']}</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:{sc}">{row['Combined_Score']:.0f}</div>
+        <div class="c-score-bar" style="background:{sc}"></div>
+      </td>
+      <td><span class="{upcls}">{row['Upside']:+.1f}%</span></td>
+      <td>
+        <span class="ts-badge {tbc}">{tbt}</span>
+        <div class="c-t1">${row['Target_1']:,.2f}</div>
+        <div class="c-t2">T2: ${row['Target_2']:,.2f}</div>
+      </td>
+      <td>
+        <div class="c-sl">${row['Stop_Loss']:,.2f}</div>
+        <div class="c-slpct">-{row['SL_Percentage']:.1f}%</div>
+        <span class="sl-badge {slcls}">{sllbl}</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:{rrc}">{rr:.1f}×</div></td>
+      <td>
+        <div class="c-atr">${row['ATR']:,.2f}</div>
+        <div class="c-atr-sub">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
+      </td>
+      <td><div class="c-beta" style="color:{betac}">{row['Beta']:.2f}</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:{sdc}">{row.get('Support_Dist_Pct',0):.1f}%</div></td>
+      <td class="detail-col">{rsi_html(row['RSI'], row['RSI_Signal'])}</td>
+      <td class="detail-col"><span class="c-macd {'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
+      <td class="detail-col">{adx_html(row.get('ADX',0))}</td>
+      <td class="detail-col sep-momentum">{vol_html(row.get('Vol_Ratio',1.0))}</td>
+      <td class="detail-col"><div class="c-pe" style="color:{pec}">{pe_str}</div></td>
+      <td class="detail-col"><div class="c-div" style="color:{divc}">{div_str}</div></td>
+      <td class="detail-col sep-value"><span class="qual {qcls}">{row['Quality']}</span></td>
+      <td><div class="c-52w" style="color:{w52c}">{w52:+.1f}%</div></td>
+      <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
+      <td class="earn-cell">{earn_html(row.get('Earnings_Date','N/A'), soon)}</td>
+    </tr>
 """
-            html += "    </tbody></table></div>\n"
+            html += "  </tbody>\n</table></div>\n"
 
         # ── SELL TABLE ────────────────────────────────────────────────────────
         if not top_sells.empty:
-            html += """  <div class="sh">
-    <div class="sh-icon shi-sell">▼</div>
-    <span class="sh-title">Top 20 Sell Recommendations</span>
-    <div class="sh-divider"></div>
-    <span class="sh-count">12M S/R · ATR Stop · Sector · Vol · ADX · Earnings</span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr>
+            html += """
+<div class="sec-title">
+  <div class="sec-title-icon" style="background:rgba(239,68,68,0.12);color:#f87171;">▼</div>
+  <span class="sec-title-text">Top 20 Sell Recommendations</span>
+  <div class="sec-title-line"></div>
+  <span class="sec-title-note">Quick = 12 cols · Detail = all 19 · Hover headers for tips</span>
+</div>
+
+<div class="tbl-wrap"><table>
+  <thead>
+    <tr class="grp-row">
+      <th colspan="5" class="grp-identity">⬡ Identity</th>
+      <th colspan="4" class="grp-trade">▼ Trade Setup</th>
+      <th colspan="3" class="grp-risk">⚠ Risk</th>
+      <th colspan="4" class="grp-momentum detail-col">◎ Momentum</th>
+      <th colspan="3" class="grp-value detail-col">◈ Valuation</th>
+      <th colspan="3" class="grp-external">⊕ External</th>
+    </tr>
+    <tr class="col-hdr">
       <th>#</th>
       <th>Stock / Sector</th>
-      <th>Price</th>
-      <th>Rating</th>
-      <th>Score</th>
-      <th>RSI</th>
-      <th>MACD</th>
-      <th>ADX</th>
-      <th>Downside</th>
-      <th>Target (S/R)</th>
-      <th>Stop Loss</th>
-      <th>ATR</th>
-      <th>Vol/Avg</th>
-      <th>R:R</th>
-      <th>Beta</th>
-      <th>P/E</th>
-      <th>Analyst</th>
-      <th>Earnings</th>
-      <th>Quality</th>
-    </tr></thead><tbody>
+      <th data-tip="Last closing price">Price</th>
+      <th data-tip="Algorithm sell rating">Rating</th>
+      <th class="gh-identity" data-tip="Combined score 0–100">Score</th>
+      <th data-tip="% downside to Target 1">Downside</th>
+      <th data-tip="T1 = nearest support · T2 = next support">Target T1/T2</th>
+      <th data-tip="ATR-based stop above resistance">Stop Loss</th>
+      <th class="gh-trade" data-tip="Reward ÷ Risk">R:R</th>
+      <th data-tip="Average True Range in $">ATR</th>
+      <th data-tip="Market beta sensitivity">Beta</th>
+      <th class="gh-risk" data-tip="Distance to nearest support">Sup Dist</th>
+      <th class="detail-col" data-tip="RSI · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="MACD signal direction">MACD</th>
+      <th class="detail-col" data-tip="ADX trend strength">ADX</th>
+      <th class="detail-col gh-momentum" data-tip="Volume vs 20-day average">Vol/Avg</th>
+      <th class="detail-col" data-tip="P/E ratio">P/E</th>
+      <th class="detail-col" data-tip="Dividend yield">Div%</th>
+      <th class="detail-col gh-value" data-tip="Fundamental quality">Quality</th>
+      <th data-tip="% below 52-week high">52W Hi%</th>
+      <th data-tip="Analyst consensus">Analyst</th>
+      <th class="earn-cell" data-tip="⚠ Pulses red if earnings within 14 days">Earnings</th>
+    </tr>
+  </thead>
+  <tbody>
 """
             for i, (_, row) in enumerate(top_sells.iterrows(), 1):
-                rtag  = "rt-ss" if row['Recommendation'] == "STRONG SELL" else "rt-s"
-                rsic  = "#f87171" if row['RSI'] > 70 else ("#4ade80" if row['RSI'] < 30 else "#fbbf24")
-                mcdcl = "#f87171" if row['MACD'] == "Bearish" else "#4ade80"
-                dncls = "dn" if row['Upside'] >= 0 else "up"
-                rr    = row['Risk_Reward']
-                rrc   = "#4ade80" if rr >= 2 else ("#fbbf24" if rr >= 1 else "#f87171")
-                betac = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
-                pe    = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec   = "#a07850" if row['PE_Ratio'] <= 0 else ("#f87171" if row['PE_Ratio'] > 40 else ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80"))
-                qcls  = {"Excellent":"qb-ex","Good":"qb-gd","Average":"qb-av","Poor":"qb-po"}.get(row['Quality'],"qb-av")
-                ts    = row.get('Target_Status','')
-                tbcls, tbtxt = target_badge(ts, 0)
-                st    = row.get('Stop_Type','ATR Stop')
-                scls  = "sb-atr" if st == "ATR Stop" else "sb-beta"
-                slbl  = f"{'📐' if st=='ATR Stop' else '🔒'} {st}"
-                sec   = row.get('Sector', 'N/A')
-                ed    = row.get('Earnings_Date', 'N/A')
-                html += f"""      <tr>
-        <td style="color:#a07850;font-size:11px">{i}</td>
-        <td>
-          <div class="sn">{row['Name']}</div>
-          <div class="ss">{row['Symbol']}</div>
-          <div class="sec">{sec}</div>
-        </td>
-        <td><div class="pv">${row['Price']:,.2f}</div></td>
-        <td><span class="rt {rtag}">{row['Rating']}</span></td>
-        <td><div class="scn" style="color:#f87171">{row['Combined_Score']:.0f}</div><div class="scb" style="background:#ef4444"></div></td>
-        <td><div class="rv" style="color:{rsic}">{row['RSI']:.0f}</div><div class="rsb">{row['RSI_Signal']}</div></td>
-        <td style="color:{mcdcl};font-weight:600;font-size:11px">{row['MACD']}</td>
-        <td>{adx_cell(row.get('ADX', 0))}</td>
-        <td class="{dncls}">{row['Upside']:+.1f}%</td>
-        <td>
-          <span class="ts {tbcls}">{tbtxt}</span>
-          <div class="t1">${row['Target_1']:,.2f}</div>
-          <div class="t2">T2: ${row['Target_2']:,.2f}</div>
-        </td>
-        <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#fbbf24">${row['Stop_Loss']:,.2f}</div>
-          <div class="sl2">+{row['SL_Percentage']:.1f}%</div>
-          <span class="sb {scls}">{slbl}</span>
-        </td>
-        <td>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--teal)">${row['ATR']:,.2f}</div>
-          <div style="font-size:8px;color:var(--muted)">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
-        </td>
-        <td>{vol_cell(row.get('Vol_Ratio', 1.0))}</td>
-        <td class="rrv" style="color:{rrc}">{rr:.1f}×</td>
-        <td style="color:{betac};font-size:11px">{row['Beta']:.2f}</td>
-        <td style="color:{pec};font-size:11px">{pe}</td>
-        <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
-        <td><div class="earn">{ed}</div></td>
-        <td><span class="qb {qcls}">{row['Quality']}</span></td>
-      </tr>
-"""
-            html += "    </tbody></table></div>\n"
+                rcls   = "r-ss" if row['Recommendation'] == "STRONG SELL" else "r-s"
+                sc     = "#f87171"
+                dncls  = "dn" if row['Upside'] >= 0 else "up"
+                w52    = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                w52c   = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
+                betac  = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
+                rr     = row['Risk_Reward']
+                rrc    = "#4ade80" if rr >= 2 else ("#fbbf24" if rr >= 1 else "#f87171")
+                pe_str = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
+                pec    = "#a07850" if row['PE_Ratio'] <= 0 else ("#f87171" if row['PE_Ratio'] > 40 else ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80"))
+                div_str= f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
+                divc   = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
+                sdc    = "#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171")
+                qcls   = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
+                tbc, tbt = ts_badge(row.get('Target_Status', ''), 0)
+                sltype = row.get('Stop_Type', 'ATR Stop')
+                slcls  = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
+                sllbl  = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
+                soon   = row.get('Earn_Soon', False)
+                rowcls = "earn-warning" if soon else ""
 
-        html += f"""  <div class="disc">
+                html += f"""    <tr class="{rowcls}">
+      <td><div class="c-num">{i}</div></td>
+      <td>
+        <div class="c-name">{row['Name']}</div>
+        <div class="c-sym">{row['Symbol']}</div>
+        <div class="c-sector">{row.get('Sector','N/A')}</div>
+      </td>
+      <td><div class="c-price">${row['Price']:,.2f}</div></td>
+      <td><span class="rating {rcls}">{row['Rating']}</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:{sc}">{row['Combined_Score']:.0f}</div>
+        <div class="c-score-bar" style="background:{sc}"></div>
+      </td>
+      <td><span class="{dncls}">{row['Upside']:+.1f}%</span></td>
+      <td>
+        <span class="ts-badge {tbc}">{tbt}</span>
+        <div class="c-t1">${row['Target_1']:,.2f}</div>
+        <div class="c-t2">T2: ${row['Target_2']:,.2f}</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">${row['Stop_Loss']:,.2f}</div>
+        <div class="c-slpct">+{row['SL_Percentage']:.1f}%</div>
+        <span class="sl-badge {slcls}">{sllbl}</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:{rrc}">{rr:.1f}×</div></td>
+      <td>
+        <div class="c-atr">${row['ATR']:,.2f}</div>
+        <div class="c-atr-sub">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
+      </td>
+      <td><div class="c-beta" style="color:{betac}">{row['Beta']:.2f}</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:{sdc}">{row.get('Support_Dist_Pct',0):.1f}%</div></td>
+      <td class="detail-col">{rsi_html(row['RSI'], row['RSI_Signal'])}</td>
+      <td class="detail-col"><span class="c-macd {'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
+      <td class="detail-col">{adx_html(row.get('ADX',0))}</td>
+      <td class="detail-col sep-momentum">{vol_html(row.get('Vol_Ratio',1.0))}</td>
+      <td class="detail-col"><div class="c-pe" style="color:{pec}">{pe_str}</div></td>
+      <td class="detail-col"><div class="c-div" style="color:{divc}">{div_str}</div></td>
+      <td class="detail-col sep-value"><span class="qual {qcls}">{row['Quality']}</span></td>
+      <td><div class="c-52w" style="color:{w52c}">{w52:+.1f}%</div></td>
+      <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
+      <td class="earn-cell">{earn_html(row.get('Earnings_Date','N/A'), soon)}</td>
+    </tr>
+"""
+            html += "  </tbody>\n</table></div>\n"
+
+        html += f"""
+  <div class="disc">
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
     Stop losses are ATR-based near real 12-month S/R zones. Targets derived from swing highs/lows,
     52-week extremes and round number levels. Earnings dates are estimates.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
-</div>
 
-<footer>
-  <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-  · 12M S/R · ATR Stops · Sector · ADX · Vol · Earnings v6
-  · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
-</footer>
+  <footer>
+    <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
+    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v7
+    · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
+  </footer>
+
+</div><!-- /page -->
 
 <script>
 /* ── LIVE CLOCK ── */
 function updateClock() {{
   var now = new Date();
   var est = new Date(now.toLocaleString('en-US', {{timeZone:'America/New_York'}}));
-  var h = est.getHours(), m = est.getMinutes();
+  var h = est.getHours(), m = est.getMinutes(), s = est.getSeconds();
   var ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
-  var pad = function(n) {{ return String(n).padStart(2,'0'); }};
+  var pad = n => String(n).padStart(2,'0');
   document.getElementById('liveClock').textContent = pad(h)+':'+pad(m)+' '+ampm+' EST';
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('liveDate').textContent = pad(est.getDate())+' '+months[est.getMonth()]+' '+est.getFullYear();
 }}
 updateClock();
 setInterval(updateClock, 1000);
+
+/* ── VIEW TOGGLE ── */
+function setView(v, btn) {{
+  document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (v === 'quick') {{
+    document.body.classList.add('quick-view');
+  }} else {{
+    document.body.classList.remove('quick-view');
+  }}
+}}
 </script>
 
 </body></html>"""
@@ -1120,7 +1344,7 @@ setInterval(updateClock, 1000);
             msg = MIMEMultipart('alternative')
             msg['From']    = from_email
             msg['To']      = to_email
-            msg['Subject'] = f"🌅 US Market Report v6 — {tod} {now.strftime('%d %b %Y')}"
+            msg['Subject'] = f"🌅 US Market Report v7 — {tod} {now.strftime('%d %b %Y')}"
             msg.attach(MIMEText(self.generate_email_html(), 'html'))
             srv = smtplib.SMTP('smtp.gmail.com', 587)
             srv.starttls(); srv.login(from_email, password)
@@ -1135,7 +1359,7 @@ setInterval(updateClock, 1000);
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v6 — Index Strip + Live Clock + New Columns")
+        print("📊 S&P 500 ANALYZER v7 — Redesigned UI + Quick/Detail Toggle")
         print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
