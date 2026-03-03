@@ -1,5 +1,5 @@
 """
-S&P 500 COMPLETE STOCK ANALYZER v7
+S&P 500 COMPLETE STOCK ANALYZER v8
 Technical + Fundamental Analysis with Email Delivery
 Theme: Dark Slate (Redesigned)
 VERSION 7:
@@ -108,6 +108,31 @@ class SP500CompleteAnalyzer:
         macd   = ema12 - ema26
         signal = macd.ewm(span=9, adjust=False).mean()
         return macd.iloc[-1], signal.iloc[-1]
+
+    # ------------------------------------------------------------------
+    #  NEW v8: momentum-slope helpers
+    # ------------------------------------------------------------------
+    def calculate_rsi_slope(self, prices, period=14, lookback=5):
+        """Return RSI(today) - RSI(lookback bars ago).  Negative = fading."""
+        delta = prices.diff()
+        gain  = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss  = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs    = gain / loss
+        rsi_series = 100 - (100 / (1 + rs))
+        if len(rsi_series) < lookback + 1:
+            return 0.0
+        return round(rsi_series.iloc[-1] - rsi_series.iloc[-(lookback + 1)], 2)
+
+    def calculate_macd_hist_slope(self, prices):
+        """Return histogram(today) - histogram(yesterday).  Negative = shrinking."""
+        ema12  = prices.ewm(span=12, adjust=False).mean()
+        ema26  = prices.ewm(span=26, adjust=False).mean()
+        macd   = ema12 - ema26
+        signal = macd.ewm(span=9, adjust=False).mean()
+        hist   = macd - signal
+        if len(hist) < 2:
+            return 0.0
+        return round(hist.iloc[-1] - hist.iloc[-2], 4)
 
     def calculate_atr(self, df, period=14):
         high  = df['High']
@@ -361,6 +386,9 @@ class SP500CompleteAnalyzer:
             atr_pct      = round((atr / current_price) * 100, 2)
             adx          = self.calculate_adx(df)
             vol_ratio    = self.calculate_volume_ratio(df)
+            # v8: momentum-slope metrics
+            rsi_slope       = self.calculate_rsi_slope(df['Close'])
+            macd_hist_slope = self.calculate_macd_hist_slope(df['Close'])
             high_52w = df['High'].tail(252).max()
             low_52w  = df['Low'].tail(252).min()
             resistance_levels = self.find_resistance_levels(df, current_price)
@@ -386,6 +414,27 @@ class SP500CompleteAnalyzer:
                 tech_score -= 1;  macd_signal = "Bearish"
             if adx > 25:
                 tech_score = min(tech_score + 1, 6)
+
+            # ── v8: momentum-reversal penalties ──────────────────────────
+            # 1. RSI fading: high RSI that is now rolling over = danger
+            if rsi > 55 and rsi_slope < -2:
+                tech_score -= 2   # RSI peaked and falling fast
+            elif rsi > 50 and rsi_slope < -1:
+                tech_score -= 1   # mild RSI fade
+
+            # 2. MACD histogram shrinking while positive = momentum loss
+            macd_hist_now = macd - signal
+            if macd_hist_now > 0 and macd_hist_slope < -0.05:
+                tech_score -= 1   # bullish but weakening
+            if macd_hist_now < 0 and macd_hist_slope < 0:
+                tech_score -= 1   # histogram negative AND still falling
+
+            # 3. Price extended above SMA-20 AND RSI falling = stretched entry
+            price_ext_pct = ((current_price - sma_20) / sma_20) * 100
+            if price_ext_pct > 7 and rsi_slope < -1:
+                tech_score -= 1   # extended AND fading
+            # ── end v8 penalties ─────────────────────────────────────────
+
             pe_ratio         = info.get('trailingPE', info.get('forwardPE', 0))
             pb_ratio         = info.get('priceToBook', 0)
             peg_ratio        = info.get('pegRatio', 0)
@@ -477,7 +526,9 @@ class SP500CompleteAnalyzer:
                 'Symbol': symbol, 'Name': name, 'Price': round(current_price, 2),
                 'Sector': sector,
                 'RSI': round(rsi, 2), 'RSI_Signal': rsi_signal,
+                'RSI_Slope': rsi_slope,
                 'MACD': macd_signal,
+                'MACD_Hist_Slope': round(macd_hist_slope, 4),
                 'ADX': adx,
                 'Vol_Ratio': vol_ratio,
                 'SMA_20': round(sma_20, 2), 'SMA_50': round(sma_50, 2), 'SMA_200': round(sma_200, 2),
@@ -540,8 +591,12 @@ class SP500CompleteAnalyzer:
         f1 = all_buys[all_buys['Upside'] > 0.5]
         f2 = f1[f1['Risk_Reward'] >= 0.5]
         f3 = f2[f2['Target_1'] > f2['Price']]
-        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} final")
-        top_buys = f3.nlargest(20, 'Combined_Score')
+        # v8: drop stocks where RSI is high AND falling (momentum reversal)
+        f4 = f3[~((f3['RSI'] > 60) & (f3['RSI_Slope'] < -2))]
+        # v8: drop stocks where MACD histogram is shrinking while RSI is elevated
+        f5 = f4[~((f4['MACD_Hist_Slope'] < -0.05) & (f4['RSI'] > 58))]
+        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} → {len(f4)} → {len(f5)} final (v8 momentum filter)")
+        top_buys = f5.nlargest(20, 'Combined_Score')
         all_sells = df[df['Recommendation'].isin(['STRONG SELL', 'SELL'])]
         s1 = all_sells[all_sells['Upside'] > 0.5]
         s2 = s1[s1['Risk_Reward'] >= 0.5]
@@ -939,7 +994,7 @@ footer strong {{ color:var(--accent); }}
     <div class="hdr-icon">🌅</div>
     <div>
       <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v7 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v8 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
     </div>
   </div>
 
@@ -1293,7 +1348,7 @@ footer strong {{ color:var(--accent); }}
 
   <footer>
     <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v7
+    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v8
     · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
   </footer>
 
@@ -1359,7 +1414,7 @@ function setView(v, btn) {{
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v7 — Redesigned UI + Quick/Detail Toggle")
+        print("📊 S&P 500 ANALYZER v8 — Momentum Reversal Filter")
         print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
