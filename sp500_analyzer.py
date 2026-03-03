@@ -1,5 +1,5 @@
 """
-S&P 500 COMPLETE STOCK ANALYZER v9
+S&P 500 COMPLETE STOCK ANALYZER v10
 Technical + Fundamental Analysis with Email Delivery
 Theme: Dark Slate (Redesigned)
 VERSION 7:
@@ -818,10 +818,10 @@ table {{ width:100%; border-collapse:collapse; min-width:1200px; }}
 
 /* ── COLUMN HEADERS ── */
 thead tr.col-hdr th {{
-  font-size:0.62em; font-weight:700; letter-spacing:1px;
-  text-transform:uppercase; color:#8090a0;
+  font-size:0.63em; font-weight:800; letter-spacing:1px;
+  text-transform:uppercase; color:#a8c0d0;
   padding:8px 10px;
-  border-bottom:2px solid var(--border);
+  border-bottom:2px solid rgba(255,255,255,0.1);
   white-space:nowrap; text-align:left;
   background:var(--card2);
 }}
@@ -851,10 +851,10 @@ td.sep-momentum {{ border-right:2px solid rgba(96,165,250,0.08); }}
 td.sep-value    {{ border-right:2px solid rgba(167,139,250,0.08); }}
 
 /* ── CELL COMPONENTS ── */
-.c-num {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; color:var(--muted); text-align:center; }}
-.c-name {{ font-size:0.88em; font-weight:600; color:#fff; line-height:1.2; }}
-.c-sym  {{ font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700; color:var(--accent); letter-spacing:1px; margin-top:1px; }}
-.c-sector {{ font-size:0.65em; color:var(--muted); margin-top:1px; max-width:110px; overflow:hidden; text-overflow:ellipsis; }}
+.c-num {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; color:#6a8090; text-align:center; }}
+.c-name {{ font-size:0.90em; font-weight:700; color:#ffffff; line-height:1.2; }}
+.c-sym  {{ font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:800; color:#f59e0b; letter-spacing:1px; margin-top:1px; }}
+.c-sector {{ font-size:0.68em; color:#7a9ab0; margin-top:1px; max-width:110px; overflow:hidden; text-overflow:ellipsis; font-weight:500; }}
 
 /* Earnings warning */
 tr.earn-warning td {{ background:rgba(239,68,68,0.04)!important; }}
@@ -875,79 +875,79 @@ tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
 .rating {{
   display:inline-flex; align-items:center; gap:4px;
   font-family:'JetBrains Mono',monospace;
-  font-size:0.6em; font-weight:700;
-  padding:3px 8px; border-radius:4px; white-space:nowrap; letter-spacing:0.3px;
+  font-size:0.62em; font-weight:800;
+  padding:4px 9px; border-radius:5px; white-space:nowrap; letter-spacing:0.5px;
 }}
-.r-sb {{ background:rgba(34,197,94,0.15);  color:#4ade80; border:1px solid rgba(34,197,94,0.25); }}
-.r-b  {{ background:rgba(45,212,191,0.12); color:#2dd4bf; border:1px solid rgba(45,212,191,0.2); }}
-.r-s  {{ background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.25); }}
-.r-ss {{ background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }}
+.r-sb {{ background:rgba(34,197,94,0.22);  color:#6dffaa; border:1px solid rgba(34,197,94,0.45); }}
+.r-b  {{ background:rgba(45,212,191,0.18); color:#5fffee; border:1px solid rgba(45,212,191,0.40); }}
+.r-s  {{ background:rgba(239,68,68,0.22);  color:#ff8080; border:1px solid rgba(239,68,68,0.45); }}
+.r-ss {{ background:rgba(239,68,68,0.28);  color:#ffb0b0; border:1px solid rgba(239,68,68,0.55); }}
 
-.c-score-n   {{ font-family:'JetBrains Mono',monospace; font-size:1.15em; font-weight:800; line-height:1; }}
-.c-score-bar {{ height:3px; border-radius:2px; margin-top:4px; width:36px; }}
+.c-score-n   {{ font-family:'JetBrains Mono',monospace; font-size:1.2em; font-weight:800; line-height:1; }}
+.c-score-bar {{ height:5px; border-radius:3px; margin-top:6px; width:40px; opacity:0.9; box-shadow:0 0 6px currentColor; }}
 
-.up {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#4ade80; }}
-.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#f87171; }}
+.up {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:800; color:#6dffaa; }}
+.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:800; color:#ff8080; }}
 
 .ts-badge {{
   display:inline-block; font-family:'JetBrains Mono',monospace;
-  font-size:0.58em; font-weight:700; padding:1px 5px; border-radius:3px;
-  margin-bottom:3px;
+  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px;
+  margin-bottom:4px;
 }}
-.ts-real    {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
-.ts-partial {{ background:rgba(245,158,11,0.12); color:#fbbf24; }}
-.ts-ath     {{ background:rgba(96,165,250,0.12); color:#93c5fd; }}
-.ts-hit1    {{ background:rgba(34,197,94,0.2);   color:#4ade80; }}
-.ts-hit2    {{ background:rgba(45,212,191,0.2);  color:#2dd4bf; }}
+.ts-real    {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
+.ts-partial {{ background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
+.ts-ath     {{ background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
+.ts-hit1    {{ background:rgba(34,197,94,0.28);  color:#6dffaa; border:1px solid rgba(34,197,94,0.50); }}
+.ts-hit2    {{ background:rgba(45,212,191,0.28); color:#5fffee; border:1px solid rgba(45,212,191,0.50); }}
 
-.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#fff; }}
-.c-t2 {{ font-size:0.68em; color:#a0c0d0; margin-top:1px; }}
-.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#f87171; }}
-.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; color:#fbbf24; }}
-.c-slpct {{ font-size:0.65em; color:var(--muted); margin-top:1px; }}
+.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffffff; }}
+.c-t2 {{ font-size:0.70em; color:#c0dff0; margin-top:2px; font-weight:600; }}
+.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }}
+.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }}
+.c-slpct {{ font-size:0.68em; color:#c0b090; margin-top:2px; font-weight:600; }}
 .sl-badge {{
-  display:inline-block; font-size:0.58em; font-weight:700;
-  padding:1px 5px; border-radius:3px; margin-top:2px;
+  display:inline-block; font-size:0.60em; font-weight:800;
+  padding:2px 6px; border-radius:3px; margin-top:3px;
   font-family:'JetBrains Mono',monospace;
 }}
-.sl-atr  {{ background:rgba(34,197,94,0.1);  color:#4ade80; }}
-.sl-beta {{ background:rgba(245,158,11,0.1); color:#fbbf24; }}
+.sl-atr  {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
+.sl-beta {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }}
 
-.c-rr {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:700; }}
-.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; color:var(--teal); }}
-.c-atr-sub {{ font-size:0.63em; color:var(--muted); margin-top:1px; }}
-.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
-.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
+.c-rr {{ font-family:'JetBrains Mono',monospace; font-size:0.92em; font-weight:800; }}
+.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }}
+.c-atr-sub {{ font-size:0.67em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
+.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
 
 /* RSI progress bar */
-.c-rsi {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:700; }}
-.c-rsi-lbl {{ font-size:0.62em; color:var(--muted); margin-top:1px; }}
-.rsi-track {{ width:36px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:3px; overflow:hidden; }}
-.rsi-fill  {{ height:100%; border-radius:2px; }}
+.c-rsi {{ font-family:'JetBrains Mono',monospace; font-size:0.90em; font-weight:800; }}
+.c-rsi-lbl {{ font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
+.rsi-track {{ width:40px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin-top:4px; overflow:hidden; }}
+.rsi-fill  {{ height:100%; border-radius:3px; }}
 
-.c-macd {{ font-size:0.75em; font-weight:600; padding:2px 7px; border-radius:4px; font-family:'JetBrains Mono',monospace; display:inline-block; }}
-.macd-bull {{ background:rgba(34,197,94,0.1);  color:#4ade80; }}
-.macd-bear {{ background:rgba(239,68,68,0.1);  color:#f87171; }}
+.c-macd {{ font-size:0.76em; font-weight:800; padding:3px 8px; border-radius:4px; font-family:'JetBrains Mono',monospace; display:inline-block; }}
+.macd-bull {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
+.macd-bear {{ background:rgba(239,68,68,0.18);  color:#ff8080; border:1px solid rgba(239,68,68,0.3); }}
 
-.c-adx {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.c-adx-lbl {{ font-size:0.62em; margin-top:1px; }}
-.c-vol {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
-.c-vol-lbl {{ font-size:0.62em; color:var(--muted); margin-top:1px; }}
-.c-pe  {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:600; }}
-.c-div {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; }}
-.c-52w {{ font-family:'JetBrains Mono',monospace; font-size:0.78em; font-weight:600; }}
+.c-adx {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:800; }}
+.c-adx-lbl {{ font-size:0.65em; margin-top:2px; font-weight:600; }}
+.c-vol {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.c-vol-lbl {{ font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
+.c-pe  {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.c-div {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
+.c-52w {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
 
-.analyst {{ font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700; padding:2px 7px; border-radius:4px; display:inline-block; }}
-.an-sb {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
-.an-b  {{ background:rgba(96,165,250,0.1);  color:#93c5fd; }}
-.an-h  {{ background:rgba(160,120,80,0.15); color:#c8a060; }}
-.an-s  {{ background:rgba(239,68,68,0.1);   color:#f87171; }}
+.analyst {{ font-family:'JetBrains Mono',monospace; font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; display:inline-block; }}
+.an-sb {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
+.an-b  {{ background:rgba(96,165,250,0.18); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
+.an-h  {{ background:rgba(160,120,80,0.22); color:#e8c080; border:1px solid rgba(160,120,80,0.40); }}
+.an-s  {{ background:rgba(239,68,68,0.18);  color:#ff9090; border:1px solid rgba(239,68,68,0.35); }}
 
-.qual {{ font-size:0.65em; font-weight:700; padding:2px 7px; border-radius:4px; }}
-.q-ex {{ background:rgba(34,197,94,0.12);  color:#4ade80; }}
-.q-gd {{ background:rgba(96,165,250,0.1);  color:#93c5fd; }}
-.q-av {{ background:rgba(245,158,11,0.1);  color:#fbbf24; }}
-.q-po {{ background:rgba(239,68,68,0.1);   color:#f87171; }}
+.qual {{ font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; }}
+.q-ex {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
+.q-gd {{ background:rgba(96,165,250,0.18); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
+.q-av {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
+.q-po {{ background:rgba(239,68,68,0.18);  color:#ff9090; border:1px solid rgba(239,68,68,0.35); }}
 
 /* QUICK VIEW hidden cols */
 .detail-col {{ transition:opacity 0.2s; }}
@@ -1006,7 +1006,7 @@ footer strong {{ color:var(--accent); }}
     <div class="hdr-icon">🌅</div>
     <div>
       <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v9 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v10 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
     </div>
   </div>
 
@@ -1369,7 +1369,7 @@ footer strong {{ color:var(--accent); }}
 
   <footer>
     <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v9
+    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v10
     · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
   </footer>
 
@@ -1435,7 +1435,7 @@ function setView(v, btn) {{
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v9 — Vol Sell-Off Filter")
+        print("📊 S&P 500 ANALYZER v10 — Visibility Fixes")
         print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
