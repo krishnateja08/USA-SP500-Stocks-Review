@@ -1,5 +1,5 @@
 """
-S&P 500 COMPLETE STOCK ANALYZER v8
+S&P 500 COMPLETE STOCK ANALYZER v9
 Technical + Fundamental Analysis with Email Delivery
 Theme: Dark Slate (Redesigned)
 VERSION 7:
@@ -595,8 +595,18 @@ class SP500CompleteAnalyzer:
         f4 = f3[~((f3['RSI'] > 60) & (f3['RSI_Slope'] < -2))]
         # v8: drop stocks where MACD histogram is shrinking while RSI is elevated
         f5 = f4[~((f4['MACD_Hist_Slope'] < -0.05) & (f4['RSI'] > 58))]
-        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} → {len(f4)} → {len(f5)} final (v8 momentum filter)")
-        top_buys = f5.nlargest(20, 'Combined_Score')
+        # v9: drop stocks with high sell-off volume + falling RSI = institution selling day
+        #     Vol_Ratio > 2.0 means today's volume is 2x the 20-day average
+        #     Combined with RSI_Slope < 0 = momentum falling on big volume = dangerous entry
+        f6 = f5[~((f5['Vol_Ratio'] > 2.0) & (f5['RSI_Slope'] < 0))]
+        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} → {len(f4)} → {len(f5)} → {len(f6)} final (v9 vol+momentum filter)")
+        # Log what was filtered by v9 so you can review next session
+        v9_filtered = f5[((f5['Vol_Ratio'] > 2.0) & (f5['RSI_Slope'] < 0))]
+        if not v9_filtered.empty:
+            print(f"   ⚠️  v9 removed (high sell-off volume — check tomorrow):")
+            for _, r in v9_filtered.iterrows():
+                print(f"      {r['Symbol']:6s}  Vol×{r['Vol_Ratio']:.1f}  RSI slope {r['RSI_Slope']:+.1f}  RSI {r['RSI']:.0f}")
+        top_buys = f6.nlargest(20, 'Combined_Score')
         all_sells = df[df['Recommendation'].isin(['STRONG SELL', 'SELL'])]
         s1 = all_sells[all_sells['Upside'] > 0.5]
         s2 = s1[s1['Risk_Reward'] >= 0.5]
@@ -849,6 +859,8 @@ td.sep-value    {{ border-right:2px solid rgba(167,139,250,0.08); }}
 /* Earnings warning */
 tr.earn-warning td {{ background:rgba(239,68,68,0.04)!important; }}
 tr.earn-warning td.earn-cell {{ background:rgba(239,68,68,0.1)!important; }}
+/* v9: High sell-off volume warning */
+tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
 .earn-badge {{
   font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700;
   padding:2px 7px; border-radius:4px; display:inline-block; white-space:nowrap;
@@ -994,7 +1006,7 @@ footer strong {{ color:var(--accent); }}
     <div class="hdr-icon">🌅</div>
     <div>
       <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v8 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v9 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
     </div>
   </div>
 
@@ -1065,6 +1077,9 @@ footer strong {{ color:var(--accent); }}
   <div class="leg-item"><div class="leg-dot" style="background:#2dd4bf;"></div> External</div>
   <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
     <span style="color:#f87171;font-weight:600;">🔴 Pulsing row</span> = Earnings within 14 days — trade carefully
+  </span>
+  <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
+    <span style="color:#fb923c;font-weight:600;">🟠 ⚠ Vol×</span> badge = High sell-off volume today — wait 1 session before entering
   </span>
 </div>
 """
@@ -1175,13 +1190,19 @@ footer strong {{ color:var(--accent); }}
                 sltype = row.get('Stop_Type', 'ATR Stop')
                 slcls  = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
                 sllbl  = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
-                soon   = row.get('Earn_Soon', False)
-                rowcls = "earn-warning" if soon else ""
+                soon      = row.get('Earn_Soon', False)
+                vol_warn  = row.get('Vol_Ratio', 1.0) > 2.0 and row.get('RSI_Slope', 0) < 0
+                rowcls    = "earn-warning" if soon else ("vol-warning" if vol_warn else "")
+                vol_badge = ('<span style="font-size:0.6em;font-weight:700;padding:1px 5px;'
+                             'border-radius:3px;background:rgba(249,115,22,0.15);'
+                             'color:#fb923c;border:1px solid rgba(249,115,22,0.3);'
+                             'margin-left:4px;" title="High sell-off volume today — wait 1 session">'
+                             f'⚠ Vol×{row.get("Vol_Ratio",1.0):.1f}</span>') if vol_warn else ""
 
                 html += f"""    <tr class="{rowcls}">
       <td><div class="c-num">{i}</div></td>
       <td>
-        <div class="c-name">{row['Name']}</div>
+        <div class="c-name">{row['Name']}{vol_badge}</div>
         <div class="c-sym">{row['Symbol']}</div>
         <div class="c-sector">{row.get('Sector','N/A')}</div>
       </td>
@@ -1348,7 +1369,7 @@ footer strong {{ color:var(--accent); }}
 
   <footer>
     <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v8
+    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v9
     · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
   </footer>
 
@@ -1414,7 +1435,7 @@ function setView(v, btn) {{
     def generate_complete_report(self, send_email_flag=True, recipient_email=None):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v8 — Momentum Reversal Filter")
+        print("📊 S&P 500 ANALYZER v9 — Vol Sell-Off Filter")
         print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
