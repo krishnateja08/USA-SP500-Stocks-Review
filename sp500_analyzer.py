@@ -1,22 +1,120 @@
 """
-S&P 500 COMPLETE STOCK ANALYZER v11
+S&P 500 COMPLETE STOCK ANALYZER - v5.4 Logic Upgrade
 Technical + Fundamental Analysis with Email Delivery
 Theme: Dark Slate (Redesigned)
-VERSION 7:
-  - New dark blue/charcoal theme from redesign sample
-  - Grouped column headers: Identity · Trade Setup · Risk · Momentum · Valuation · External
-  - Quick View / Detail View toggle (hides Momentum + Valuation in Quick mode)
+
+=======================================================================
+UPGRADES APPLIED FROM NIFTY50 v5.4 (ported to SP500):
+
+  U01  WILDER'S RSI - Replaces simple rolling mean with ewm(com=period-1)
+         Matches TradingView RSI values. Simple mean overstates RSI by
+         5-10 points. All RSI signals now calculated correctly.
+
+  U02  TREND VETO GATE - Hard block before rating is assigned.
+         If 3+ of these bearish signals fire simultaneously:
+           · SMA20 declining (today < 5 bars ago)
+           · Death cross forming (SMA20 < SMA50)
+           · MACD < Signal (bearish crossover)
+           · RSI < 50 (momentum lost)
+           · Price < SMA50
+           · RSI falling fast (|slope| > 8)
+         → Maximum rating is capped at HOLD, regardless of combined
+         score. Fundamentals cannot rescue a stock in confirmed
+         technical downtrend.
+
+  U03  SMA200 SLOPE GUARD - SMA200 bonus now requires SMA200 itself
+         to be rising (today > 10 bars ago). A rising price above a
+         flat/falling SMA200 no longer earns +2 bonus.
+
+  U04  ANALYST BONUS APPLIED TO SCORE - Analyst consensus was
+         previously shown in the table but never applied to the score.
+         Now adds/subtracts ±5 points, with a tech_score >= 2 gate
+         to prevent analyst buy from rescuing a weak chart.
+
+  U05  DYNAMIC WEIGHT SHIFT - When 2+ bearish tech signals fire,
+         weight shifts from 50/50 to 40/60 (tech/fund → more tech
+         weight in downtrend). At 3+ signals veto fires.
+
+  U06  SMA20 DECLINING PENALTY (V53-1) - If SMA20 today < SMA20
+         five bars ago, short-term trend is actively declining right
+         now. Catches stocks rolling over before SMA50 lags down.
+
+  U07  DEATH CROSS FORMING PENALTY (V53-2) - SMA20 < SMA50 adds
+         additional -1 tech score as early warning of sustained
+         bearish momentum shift.
+
+  U08  ADX DIRECTION-AWARE (V52-1) - ADX bonus only when price >
+         SMA50. A strong downtrend has high ADX but should NOT be
+         rewarded. Strong downtrend now penalised with -1.
+
+  U09  RSI WEAK MOMENTUM ZONE (V52-2) - RSI 30-45 = weak momentum
+         zone adds -1 tech score. Was treated as neutral previously.
+
+  U10  DOUBLE SMA PENALTY (V52-3) - Price below BOTH SMA20 AND
+         SMA50 simultaneously = confirmed short-term downtrend, adds
+         extra -1 penalty.
+
+  U11  RSI DIVERGENCE DETECTION - Bearish divergence (price higher
+         high + RSI lower high) and Bullish divergence (price lower
+         low + RSI higher low) detected over a 20-bar window.
+
+  U12  FULL RSI SLOPE OBJECT - calculate_rsi_slope() now returns
+         direction (Rising/Falling/Flat), strong flag (|slope| > 8),
+         and rsi_5bar for display. Replaces scalar-only version.
+
+  U13  SECTOR-ADJUSTED PE (V52-4) - Financial sector stocks (Banks,
+         Insurance, Financial Services) use PE < 15 thresholds.
+         JPM, BAC, GS, WFC, MS, AXP etc scored correctly.
+
+  U14  NEGATIVE GROWTH PENALTY + CAP (FIX-5 + CAL-4) - Negative
+         revenue/earnings growth now penalised. Combined penalty
+         capped at -10 to prevent cyclicals from being wiped out.
+
+  U15  FCF WEIGHT RAISED - Free cash flow +15 (was +5).
+         Cash generation matters especially in rate-hike environments.
+
+  U16  D/E WEIGHT RAISED - Low debt/equity +15 (was +10).
+         Highly leveraged companies collapse in credit crunches.
+
+  U17  PARTIAL CREDIT FOR MISSING FIELDS (CAL-5) - Missing PEG,
+         ROA, and Current Ratio now award partial credit instead of 0.
+         Prevents unfair penalisation when yFinance returns None.
+
+  U18  DATA SANITY CHECK - Detects >20% single-day price moves with
+         normal volume as likely bad yFinance data. Skips stock
+         rather than corrupting signals.
+
+  U19  DATA FRESHNESS WARNING - Warns if last candle is >5 trading
+         days old. Catches weekend/holiday stale data lag.
+
+  U20  auto_adjust=False - Uses unadjusted prices to match
+         TradingView RSI/MACD chart values.
+
+  U21  VOLUME RATIO SMOOTHED - Uses 5-bar average for numerator
+         instead of single last bar. Reduces noise from ex-dividend
+         days and index rebalancing events.
+
+  U22  SECTOR DIVERSITY CAP - Max 4 picks per sector in Top 20 Buy
+         table. Prevents table from being flooded by one hot sector.
+
+  U23  SELL GATE - Mirrors Nifty v5.4 sell validation: blocks
+         oversold shorts (RSI < 35), RSI > 50 + MACD bullish stocks,
+         and fast-recovering stocks from the sell table.
+
+RETAINED FROM SP500 v9/v10/v11:
+  - Dark Slate HTML design with grouped column headers
+  - Quick View / Detail View toggle
   - RSI mini progress bar
-  - Earnings row warning highlight + pulsing badge when within 14 days
-  - Tooltips on all column headers
-  - Full width + mobile responsive layout
-  - NEW columns: Sector, Vol/Avg, ADX, Analyst Consensus,
-                 Support Distance %, Earnings Date
-  - 12-Month S/R lookback + round numbers + 52W levels
-  - ATR-Based Stop Loss Near Real S/R Zones
-  - Dynamic Target Promotion
-  - Live Clock + Report Timestamp
-  - DJI / NDX / SPX live index strip in header
+  - Earnings row warning + pulsing badge
+  - v8 MACD histogram slope penalties
+  - v8 price extension above SMA20 penalty
+  - v9 high sell-off volume filter in recommendations
+  - Live Clock + Index Strip (DJI / NDX / SPX)
+  - Mobile responsive layout
+=======================================================================
+
+Requirements:
+    pip install yfinance pandas numpy pytz
 """
 
 import yfinance as yf
@@ -32,60 +130,63 @@ import os
 
 warnings.filterwarnings('ignore')
 
+# U22: Sector diversity cap
+MAX_PICKS_PER_SECTOR = 4
+
 
 class SP500CompleteAnalyzer:
     def __init__(self):
         self.sp500_stocks = {
-            'NVDA': 'NVIDIA',
-            'AAPL': 'Apple Inc.',
-            'MSFT': 'Microsoft',
-            'AMZN': 'Amazon',
+            'NVDA':  'NVIDIA',
+            'AAPL':  'Apple Inc.',
+            'MSFT':  'Microsoft',
+            'AMZN':  'Amazon',
             'GOOGL': 'Alphabet (Class A)',
-            'GOOG': 'Alphabet (Class C)',
-            'META': 'Meta Platforms',
-            'TSLA': 'Tesla',
-            'AVGO': 'Broadcom',
+            'GOOG':  'Alphabet (Class C)',
+            'META':  'Meta Platforms',
+            'TSLA':  'Tesla',
+            'AVGO':  'Broadcom',
             'BRK-B': 'Berkshire Hathaway',
-            'WMT': 'Walmart',
-            'LLY': 'Eli Lilly',
-            'JPM': 'JPMorgan Chase',
-            'XOM': 'ExxonMobil',
-            'V': 'Visa Inc.',
-            'JNJ': 'Johnson & Johnson',
-            'MA': 'Mastercard',
-            'MU': 'Micron Technology',
-            'ORCL': 'Oracle Corporation',
-            'COST': 'Costco',
-            'ABBV': 'AbbVie',
-            'HD': 'Home Depot',
-            'BAC': 'Bank of America',
-            'PG': 'Procter & Gamble',
-            'CVX': 'Chevron Corporation',
-            'CAT': 'Caterpillar Inc.',
-            'KO': 'Coca-Cola Company',
-            'GE': 'GE Aerospace',
-            'AMD': 'Advanced Micro Devices',
-            'NFLX': 'Netflix',
-            'PLTR': 'Palantir Technologies',
-            'MRK': 'Merck & Co.',
-            'CSCO': 'Cisco Systems',
-            'PM': 'Philip Morris International',
-            'LRCX': 'Lam Research',
-            'AMAT': 'Applied Materials',
-            'MS': 'Morgan Stanley',
-            'WFC': 'Wells Fargo',
-            'GS': 'Goldman Sachs',
-            'RTX': 'RTX Corporation',
-            'UNH': 'UnitedHealth Group',
-            'TMUS': 'T-Mobile US',
-            'IBM': 'IBM',
-            'MCD': "McDonald's",
-            'AXP': 'American Express',
-            'INTC': 'Intel',
-            'PEP': 'PepsiCo',
-            'LIN': 'Linde plc',
-            'GEV': 'GE Vernova',
-            'VZ': 'Verizon',
+            'WMT':   'Walmart',
+            'LLY':   'Eli Lilly',
+            'JPM':   'JPMorgan Chase',
+            'XOM':   'ExxonMobil',
+            'V':     'Visa Inc.',
+            'JNJ':   'Johnson & Johnson',
+            'MA':    'Mastercard',
+            'MU':    'Micron Technology',
+            'ORCL':  'Oracle Corporation',
+            'COST':  'Costco',
+            'ABBV':  'AbbVie',
+            'HD':    'Home Depot',
+            'BAC':   'Bank of America',
+            'PG':    'Procter & Gamble',
+            'CVX':   'Chevron Corporation',
+            'CAT':   'Caterpillar Inc.',
+            'KO':    'Coca-Cola Company',
+            'GE':    'GE Aerospace',
+            'AMD':   'Advanced Micro Devices',
+            'NFLX':  'Netflix',
+            'PLTR':  'Palantir Technologies',
+            'MRK':   'Merck & Co.',
+            'CSCO':  'Cisco Systems',
+            'PM':    'Philip Morris International',
+            'LRCX':  'Lam Research',
+            'AMAT':  'Applied Materials',
+            'MS':    'Morgan Stanley',
+            'WFC':   'Wells Fargo',
+            'GS':    'Goldman Sachs',
+            'RTX':   'RTX Corporation',
+            'UNH':   'UnitedHealth Group',
+            'TMUS':  'T-Mobile US',
+            'IBM':   'IBM',
+            'MCD':   "McDonald's",
+            'AXP':   'American Express',
+            'INTC':  'Intel',
+            'PEP':   'PepsiCo',
+            'LIN':   'Linde plc',
+            'GEV':   'GE Vernova',
+            'VZ':    'Verizon',
         }
         self.results = []
 
@@ -95,12 +196,86 @@ class SP500CompleteAnalyzer:
     def get_est_time(self):
         return datetime.now(pytz.timezone('US/Eastern'))
 
+    # U01: Wilder's RSI — matches TradingView. Simple rolling mean overstates
+    # RSI by 5-10 points. ewm(com=period-1) = Wilder's smoothing (alpha=1/period).
     def calculate_rsi(self, prices, period=14):
-        delta = prices.diff()
-        gain  = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss  = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs    = gain / loss
+        delta    = prices.diff()
+        gain     = delta.where(delta > 0, 0)
+        loss     = (-delta.where(delta < 0, 0))
+        avg_gain = gain.ewm(com=period - 1, min_periods=period).mean()
+        avg_loss = loss.ewm(com=period - 1, min_periods=period).mean()
+        rs = avg_gain / avg_loss
         return (100 - (100 / (1 + rs))).iloc[-1]
+
+    # U12: Full RSI slope object — direction, strong flag, rsi_5bar for display.
+    # Replaces scalar-only version. Backward-compat: callers extract ['slope'].
+    def calculate_rsi_slope(self, prices, period=14, lookback=5):
+        """
+        Returns direction and strength of RSI movement.
+        RSI rising from 35→50 = momentum building   → GOOD
+        RSI falling from 65→46 = momentum fading    → BAD
+        RSI flat at 50          = no signal          → NEUTRAL
+        Returns dict: slope, direction, strong (|slope|>8), rsi_5bar
+        """
+        try:
+            delta    = prices.diff()
+            gain     = delta.where(delta > 0, 0)
+            loss     = (-delta.where(delta < 0, 0))
+            avg_gain = gain.ewm(com=period - 1, min_periods=period).mean()
+            avg_loss = loss.ewm(com=period - 1, min_periods=period).mean()
+            rsi_ser  = 100 - (100 / (1 + avg_gain / avg_loss))
+            rsi_ser  = rsi_ser.dropna()
+            if len(rsi_ser) < lookback + 2:
+                return {'slope': 0, 'direction': 'Flat', 'strong': False,
+                        'rsi_5bar': float(rsi_ser.iloc[-1]) if len(rsi_ser) else 50}
+            rsi_now  = rsi_ser.iloc[-1]
+            rsi_prev = rsi_ser.iloc[-(lookback + 1)]
+            slope    = round(rsi_now - rsi_prev, 2)
+            if slope > 3:
+                direction = 'Rising'
+            elif slope < -3:
+                direction = 'Falling'
+            else:
+                direction = 'Flat'
+            strong = abs(slope) > 8   # sharp move — e.g. RSI 71→46 in 5 bars
+            return {'slope': slope, 'direction': direction,
+                    'strong': strong, 'rsi_5bar': round(rsi_prev, 1)}
+        except Exception:
+            return {'slope': 0, 'direction': 'Flat', 'strong': False, 'rsi_5bar': 50}
+
+    # U11: RSI Divergence detection (ported from Nifty50 v5.4 NEW-1)
+    def detect_rsi_divergence(self, prices, window=14):
+        """
+        Bearish divergence: price makes HIGHER high, RSI makes LOWER high.
+        Bullish divergence: price makes LOWER low,  RSI makes HIGHER low.
+        Both measured over the last 20 bars vs prior 20 bars.
+        """
+        try:
+            delta    = prices.diff()
+            gain     = delta.where(delta > 0, 0)
+            loss     = (-delta.where(delta < 0, 0))
+            avg_gain = gain.ewm(com=window - 1, min_periods=window).mean()
+            avg_loss = loss.ewm(com=window - 1, min_periods=window).mean()
+            rsi_ser  = 100 - (100 / (1 + avg_gain / avg_loss))
+            rsi_ser  = rsi_ser.dropna()
+            lookback = 20
+            if len(prices) < lookback + window or len(rsi_ser) < lookback:
+                return 'None'
+            recent_price = prices.iloc[-lookback:]
+            prior_price  = prices.iloc[-(lookback * 2):-lookback]
+            recent_rsi   = rsi_ser.iloc[-lookback:]
+            prior_rsi    = rsi_ser.iloc[-(lookback * 2):-lookback]
+            # Bearish: price higher high + RSI lower high
+            if (recent_price.max() > prior_price.max() * 1.005 and
+                    recent_rsi.max() < prior_rsi.max() * 0.97):
+                return 'Bearish Divergence'
+            # Bullish: price lower low + RSI higher low
+            if (recent_price.min() < prior_price.min() * 0.995 and
+                    recent_rsi.min() > prior_rsi.min() * 1.03):
+                return 'Bullish Divergence'
+            return 'None'
+        except Exception:
+            return 'None'
 
     def calculate_macd(self, prices):
         ema12  = prices.ewm(span=12, adjust=False).mean()
@@ -109,22 +284,8 @@ class SP500CompleteAnalyzer:
         signal = macd.ewm(span=9, adjust=False).mean()
         return macd.iloc[-1], signal.iloc[-1]
 
-    # ------------------------------------------------------------------
-    #  NEW v8: momentum-slope helpers
-    # ------------------------------------------------------------------
-    def calculate_rsi_slope(self, prices, period=14, lookback=5):
-        """Return RSI(today) - RSI(lookback bars ago).  Negative = fading."""
-        delta = prices.diff()
-        gain  = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss  = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs    = gain / loss
-        rsi_series = 100 - (100 / (1 + rs))
-        if len(rsi_series) < lookback + 1:
-            return 0.0
-        return round(rsi_series.iloc[-1] - rsi_series.iloc[-(lookback + 1)], 2)
-
+    # v8: MACD histogram slope — histogram shrinking = momentum loss
     def calculate_macd_hist_slope(self, prices):
-        """Return histogram(today) - histogram(yesterday).  Negative = shrinking."""
         ema12  = prices.ewm(span=12, adjust=False).mean()
         ema26  = prices.ewm(span=26, adjust=False).mean()
         macd   = ema12 - ema26
@@ -144,36 +305,38 @@ class SP500CompleteAnalyzer:
         return round(tr.ewm(alpha=1 / period, adjust=False).mean().iloc[-1], 2)
 
     def calculate_adx(self, df, period=14):
-        high  = df['High']
-        low   = df['Low']
-        close = df['Close']
+        high     = df['High']
+        low      = df['Low']
+        close    = df['Close']
         plus_dm  = high.diff()
         minus_dm = low.diff().abs()
         plus_dm[plus_dm < 0]   = 0
         minus_dm[minus_dm < 0] = 0
         plus_dm[plus_dm < minus_dm]  = 0
         minus_dm[minus_dm < plus_dm] = 0
-        tr = pd.concat([high - low,
-                        abs(high - close.shift(1)),
-                        abs(low  - close.shift(1))], axis=1).max(axis=1)
-        atr14    = tr.ewm(alpha=1/period, adjust=False).mean()
-        plus_di  = 100 * (plus_dm.ewm(alpha=1/period, adjust=False).mean() / atr14)
-        minus_di = 100 * (minus_dm.ewm(alpha=1/period, adjust=False).mean() / atr14)
+        tr      = pd.concat([high - low,
+                             abs(high - close.shift(1)),
+                             abs(low  - close.shift(1))], axis=1).max(axis=1)
+        atr14    = tr.ewm(alpha=1 / period, adjust=False).mean()
+        plus_di  = 100 * (plus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr14)
+        minus_di = 100 * (minus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr14)
         dx       = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
-        adx      = dx.ewm(alpha=1/period, adjust=False).mean()
+        adx      = dx.ewm(alpha=1 / period, adjust=False).mean()
         return round(adx.iloc[-1], 1)
 
+    # U21: Volume ratio uses 5-bar average for numerator (smooths ex-div noise)
     def calculate_volume_ratio(self, df):
         avg_vol = df['Volume'].tail(20).mean()
         if avg_vol == 0:
             return 1.0
-        return round(df['Volume'].iloc[-1] / avg_vol, 2)
+        last_5_avg = df['Volume'].tail(5).mean()
+        return round(last_5_avg / avg_vol, 2)
 
     def get_earnings_date(self, info):
         try:
-            ts = info.get('earningsTimestamp') or \
-                 info.get('earningsTimestampStart') or \
-                 info.get('earningsDate')
+            ts = (info.get('earningsTimestamp') or
+                  info.get('earningsTimestampStart') or
+                  info.get('earningsDate'))
             if ts:
                 if isinstance(ts, (list, tuple)):
                     ts = ts[0]
@@ -187,25 +350,18 @@ class SP500CompleteAnalyzer:
         return "N/A"
 
     def is_earnings_soon(self, earnings_date_str, days=14):
-        """Returns True if earnings are within `days` days from now."""
         if earnings_date_str == "N/A":
             return False
         try:
-            ed = datetime.strptime(earnings_date_str, '%d %b %Y')
-            now = datetime.now()
-            delta = (ed - now).days
+            ed    = datetime.strptime(earnings_date_str, '%d %b %Y')
+            delta = (ed - datetime.now()).days
             return 0 <= delta <= days
         except Exception:
             return False
 
     def fetch_index_data(self):
-        """Fetch DJI, NDX, SPX prices via yfinance at report generation time."""
-        indices = {
-            'DJI': '^DJI',
-            'NDX': '^NDX',
-            'SPX': '^GSPC',
-        }
-        result = {}
+        indices = {'DJI': '^DJI', 'NDX': '^NDX', 'SPX': '^GSPC'}
+        result  = {}
         for label, sym in indices.items():
             try:
                 d     = yf.Ticker(sym).history(period='2d')
@@ -216,14 +372,35 @@ class SP500CompleteAnalyzer:
                 arrow = '▲' if chg >= 0 else '▼'
                 cls   = 'up' if chg >= 0 else 'dn'
                 sign  = '+' if chg >= 0 else ''
-                result[label] = {
-                    'price': f"{price:,.2f}",
-                    'chg':   f"{arrow} {sign}{pct:.2f}%",
-                    'cls':   cls,
-                }
+                result[label] = {'price': f"{price:,.2f}",
+                                 'chg':   f"{arrow} {sign}{pct:.2f}%",
+                                 'cls':   cls}
             except Exception:
                 result[label] = {'price': 'N/A', 'chg': '—', 'cls': ''}
         return result
+
+    # U18: Data sanity check — skip stocks with bad yFinance data
+    def is_data_clean(self, df):
+        """
+        Returns (True, '') if data looks valid.
+        Returns (False, reason) if a suspicious spike is detected.
+        Any >20% single-day move with normal volume = likely data error.
+        """
+        try:
+            close      = df['Close']
+            volume     = df['Volume']
+            pct_change = close.pct_change().abs()
+            spike_days = pct_change[pct_change > 0.20]
+            if spike_days.empty:
+                return True, ''
+            for spike_date, spike_val in spike_days.items():
+                avg_vol   = volume.mean()
+                spike_vol = volume.loc[spike_date] if spike_date in volume.index else 0
+                if avg_vol > 0 and spike_vol < avg_vol * 3:
+                    return False, f"Suspicious {spike_val*100:.0f}% move on {spike_date.date()} — possible bad data"
+            return True, ''
+        except Exception:
+            return True, ''
 
     # =========================================================================
     #  RESISTANCE & SUPPORT
@@ -234,8 +411,8 @@ class SP500CompleteAnalyzer:
         for src_days in [180, 252]:
             highs = df.tail(src_days)['High'].values
             for i in range(window, len(highs) - window):
-                if highs[i] > max(highs[i-window:i]) and \
-                   highs[i] > max(highs[i+1:i+window+1]):
+                if (highs[i] > max(highs[i-window:i]) and
+                        highs[i] > max(highs[i+1:i+window+1])):
                     swing_highs.append(highs[i])
         high_52w = df['High'].tail(252).max()
         if high_52w > current_price * 1.005:
@@ -267,8 +444,8 @@ class SP500CompleteAnalyzer:
         for src_days in [180, 252]:
             lows = df.tail(src_days)['Low'].values
             for i in range(window, len(lows) - window):
-                if lows[i] < min(lows[i-window:i]) and \
-                   lows[i] < min(lows[i+1:i+window+1]):
+                if (lows[i] < min(lows[i-window:i]) and
+                        lows[i] < min(lows[i+1:i+window+1])):
                     swing_lows.append(lows[i])
         low_52w = df['Low'].tail(252).min()
         if low_52w < current_price * 0.995:
@@ -299,43 +476,67 @@ class SP500CompleteAnalyzer:
     # =========================================================================
     def calculate_dynamic_targets(self, current_price, resistance_levels,
                                    support_levels, target_price, atr):
-        valid       = [r['level'] for r in resistance_levels
-                       if r['level'] > current_price * 1.005]
-        min_target  = current_price + (atr * 2)
-        targets_hit = 0
+        valid      = [r['level'] for r in resistance_levels
+                      if r['level'] > current_price * 1.005]
+        min_target = current_price + (atr * 2)
         if len(valid) >= 2:
             t1, t2        = valid[0], valid[1]
             target_status = "Real S/R Levels"
         elif len(valid) == 1:
             t1 = valid[0]
-            t2 = round(target_price, 2) if target_price and target_price > t1 * 1.01 \
-                 else round(t1 * 1.04, 2)
+            t2 = (round(target_price, 2)
+                  if target_price and target_price > t1 * 1.01
+                  else round(t1 * 1.04, 2))
             target_status = "Partial Real Levels"
         else:
-            t1 = round(target_price, 2) if target_price and target_price > current_price * 1.005 \
-                 else round(current_price * 1.03, 2)
+            t1 = (round(target_price, 2)
+                  if target_price and target_price > current_price * 1.005
+                  else round(current_price * 1.03, 2))
             t2            = round(t1 * 1.04, 2)
             target_status = "ATH Zone — Projected"
         if t1 < min_target:
             t1            = round(min_target, 2)
             t2            = round(t1 * 1.04, 2)
             target_status += " (ATR Adj)"
-        return round(t1, 2), round(t2, 2), targets_hit, target_status
+        return round(t1, 2), round(t2, 2), 0, target_status
 
     # =========================================================================
     #  FUNDAMENTAL SCORE
+    #  U13: Sector-adjusted PE (Financial sector uses PE < 15 thresholds)
+    #  U14: Negative growth penalty capped at -10
+    #  U15: FCF raised to +15
+    #  U16: D/E raised to +15
+    #  U17: Partial credit for missing fields
     # =========================================================================
-    def get_fundamental_score(self, info):
+    def get_fundamental_score(self, info, sector=''):
         score = 0
-        pe    = info.get('trailingPE', info.get('forwardPE', 0))
-        pb    = info.get('priceToBook', 0)
-        peg   = info.get('pegRatio', 0)
-        if pe  and 0 < pe < 25:      score += 10
-        elif pe  and 25 <= pe < 35:  score += 5
-        if pb  and 0 < pb < 3:       score += 5
-        elif pb  and 3 <= pb < 5:    score += 3
+
+        pe  = info.get('trailingPE', info.get('forwardPE', 0))
+        pb  = info.get('priceToBook', 0)
+        peg = info.get('pegRatio', 0)
+
+        # U13: Financial sector (banks, insurance) always trade at structurally
+        # lower PE. Using PE < 25 for JPM/BAC rewards them for being "cheap"
+        # when they are merely sector-typical. Use PE < 15 for financials.
+        is_financial = sector in ('Financial Services', 'Banks', 'Banking',
+                                  'Insurance', 'Financial', 'Capital Markets',
+                                  'Asset Management')
+        if is_financial:
+            if pe and 0 < pe < 15:      score += 10   # genuinely cheap bank
+            elif pe and 15 <= pe < 20:  score += 5    # fair value for a bank
+            # PE > 20 for a financial = expensive for its sector → 0 pts
+        else:
+            if pe  and 0 < pe  < 25:    score += 10
+            elif pe  and 25 <= pe < 35: score += 5
+
+        if pb  and 0 < pb  < 3:      score += 5
+        elif pb  and 3 <= pb  < 5:   score += 3
+
         if peg and 0 < peg < 1:      score += 10
         elif peg and 1 <= peg < 2:   score += 5
+        else:                        score += 3   # U17: partial credit if PEG missing
+
+        # Profitability
         roe = info.get('returnOnEquity', 0)
         roa = info.get('returnOnAssets', 0)
         pm  = info.get('profitMargins', 0)
@@ -343,28 +544,50 @@ class SP500CompleteAnalyzer:
         elif roe and roe > 0.10: score += 5
         if roa and roa > 0.05:   score += 5
         elif roa and roa > 0.02: score += 3
+        else:                    score += 2   # U17: partial credit if ROA missing
         if pm  and pm  > 0.10:   score += 10
         elif pm  and pm  > 0.05: score += 5
+
+        # Growth (U14: penalise negative growth; cap total penalty at -10)
         rg = info.get('revenueGrowth', 0)
         eg = info.get('earningsGrowth', 0)
-        if rg and rg > 0.15:   score += 10
-        elif rg and rg > 0.10: score += 7
-        elif rg and rg > 0.05: score += 5
-        if eg and eg > 0.15:   score += 10
-        elif eg and eg > 0.10: score += 7
-        elif eg and eg > 0.05: score += 5
+        growth_penalty = 0
+        if rg and rg > 0.15:    score += 10
+        elif rg and rg > 0.10:  score += 7
+        elif rg and rg > 0.05:  score += 5
+        elif rg and rg < 0:     growth_penalty += 10   # track separately for cap
+
+        if eg and eg > 0.15:    score += 10
+        elif eg and eg > 0.10:  score += 7
+        elif eg and eg > 0.05:  score += 5
+        elif eg and eg < 0:     growth_penalty += 10   # track separately for cap
+
+        # Cap combined growth penalty at -10 to prevent cyclicals (energy,
+        # materials, industrials) with one bad quarter from being wiped out.
+        score -= min(growth_penalty, 10)
+
+        # Balance sheet health
         de = info.get('debtToEquity', 0)
         cr = info.get('currentRatio', 0)
         fc = info.get('freeCashflow', 0)
+
+        # U16: D/E weight raised to +15 (was +10). Highly leveraged companies
+        # face outsized risk in rate-hike cycles.
         if de is not None:
-            if de < 50:    score += 10
-            elif de < 100: score += 5
+            if de < 50:    score += 15   # was +10
+            elif de < 100: score += 7    # was +5
         else:
             score += 5
-        if cr and cr > 1.5:  score += 10
+
+        if cr and cr > 1.5:   score += 10
         elif cr and cr > 1.0: score += 5
-        if fc and fc > 0:    score += 5
-        return min(score, 100)
+        else:                  score += 3   # U17: partial credit if CR missing
+
+        # U15: FCF weight raised to +15 (was +5). Cash generation = survival
+        # in downturns and ability to buy back shares / pay dividends.
+        if fc and fc > 0:     score += 15   # was +5
+
+        return min(max(score, 0), 100)
 
     # =========================================================================
     #  MAIN ANALYSIS
@@ -372,68 +595,218 @@ class SP500CompleteAnalyzer:
     def analyze_stock(self, symbol, name):
         try:
             stock = yf.Ticker(symbol)
-            df    = stock.history(period='1y')
-            info  = stock.info
+
+            # U20: auto_adjust=False — use unadjusted prices to match TradingView.
+            # Adjusted prices change RSI/MACD values vs what you see on charts.
+            # U19: Fetch with explicit period — check freshness after.
+            df = stock.history(period='1y', auto_adjust=False)
+
             if df.empty or len(df) < 200:
                 return None
+
+            # U19: Data freshness check — warn if last candle is stale
+            today          = datetime.now(pytz.timezone('US/Eastern')).date()
+            last_candle    = df.index[-1].date() if hasattr(df.index[-1], 'date') else df.index[-1]
+            days_lag       = (today - last_candle).days
+            if days_lag > 5:
+                print(f"  ⚠ {symbol}: Data lag {days_lag} days (last candle: {last_candle})")
+
+            # Ensure 'Close' column exists
+            if 'Close' not in df.columns and 'Adj Close' in df.columns:
+                df = df.rename(columns={'Adj Close': 'Close'})
+
+            info = stock.info
+
+            # U18: Data sanity check
+            data_ok, data_warn = self.is_data_clean(df)
+            if not data_ok:
+                print(f"  ⚠ Skipping {symbol}: {data_warn}")
+                return None
+
             current_price = df['Close'].iloc[-1]
-            sma_20  = df['Close'].rolling(20).mean().iloc[-1]
-            sma_50  = df['Close'].rolling(50).mean().iloc[-1]
-            sma_200 = df['Close'].rolling(200).mean().iloc[-1]
+            sma_20        = df['Close'].rolling(20).mean().iloc[-1]
+            sma_50        = df['Close'].rolling(50).mean().iloc[-1]
+            sma_200       = df['Close'].rolling(200).mean().iloc[-1]
+
+            # U06: SMA20 slope — is the short-term trend actively declining?
+            # Catches stocks rolling over BEFORE SMA50 lags down (key fix).
+            sma_20_series    = df['Close'].rolling(20).mean()
+            sma_20_5bar_ago  = sma_20_series.iloc[-6] if len(sma_20_series) >= 6 else sma_20
+            sma_20_declining = sma_20 < sma_20_5bar_ago
+
+            # U07: Death cross forming — SMA20 has crossed below SMA50.
+            death_cross_forming = sma_20 < sma_50
+
+            # U03: SMA200 slope guard — bonus only if SMA200 is rising.
+            # Price above a flat/falling SMA200 does not confirm an uptrend.
+            sma_200_series    = df['Close'].rolling(200).mean()
+            sma_200_10bar_ago = sma_200_series.iloc[-11] if len(sma_200_series) >= 11 else sma_200
+            sma_200_rising    = sma_200 > sma_200_10bar_ago
+
             rsi          = self.calculate_rsi(df['Close'])
             macd, signal = self.calculate_macd(df['Close'])
             atr          = self.calculate_atr(df)
             atr_pct      = round((atr / current_price) * 100, 2)
             adx          = self.calculate_adx(df)
             vol_ratio    = self.calculate_volume_ratio(df)
-            # v8: momentum-slope metrics
-            rsi_slope       = self.calculate_rsi_slope(df['Close'])
+
+            # v8: MACD histogram slope for momentum-reversal detection
             macd_hist_slope = self.calculate_macd_hist_slope(df['Close'])
+
+            # U11: RSI divergence detection
+            rsi_divergence = self.detect_rsi_divergence(df['Close'])
+
+            # U12: Full RSI slope object
+            rsi_slope_data  = self.calculate_rsi_slope(df['Close'])
+            rsi_slope       = rsi_slope_data['slope']        # scalar (backward compat)
+            rsi_direction   = rsi_slope_data['direction']    # 'Rising'|'Falling'|'Flat'
+            rsi_slope_strong = rsi_slope_data['strong']      # True if |slope| > 8
+            rsi_5bar        = rsi_slope_data['rsi_5bar']
+
             high_52w = df['High'].tail(252).max()
             low_52w  = df['Low'].tail(252).min()
+
             resistance_levels = self.find_resistance_levels(df, current_price)
             support_levels    = self.find_support_levels(df, current_price)
-            nearest_resistance = resistance_levels[0]['level'] if resistance_levels \
-                                 else df.tail(60)['High'].quantile(0.90)
-            nearest_support    = support_levels[0]['level'] if support_levels \
-                                 else df.tail(60)['Low'].quantile(0.10)
-            support_dist_pct = round(((current_price - nearest_support) / current_price) * 100, 2)
+
+            nearest_resistance = (resistance_levels[0]['level'] if resistance_levels
+                                  else df.tail(60)['High'].quantile(0.90))
+            nearest_support    = (support_levels[0]['level'] if support_levels
+                                  else df.tail(60)['Low'].quantile(0.10))
+            support_dist_pct   = round(((current_price - nearest_support) / current_price) * 100, 2)
+
+            # ==================================================================
+            #  TECHNICAL SCORE
+            # ==================================================================
             tech_score = 0
+
+            # SMA position
             tech_score += 1 if current_price > sma_20  else -1
             tech_score += 1 if current_price > sma_50  else -1
-            tech_score += 2 if current_price > sma_200 else -2
-            if rsi < 30:
-                tech_score += 2;  rsi_signal = "Oversold"
-            elif rsi > 70:
-                tech_score -= 2;  rsi_signal = "Overbought"
+
+            # U03: SMA200 bonus only if SMA200 is actively rising
+            if current_price > sma_200 and sma_200_rising:
+                tech_score += 2   # confirmed long-term uptrend
+            elif current_price > sma_200 and not sma_200_rising:
+                tech_score += 0   # above SMA200 but trend flattening — no bonus
             else:
-                rsi_signal = "Neutral"
+                tech_score -= 2   # below SMA200 — penalise
+
+            # U10: Double SMA penalty — below BOTH SMA20 and SMA50 simultaneously
+            if current_price < sma_20 and current_price < sma_50:
+                tech_score -= 1
+
+            # U06: SMA20 declining — short-term trend actively falling
+            if sma_20_declining:
+                tech_score -= 1
+
+            # U07: Death cross forming — SMA20 crossed below SMA50
+            if death_cross_forming:
+                tech_score -= 1
+
+            # RSI scoring — context-aware with direction (ported from Nifty v5.4)
+            if rsi < 30:
+                if current_price > sma_200:
+                    tech_score += 2
+                    rsi_signal = "Oversold ↑" if rsi_direction == 'Rising' else "Oversold"
+                else:
+                    tech_score -= 1
+                    rsi_signal = "Oversold (Downtrend)"
+            elif rsi > 70:
+                if rsi_divergence == 'Bearish Divergence':
+                    tech_score -= 3
+                    rsi_signal = "Bearish Divergence ⚠"
+                elif rsi_direction == 'Falling' and rsi_slope_strong:
+                    tech_score -= 3
+                    rsi_signal = f"Topping Out ⚠ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_direction == 'Falling':
+                    tech_score -= 2
+                    rsi_signal = f"Fading ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                else:
+                    tech_score -= 1
+                    rsi_signal = "Overbought"
+            elif 30 <= rsi <= 45:
+                # U09: Weak momentum zone — no longer treated as neutral
+                if rsi_direction == 'Falling':
+                    tech_score -= 2
+                    rsi_signal = f"Weak & Falling ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                else:
+                    tech_score -= 1
+                    rsi_signal = "Weak Momentum ⚠"
+            elif 45 < rsi <= 55:
+                if rsi_direction == 'Rising':
+                    tech_score += 1
+                    rsi_signal = f"Building ↑ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_direction == 'Falling' and rsi_slope_strong:
+                    tech_score -= 2
+                    rsi_signal = f"Falling Fast ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_direction == 'Falling':
+                    tech_score -= 1
+                    rsi_signal = f"Fading ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                else:
+                    rsi_signal = "Neutral →"
+            else:
+                # RSI 55-70: healthy zone — reward rising, penalise falling
+                if rsi_direction == 'Rising' and rsi > 65:
+                    rsi_signal = f"Near Overbought ⚠ ({rsi:.0f}↑)"
+                elif rsi_direction == 'Rising':
+                    tech_score = min(tech_score + 1, 6)
+                    rsi_signal = f"Momentum ↑ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_direction == 'Falling' and rsi_slope_strong:
+                    tech_score -= 2
+                    rsi_signal = f"Rolling Over ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_direction == 'Falling':
+                    tech_score -= 1
+                    rsi_signal = f"Softening ↓ ({rsi_5bar:.0f}→{rsi:.0f})"
+                elif rsi_divergence == 'Bullish Divergence':
+                    tech_score = min(tech_score + 1, 6)
+                    rsi_signal = "Bullish Divergence ✅"
+                else:
+                    rsi_signal = f"Healthy ({rsi:.0f})"
+
             if macd > signal:
                 tech_score += 1;  macd_signal = "Bullish"
             else:
                 tech_score -= 1;  macd_signal = "Bearish"
+
+            # U08: ADX direction-aware — bonus only when price > SMA50
             if adx > 25:
+                if current_price > sma_50:
+                    tech_score = min(tech_score + 1, 6)   # strong uptrend ✅
+                else:
+                    tech_score -= 1   # strong downtrend — penalise
+            elif adx < 20:
+                tech_score -= 1   # weak/no trend penalty
+
+            # Volume influences tech score
+            if vol_ratio > 1.5 and current_price > sma_20:
+                tech_score = min(tech_score + 1, 6)
+            elif vol_ratio < 0.7:
+                tech_score -= 1
+
+            # Near 52W high in uptrend bonus
+            pct_from_52w_high = ((current_price - high_52w) / high_52w) * 100
+            if pct_from_52w_high >= -5 and current_price > sma_200:
                 tech_score = min(tech_score + 1, 6)
 
-            # ── v8: momentum-reversal penalties ──────────────────────────
-            # 1. RSI fading: high RSI that is now rolling over = danger
+            # v8: RSI fading momentum penalties (retained from SP500 v8)
             if rsi > 55 and rsi_slope < -2:
                 tech_score -= 2   # RSI peaked and falling fast
             elif rsi > 50 and rsi_slope < -1:
                 tech_score -= 1   # mild RSI fade
 
-            # 2. MACD histogram shrinking while positive = momentum loss
+            # v8: MACD histogram shrinking = momentum loss
             macd_hist_now = macd - signal
             if macd_hist_now > 0 and macd_hist_slope < -0.05:
-                tech_score -= 1   # bullish but weakening
+                tech_score -= 1
             if macd_hist_now < 0 and macd_hist_slope < 0:
-                tech_score -= 1   # histogram negative AND still falling
+                tech_score -= 1
 
-            # 3. Price extended above SMA-20 AND RSI falling = stretched entry
+            # v8: Price extended above SMA20 AND RSI falling = stretched entry
             price_ext_pct = ((current_price - sma_20) / sma_20) * 100
             if price_ext_pct > 7 and rsi_slope < -1:
-                tech_score -= 1   # extended AND fading
-            # ── end v8 penalties ─────────────────────────────────────────
+                tech_score -= 1
+            # ==================================================================
 
             pe_ratio         = info.get('trailingPE', info.get('forwardPE', 0))
             pb_ratio         = info.get('priceToBook', 0)
@@ -457,12 +830,48 @@ class SP500CompleteAnalyzer:
                 'strongBuy': 'Strong Buy', 'buy': 'Buy',
                 'hold': 'Hold', 'sell': 'Sell', 'strongSell': 'Strong Sell'
             }
-            analyst_label    = analyst_map.get(analyst_key, analyst_key.title() if analyst_key else 'N/A')
+            analyst_label    = analyst_map.get(
+                analyst_key,
+                analyst_key.title() if analyst_key else 'N/A')
             earnings_date    = self.get_earnings_date(info)
             earn_soon        = self.is_earnings_soon(earnings_date)
-            fund_score = self.get_fundamental_score(info)
+
+            fund_score = self.get_fundamental_score(info, sector)
+
+            # U05: Dynamic weight shift — count active bearish signals
+            bearish_signal_count = sum([
+                bool(sma_20_declining),
+                bool(death_cross_forming),
+                bool(macd < signal),
+                bool(rsi < 50),
+                bool(current_price < sma_50),
+                bool(rsi_direction == 'Falling' and rsi_slope_strong),
+            ])
+
+            # U05: Shift from 50/50 to 60/40 tech/fund when 2+ signals fire
+            # (gives more weight to deteriorating technicals before veto kicks in)
+            if bearish_signal_count >= 2:
+                tech_weight  = 0.60
+                fund_weight  = 0.40
+                weight_label = "60/40 Tech (Downtrend Override)"
+            else:
+                tech_weight  = 0.50
+                fund_weight  = 0.50
+                weight_label = "50/50 (Normal)"
+
+            # Combined score with dynamic weights
             tech_score_normalized = ((tech_score + 6) / 12) * 100
-            combined_score        = (tech_score_normalized * 0.5) + (fund_score * 0.5)
+            combined_score        = (tech_score_normalized * tech_weight) + (fund_score * fund_weight)
+
+            # U04: Analyst consensus ±5 applied to combined score.
+            # Tech gate: tech_score >= 2 required before analyst buy counts.
+            if analyst_key in ('strongBuy', 'buy'):
+                if tech_score >= 2:
+                    combined_score = min(combined_score + 5, 100)
+            elif analyst_key in ('sell', 'strongSell'):
+                combined_score = max(combined_score - 5, 0)
+
+            # Rating thresholds
             if combined_score >= 75:
                 rating = "⭐⭐⭐⭐⭐ STRONG BUY";  recommendation = "STRONG BUY"
             elif combined_score >= 55:
@@ -473,6 +882,17 @@ class SP500CompleteAnalyzer:
                 rating = "⭐⭐ SELL";              recommendation = "SELL"
             else:
                 rating = "⭐ STRONG SELL";         recommendation = "STRONG SELL"
+
+            # U02: TREND VETO GATE — hard cap BEFORE stop/target calculation.
+            # 3+ confirmed bearish signals → maximum rating is HOLD.
+            # Threshold = 3 (not 2) to avoid vetoing everything on a general
+            # down day when MACD bear + RSI<50 fire across the whole market.
+            veto_fired = bearish_signal_count >= 3 and recommendation in ("STRONG BUY", "BUY")
+            if veto_fired:
+                recommendation = "HOLD"
+                rating         = "⭐⭐⭐ HOLD (Veto)"
+
+            # Stop loss sizing by beta
             stock_beta = beta if beta else 1.0
             if stock_beta < 0.8:
                 atr_multiplier = 1.0;  max_sl_pct = 5.0
@@ -482,7 +902,8 @@ class SP500CompleteAnalyzer:
                 atr_multiplier = 1.5;  max_sl_pct = 10.0
             else:
                 atr_multiplier = 2.0;  max_sl_pct = 12.0
-            if recommendation in ["STRONG BUY", "BUY"]:
+
+            if recommendation in ("STRONG BUY", "BUY"):
                 atr_stop       = nearest_support - (atr * atr_multiplier)
                 min_allowed_sl = current_price * (1 - max_sl_pct / 100)
                 stop_loss      = max(atr_stop, min_allowed_sl)
@@ -501,42 +922,65 @@ class SP500CompleteAnalyzer:
                 stop_loss      = min(atr_stop, max_allowed_sl)
                 sl_percentage  = ((stop_loss - current_price) / current_price) * 100
                 stop_type      = "ATR Stop" if atr_stop <= max_allowed_sl else "Beta Cap"
-                valid_sups = [s['level'] for s in support_levels
-                              if s['level'] < current_price * 0.995]
+                valid_sups     = [s['level'] for s in support_levels
+                                  if s['level'] < current_price * 0.995]
                 if len(valid_sups) >= 2:
                     target_1, target_2 = valid_sups[0], valid_sups[1]
-                    target_status = "Real S/R Levels"
+                    target_status      = "Real S/R Levels"
                 elif len(valid_sups) == 1:
-                    target_1 = valid_sups[0]; target_2 = round(target_1 * 0.96, 2)
+                    target_1      = valid_sups[0]
+                    target_2      = round(target_1 * 0.96, 2)
                     target_status = "Partial Real Levels"
                 else:
-                    target_1 = round(current_price * 0.96, 2)
-                    target_2 = round(current_price * 0.92, 2)
+                    target_1      = round(current_price * 0.96, 2)
+                    target_2      = round(current_price * 0.92, 2)
                     target_status = "Projected"
                 targets_hit = 0
                 upside      = ((current_price - target_1) / current_price) * 100
+
             risk        = abs(current_price - stop_loss)
             reward      = abs(target_1 - current_price)
             risk_reward = round(reward / risk, 2) if risk > 0 else 0
+
             if fund_score >= 80:   quality = "Excellent"
             elif fund_score >= 60: quality = "Good"
             elif fund_score >= 40: quality = "Average"
             else:                  quality = "Poor"
+
             return {
-                'Symbol': symbol, 'Name': name, 'Price': round(current_price, 2),
-                'Sector': sector,
-                'RSI': round(rsi, 2), 'RSI_Signal': rsi_signal,
-                'RSI_Slope': rsi_slope,
-                'MACD': macd_signal,
-                'MACD_Hist_Slope': round(macd_hist_slope, 4),
-                'ADX': adx,
-                'Vol_Ratio': vol_ratio,
-                'SMA_20': round(sma_20, 2), 'SMA_50': round(sma_50, 2), 'SMA_200': round(sma_200, 2),
-                'Support': round(nearest_support, 2), 'Resistance': round(nearest_resistance, 2),
+                'Symbol':           symbol,
+                'Name':             name,
+                'Price':            round(current_price, 2),
+                'Sector':           sector,
+                'RSI':              round(rsi, 2),
+                'RSI_Signal':       rsi_signal,
+                'RSI_Slope':        rsi_slope,          # scalar — used by v8/v9 filters
+                'RSI_Direction':    rsi_direction,       # U12: direction label
+                'RSI_Divergence':   rsi_divergence,      # U11
+                'MACD':             macd_signal,
+                'MACD_Hist_Slope':  round(macd_hist_slope, 4),
+                'ADX':              adx,
+                'Vol_Ratio':        vol_ratio,
+                'SMA_20':           round(sma_20, 2),
+                'SMA_50':           round(sma_50, 2),
+                'SMA_200':          round(sma_200, 2),
+                'SMA_20_Declining': sma_20_declining,
+                'Death_Cross':      death_cross_forming,
+                'SMA_200_Rising':   sma_200_rising,
+                'Bearish_Signals':  bearish_signal_count,
+                'Weight_Mode':      weight_label,
+                'Veto_Fired':       veto_fired,
+                'Support':          round(nearest_support, 2),
+                'Resistance':       round(nearest_resistance, 2),
                 'Support_Dist_Pct': support_dist_pct,
-                '52W_High': round(high_52w, 2), '52W_Low': round(low_52w, 2),
-                'Tech_Score': tech_score, 'Tech_Score_Norm': round(tech_score_normalized, 1),
-                'ATR': atr, 'ATR_Pct': atr_pct, 'ATR_Multiplier': atr_multiplier, 'Stop_Type': stop_type,
+                '52W_High':         round(high_52w, 2),
+                '52W_Low':          round(low_52w, 2),
+                'Tech_Score':       tech_score,
+                'Tech_Score_Norm':  round(tech_score_normalized, 1),
+                'ATR':              atr,
+                'ATR_Pct':          atr_pct,
+                'ATR_Multiplier':   atr_multiplier,
+                'Stop_Type':        stop_type,
                 'PE_Ratio':         round(pe_ratio, 2)           if pe_ratio else 0,
                 'PB_Ratio':         round(pb_ratio, 2)           if pb_ratio else 0,
                 'PEG_Ratio':        round(peg_ratio, 2)          if peg_ratio else 0,
@@ -552,17 +996,23 @@ class SP500CompleteAnalyzer:
                 'Current_Ratio':    round(current_ratio, 2)     if current_ratio else 0,
                 'Market_Cap':       round(market_cap / 1e9, 2)  if market_cap else 0,
                 'Beta':             round(beta, 2)               if beta else 1.0,
-                'Fund_Score':       round(fund_score, 1), 'Quality': quality,
+                'Fund_Score':       round(fund_score, 1),
+                'Quality':          quality,
                 'Combined_Score':   round(combined_score, 1),
-                'Rating': rating, 'Recommendation': recommendation,
-                'Stop_Loss': round(stop_loss, 2), 'SL_Percentage': round(sl_percentage, 2),
-                'Target_1': round(target_1, 2), 'Target_2': round(target_2, 2),
-                'Target_Price': round(target_price, 2) if target_price else 0,
-                'Upside': round(upside, 2), 'Risk_Reward': risk_reward,
-                'Targets_Hit': targets_hit, 'Target_Status': target_status,
-                'Analyst': analyst_label,
-                'Earnings_Date': earnings_date,
-                'Earn_Soon': earn_soon,
+                'Rating':           rating,
+                'Recommendation':   recommendation,
+                'Stop_Loss':        round(stop_loss, 2),
+                'SL_Percentage':    round(sl_percentage, 2),
+                'Target_1':         round(target_1, 2),
+                'Target_2':         round(target_2, 2),
+                'Target_Price':     round(target_price, 2) if target_price else 0,
+                'Upside':           round(upside, 2),
+                'Risk_Reward':      risk_reward,
+                'Targets_Hit':      targets_hit,
+                'Target_Status':    target_status,
+                'Analyst':          analyst_label,
+                'Earnings_Date':    earnings_date,
+                'Earn_Soon':        earn_soon,
             }
         except Exception:
             return None
@@ -571,7 +1021,7 @@ class SP500CompleteAnalyzer:
     #  ANALYZE ALL
     # =========================================================================
     def analyze_all_stocks(self):
-        print(f"🔍 Analyzing {len(self.sp500_stocks)} stocks...")
+        print(f"🔍 Analyzing {len(self.sp500_stocks)} US stocks...")
         print("⏳ ~2-3 minutes...\n")
         for idx, (symbol, name) in enumerate(self.sp500_stocks.items(), 1):
             result = self.analyze_stock(symbol, name)
@@ -586,37 +1036,90 @@ class SP500CompleteAnalyzer:
     # =========================================================================
     def get_top_recommendations(self):
         df = pd.DataFrame(self.results)
+
+        # == BUY side ===========================================================
         all_buys = df[df['Recommendation'].isin(['STRONG BUY', 'BUY'])]
-        print(f"\n📊 BUY Filter Debug:")
+        print(f"\n📊 BUY Filter Debug ({len(all_buys)} rated BUY/STRONG BUY):")
+
         f1 = all_buys[all_buys['Upside'] > 0.5]
         f2 = f1[f1['Risk_Reward'] >= 0.5]
         f3 = f2[f2['Target_1'] > f2['Price']]
-        # v8: drop stocks where RSI is high AND falling (momentum reversal)
-        f4 = f3[~((f3['RSI'] > 60) & (f3['RSI_Slope'] < -2))]
+
+        # U12: RSI safety gate — mirrors Nifty v5.4
+        def rsi_is_safe_to_buy(row):
+            rsi_val = row.get('RSI', 50)
+            rsi_dir = row.get('RSI_Direction', 'Flat')
+            rsi_slp = row.get('RSI_Slope', 0)
+            if rsi_val > 70:                              return False
+            if rsi_val > 65 and rsi_dir == 'Falling':    return False
+            if rsi_val > 60 and rsi_slp < -8:            return False
+            return True
+
+        f4 = f3[f3.apply(rsi_is_safe_to_buy, axis=1)]
+
         # v8: drop stocks where MACD histogram is shrinking while RSI is elevated
         f5 = f4[~((f4['MACD_Hist_Slope'] < -0.05) & (f4['RSI'] > 58))]
-        # v9: drop stocks with high sell-off volume + falling RSI = institution selling day
-        #     Vol_Ratio > 2.0 means today's volume is 2x the 20-day average
-        #     Combined with RSI_Slope < 0 = momentum falling on big volume = dangerous entry
+
+        # v9: drop stocks with high sell-off volume + falling RSI
         f6 = f5[~((f5['Vol_Ratio'] > 2.0) & (f5['RSI_Slope'] < 0))]
-        print(f"   {len(all_buys)} → {len(f1)} → {len(f2)} → {len(f3)} → {len(f4)} → {len(f5)} → {len(f6)} final (v9 vol+momentum filter)")
-        # Log what was filtered by v9 so you can review next session
+
+        print(f"   {len(all_buys)} → {len(f1)} upside → {len(f2)} RR → "
+              f"{len(f3)} T1>Price → {len(f4)} RSI-safe → "
+              f"{len(f5)} MACD → {len(f6)} vol+momentum")
+
+        # Log v9 filtered stocks
         v9_filtered = f5[((f5['Vol_Ratio'] > 2.0) & (f5['RSI_Slope'] < 0))]
         if not v9_filtered.empty:
-            print(f"   ⚠️  v9 removed (high sell-off volume — check tomorrow):")
+            print(f"   ⚠  v9 removed (high sell-off volume — check tomorrow):")
             for _, r in v9_filtered.iterrows():
-                print(f"      {r['Symbol']:6s}  Vol×{r['Vol_Ratio']:.1f}  RSI slope {r['RSI_Slope']:+.1f}  RSI {r['RSI']:.0f}")
-        top_buys = f6.nlargest(20, 'Combined_Score')
+                print(f"      {r['Symbol']:6s}  Vol×{r['Vol_Ratio']:.1f}  "
+                      f"RSI slope {r['RSI_Slope']:+.1f}  RSI {r['RSI']:.0f}")
+
+        sorted_buys = f6.sort_values('Combined_Score', ascending=False)
+
+        # U22: Sector diversity cap — max 4 per sector in top 20
+        top_buys_rows = []
+        sector_counts = {}
+        for _, row in sorted_buys.iterrows():
+            sec = row.get('Sector', 'N/A')
+            sector_counts[sec] = sector_counts.get(sec, 0)
+            if sector_counts[sec] < MAX_PICKS_PER_SECTOR:
+                top_buys_rows.append(row)
+                sector_counts[sec] += 1
+            if len(top_buys_rows) >= 20:
+                break
+        top_buys = pd.DataFrame(top_buys_rows)
+
+        # == SELL side ==========================================================
         all_sells = df[df['Recommendation'].isin(['STRONG SELL', 'SELL'])]
         s1 = all_sells[all_sells['Upside'] > 0.5]
         s2 = s1[s1['Risk_Reward'] >= 0.5]
         s3 = s2[s2['Target_1'] < s2['Price']]
-        print(f"   SELL: {len(all_sells)} → {len(s3)} final\n")
-        top_sells = s3.nsmallest(20, 'Combined_Score')
+
+        # U23: Sell gate — mirrors Nifty v5.4 sell validation
+        def sell_is_valid(row):
+            rsi_val = row.get('RSI', 50)
+            rsi_dir = row.get('RSI_Direction', 'Flat')
+            rsi_slp = row.get('RSI_Slope', 0)
+            macd    = row.get('MACD', 'Bearish')
+            # Block: Oversold — bounce risk, not a short entry
+            if rsi_val < 35:
+                return False
+            # Block: RSI healthy + MACD Bullish — chart says uptrend
+            if rsi_val > 50 and macd == 'Bullish':
+                return False
+            # Block: RSI rising fast from low base — recovery in progress
+            if rsi_val < 45 and rsi_dir == 'Rising' and rsi_slp > 8:
+                return False
+            return True
+
+        top_sells = s3[s3.apply(sell_is_valid, axis=1)].nsmallest(20, 'Combined_Score')
+        print(f"   SELL: {len(all_sells)} → {len(s3)} filtered → "
+              f"{len(top_sells)} final\n")
         return top_buys, top_sells
 
     # =========================================================================
-    #  HTML — v7 Redesign: Dark Slate, Grouped Headers, Quick/Detail Toggle
+    #  HTML — Dark Slate Design + v5.4 Logic Indicators
     # =========================================================================
     def generate_email_html(self):
         df = pd.DataFrame(self.results)
@@ -691,73 +1194,55 @@ body::before {{
   border:1px solid var(--border); border-radius:14px;
   padding:16px 20px;
 }}
-.hdr-left {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; gap:12px; }}
+.hdr-left {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }}
 .hdr-icon {{
   width:42px; height:42px; flex-shrink:0;
   background:linear-gradient(135deg,var(--accent),#ef4444);
   border-radius:10px; display:flex; align-items:center;
   justify-content:center; font-size:20px;
 }}
-.hdr-title {{
-  font-family:'Syne',sans-serif;
-  font-size:clamp(13px,2vw,19px); font-weight:800; color:#fff;
+.hdr-title {{ font-family:'Syne',sans-serif; font-size:clamp(14px,2vw,20px); font-weight:800; color:#fff; }}
+.hdr-sub   {{ font-size:0.72em; color:var(--muted); margin-top:2px; }}
+
+/* Live clock */
+.live-clock {{
+  padding:8px 14px; border-radius:8px; text-align:right;
 }}
-.hdr-sub {{ font-size:0.72em; color:#a8cce0; margin-top:2px; letter-spacing:0.3px; font-weight:600; }}
+.lc-label {{ font-size:0.6em; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }}
+.lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:1.0em; font-weight:700; color:var(--accent); }}
+.lc-date  {{ font-size:0.65em; color:var(--muted); }}
+.lc-last  {{ font-size:0.62em; color:#5a8090; margin-top:2px; }}
+
+/* View toggle */
+.view-toggle {{ display:flex; gap:6px; }}
+.vt-btn {{
+  font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700;
+  padding:6px 14px; border-radius:6px; border:1px solid var(--border);
+  background:var(--card2); color:var(--muted); cursor:pointer; transition:all .2s;
+}}
+.vt-btn.active {{ background:rgba(245,158,11,0.12); border-color:var(--accent); color:var(--accent); }}
 
 /* ── INDEX STRIP ── */
 .idx-strip {{
-  display:flex; align-items:center; gap:0;
-  background:rgba(0,0,0,0.3); border:1px solid var(--border);
-  border-radius:10px; overflow:hidden;
+  display:flex; align-items:center; gap:14px;
+  background:rgba(0,0,0,0.25); border:1px solid var(--border);
+  border-radius:8px; padding:8px 14px;
 }}
-.idx-item {{ display:flex; align-items:center; gap:10px; padding:8px 18px; }}
-.idx-name {{ font-size:9px; font-weight:800; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }}
-.idx-price {{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:#fff; }}
-.idx-chg {{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; }}
-.idx-chg.up {{ color:var(--green); }}
-.idx-chg.dn {{ color:var(--red); }}
-.idx-sep {{ width:1px; height:28px; background:var(--border); }}
+.idx-item {{ display:flex; align-items:center; gap:8px; }}
+.idx-sep  {{ width:1px; height:28px; background:var(--border); }}
+.idx-name {{ font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700; color:var(--muted); letter-spacing:1px; }}
+.idx-price {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:900; color:#fff; }}
+.idx-chg  {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700; white-space:nowrap; }}
+.up {{ color:var(--green); }} .dn {{ color:var(--red); }}
 
-/* ── LIVE CLOCK ── */
-.live-clock {{
-  display:flex; flex-direction:column; align-items:center;
-  padding:8px 18px; border-left:1px solid var(--border);
-}}
-.lc-label {{ font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }}
-.lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }}
-.lc-date  {{ font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); margin-top:1px; }}
-.lc-last  {{ font-size:8px; color:var(--accent); margin-top:2px; white-space:nowrap; }}
-
-/* ── VIEW TOGGLE ── */
-.view-toggle {{
-  display:flex; gap:4px; background:var(--card);
-  border:1px solid var(--border); border-radius:8px; padding:3px;
-}}
-.vt-btn {{
-  padding:6px 16px; border-radius:6px; border:none; cursor:pointer;
-  font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700;
-  letter-spacing:0.5px; text-transform:uppercase;
-  background:transparent; color:var(--muted); transition:all 0.2s;
-}}
-.vt-btn.active {{ background:var(--accent); color:#000; }}
-.vt-btn:hover:not(.active) {{ color:var(--text); }}
-
-/* ── TICKER STRIP ── */
-.ticker {{
-  background:rgba(0,0,0,0.4); border:1px solid var(--border);
-  border-radius:8px; margin-bottom:14px; overflow:hidden;
-}}
-.ticker-inner {{ display:flex; overflow-x:auto; scrollbar-width:none; }}
-.ticker-inner::-webkit-scrollbar {{ display:none; }}
-.ti {{
-  display:flex; gap:6px; align-items:center;
-  padding:6px 14px; border-right:1px solid var(--border);
-  font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap;
-}}
-.ti-s {{ color:var(--accent); font-weight:700; }}
-.ti-p {{ color:#fff; }}
-.ti-u {{ color:var(--green); }}
-.ti-d {{ color:var(--red); }}
+/* ── TICKER ── */
+.ticker {{ overflow:hidden; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:8px; margin-bottom:16px; padding:8px 0; }}
+.ticker-inner {{ display:flex; gap:24px; flex-wrap:wrap; padding:0 16px; }}
+.ti {{ display:flex; align-items:center; gap:6px; }}
+.ti-s {{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); font-weight:700; }}
+.ti-p {{ font-family:'JetBrains Mono',monospace; font-size:10px; color:#fff; font-weight:700; }}
+.ti-u {{ color:var(--green); font-family:'JetBrains Mono',monospace; font-size:10px; }}
+.ti-d {{ color:var(--red);   font-family:'JetBrains Mono',monospace; font-size:10px; }}
 
 /* ── KPI BAND ── */
 .kpi-band {{
@@ -859,7 +1344,6 @@ td.sep-value    {{ border-right:2px solid rgba(167,139,250,0.08); }}
 /* Earnings warning */
 tr.earn-warning td {{ background:rgba(239,68,68,0.04)!important; }}
 tr.earn-warning td.earn-cell {{ background:rgba(239,68,68,0.1)!important; }}
-/* v9: High sell-off volume warning */
 tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
 .earn-badge {{
   font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700;
@@ -885,41 +1369,14 @@ tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
 
 .c-score-n   {{ font-family:'JetBrains Mono',monospace; font-size:1.35em; font-weight:900; line-height:1; }}
 .c-score-bar {{ height:7px; border-radius:4px; margin-top:7px; width:46px; opacity:1.0; box-shadow:0 0 8px currentColor; }}
-
-.up {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#90ffb8; }}
-.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#ffaaaa; }}
-
-.ts-badge {{
-  display:inline-block; font-family:'JetBrains Mono',monospace;
-  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px;
-  margin-bottom:4px;
-}}
-.ts-real    {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
-.ts-partial {{ background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
-.ts-ath     {{ background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
-.ts-hit1    {{ background:rgba(34,197,94,0.28);  color:#6dffaa; border:1px solid rgba(34,197,94,0.50); }}
-.ts-hit2    {{ background:rgba(45,212,191,0.28); color:#5fffee; border:1px solid rgba(45,212,191,0.50); }}
-
-.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.95em; font-weight:900; color:#ffffff; }}
-.c-t2 {{ font-size:0.78em; color:#d8f0ff; margin-top:3px; font-weight:800; }}
-.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }}
-.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }}
-.c-slpct {{ font-size:0.78em; color:#ffd080; margin-top:3px; font-weight:800; }}
-.sl-badge {{
-  display:inline-block; font-size:0.60em; font-weight:800;
-  padding:2px 6px; border-radius:3px; margin-top:3px;
+.veto-badge  {{
+  display:inline-block; font-size:0.55em; font-weight:800;
+  padding:1px 5px; border-radius:3px; margin-top:3px;
+  background:rgba(255,140,0,0.15); color:#ff8c00;
+  border:1px solid rgba(255,140,0,0.35);
   font-family:'JetBrains Mono',monospace;
 }}
-.sl-atr  {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
-.sl-beta {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }}
 
-.c-rr {{ font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; }}
-.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }}
-.c-atr-sub {{ font-size:0.76em; color:#b0d8e8; margin-top:3px; font-weight:800; }}
-.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-
-/* RSI progress bar */
 .c-rsi {{ font-family:'JetBrains Mono',monospace; font-size:0.90em; font-weight:800; }}
 .c-rsi-lbl {{ font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
 .rsi-track {{ width:40px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin-top:4px; overflow:hidden; }}
@@ -936,6 +1393,31 @@ tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
 .c-pe  {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
 .c-div {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
 .c-52w {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
+.c-rr  {{ font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; }}
+.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }}
+.c-atr-sub {{ font-size:0.76em; color:#b0d8e8; margin-top:3px; font-weight:800; }}
+.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
+.up {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#90ffb8; }}
+.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#ffaaaa; }}
+.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }}
+.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }}
+.c-slpct {{ font-size:0.78em; color:#ffd080; margin-top:3px; font-weight:800; }}
+.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.95em; font-weight:900; color:#ffffff; }}
+.c-t2 {{ font-size:0.78em; color:#d8f0ff; margin-top:3px; font-weight:800; }}
+.ts-badge {{
+  display:inline-block; font-family:'JetBrains Mono',monospace;
+  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px; margin-bottom:4px;
+}}
+.ts-real    {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
+.ts-partial {{ background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
+.ts-ath     {{ background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
+.sl-badge {{
+  display:inline-block; font-size:0.60em; font-weight:800;
+  padding:2px 6px; border-radius:3px; margin-top:3px; font-family:'JetBrains Mono',monospace;
+}}
+.sl-atr  {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
+.sl-beta {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }}
 
 .analyst {{ font-family:'JetBrains Mono',monospace; font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; display:inline-block; }}
 .an-sb {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
@@ -1006,7 +1488,10 @@ footer strong {{ color:var(--accent); }}
     <div class="hdr-icon">🌅</div>
     <div>
       <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v11 · Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      <div class="hdr-sub">
+        12M S/R · Trend Veto · Dynamic Weights · Wilder RSI · Sector PE · v5.4
+        · Report: {now.strftime('%d %b %Y %I:%M %p')} EST
+      </div>
     </div>
   </div>
 
@@ -1053,7 +1538,9 @@ footer strong {{ color:var(--accent); }}
             pct  = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
             cls  = "ti-u" if pct >= 0 else "ti-d"
             sign = "+" if pct >= 0 else ""
-            html += f'<div class="ti"><span class="ti-s">{t["Symbol"]}</span><span class="ti-p">${t["Price"]:,.2f}</span><span class="{cls}">{sign}{pct:.1f}%</span></div>'
+            html += (f'<div class="ti"><span class="ti-s">{t["Symbol"]}</span>'
+                     f'<span class="ti-p">${t["Price"]:,.2f}</span>'
+                     f'<span class="{cls}">{sign}{pct:.1f}%</span></div>')
 
         html += f"""</div></div>
 
@@ -1079,15 +1566,15 @@ footer strong {{ color:var(--accent); }}
     <span style="color:#f87171;font-weight:600;">🔴 Pulsing row</span> = Earnings within 14 days — trade carefully
   </span>
   <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
-    <span style="color:#fb923c;font-weight:600;">🟠 ⚠ Vol×</span> badge = High sell-off volume today — wait 1 session before entering
+    <span style="color:#ff8c00;font-weight:600;">🟠 🚫 Veto</span> = 3+ bearish signals — fundamentals overridden, capped at HOLD
   </span>
 </div>
 """
 
-        # ── helpers ──────────────────────────────────────────────────────────
+        # ── HTML HELPERS ─────────────────────────────────────────────────────
         def analyst_badge(label):
-            m = {'Strong Buy': 'an-sb', 'Buy': 'an-b', 'Hold': 'an-h',
-                 'Sell': 'an-s', 'Strong Sell': 'an-s'}
+            m   = {'Strong Buy': 'an-sb', 'Buy': 'an-b', 'Hold': 'an-h',
+                   'Sell': 'an-s', 'Strong Sell': 'an-s'}
             cls = m.get(label, 'an-h')
             return f'<span class="analyst {cls}">{label}</span>'
 
@@ -1108,11 +1595,9 @@ footer strong {{ color:var(--accent); }}
                     f'<div class="c-rsi-lbl">{sig}</div>')
 
         def ts_badge(ts, th):
-            if th == 2:           return 'ts-hit2',  '✅ T1+T2 Hit'
-            elif th == 1:         return 'ts-hit1',  '✅ T1 Hit'
-            elif 'ATH' in ts:     return 'ts-ath',   '🚀 ATH Zone'
-            elif 'Partial' in ts: return 'ts-partial','⚡ Partial S/R'
-            else:                 return 'ts-real',  '📍 Real S/R'
+            if 'ATH' in ts:     return 'ts-ath',     '🚀 ATH Zone'
+            elif 'Partial' in ts: return 'ts-partial', '⚡ Partial S/R'
+            else:                return 'ts-real',    '📍 Real S/R'
 
         def sc_color(v):
             return "#4ade80" if v >= 75 else ("#2dd4bf" if v >= 55 else "#fbbf24")
@@ -1120,9 +1605,16 @@ footer strong {{ color:var(--accent); }}
         def earn_html(date_str, soon):
             if date_str == "N/A":
                 return '<span class="earn-na">N/A</span>'
-            cls = "earn-soon" if soon else "earn-ok"
+            cls    = "earn-soon" if soon else "earn-ok"
             prefix = "⚠ " if soon else ""
             return f'<span class="earn-badge {cls}">{prefix}{date_str}</span>'
+
+        def veto_indicator(veto_fired, bearish_count):
+            if veto_fired:
+                return f'<div class="veto-badge">🚫 Veto ({bearish_count} signals)</div>'
+            elif bearish_count >= 2:
+                return f'<div style="font-size:0.55em;color:#f59e0b;margin-top:3px;font-family:\'JetBrains Mono\',monospace;">⚠ {bearish_count} bearish</div>'
+            return ''
 
         # ── BUY TABLE ─────────────────────────────────────────────────────────
         if not top_buys.empty:
@@ -1131,7 +1623,7 @@ footer strong {{ color:var(--accent); }}
   <div class="sec-title-icon" style="background:rgba(34,197,94,0.12);color:#4ade80;">▲</div>
   <span class="sec-title-text">Top 20 Buy Recommendations</span>
   <div class="sec-title-line"></div>
-  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips</span>
+  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips · 🚫 = Trend Veto active</span>
 </div>
 
 <div class="tbl-wrap"><table>
@@ -1148,8 +1640,8 @@ footer strong {{ color:var(--accent); }}
       <th data-tip="Row number">#</th>
       <th data-tip="Company name, ticker, and sector">Stock / Sector</th>
       <th data-tip="Last closing price">Price</th>
-      <th data-tip="Algorithm rating from combined tech + fundamental score">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0–100 (50% tech + 50% fundamental)">Score</th>
+      <th data-tip="Algorithm rating · 🚫 = Trend Veto capped at HOLD">Rating</th>
+      <th class="gh-identity" data-tip="Combined score 0-100 · Dynamic weights (50/50 normal · 60/40 tech if 2+ bearish signals)">Score</th>
       <th data-tip="% gain to Target 1">Upside</th>
       <th data-tip="T1 = nearest resistance · T2 = next resistance">Target T1/T2</th>
       <th data-tip="ATR-based stop below support zone">Stop Loss</th>
@@ -1157,47 +1649,53 @@ footer strong {{ color:var(--accent); }}
       <th data-tip="Average True Range — daily volatility in $">ATR</th>
       <th data-tip="Market sensitivity · &lt;1 = stable · &gt;1.5 = volatile">Beta</th>
       <th class="gh-risk" data-tip="How far price is above nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="Relative Strength Index · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="RSI (Wilder's method = TradingView accurate) · Direction shown">RSI</th>
       <th class="detail-col" data-tip="MACD vs signal line direction">MACD</th>
-      <th class="detail-col" data-tip="Average Directional Index · &gt;25 = strong trend">ADX</th>
-      <th class="detail-col gh-momentum" data-tip="Today's volume ÷ 20-day avg · &gt;1.5× = high conviction">Vol/Avg</th>
-      <th class="detail-col" data-tip="Price-to-Earnings · &lt;25 = reasonable">P/E</th>
+      <th class="detail-col" data-tip="ADX direction-aware · bonus only if price > SMA50">ADX</th>
+      <th class="detail-col gh-momentum" data-tip="5-day avg volume ÷ 20-day avg · &gt;1.5× = conviction">Vol/Avg</th>
+      <th class="detail-col" data-tip="P/E · Financial sector: &lt;15 = cheap · Others: &lt;25 = cheap">P/E</th>
       <th class="detail-col" data-tip="Annual dividend yield">Div%</th>
-      <th class="detail-col gh-value" data-tip="Fundamental quality rating">Quality</th>
+      <th class="detail-col gh-value" data-tip="Fundamental quality (FCF +15, D/E +15)">Quality</th>
       <th data-tip="% below 52-week high">52W Hi%</th>
-      <th data-tip="Wall Street analyst consensus">Analyst</th>
+      <th data-tip="Wall Street analyst consensus (±5 pts applied to score)">Analyst</th>
       <th class="earn-cell" data-tip="⚠ Row pulses red if earnings within 14 days">Earnings</th>
     </tr>
   </thead>
   <tbody>
 """
             for i, (_, row) in enumerate(top_buys.iterrows(), 1):
-                rcls   = "r-sb" if row['Recommendation'] == "STRONG BUY" else "r-b"
-                sc     = sc_color(row['Combined_Score'])
-                upcls  = "up" if row['Upside'] >= 0 else "dn"
-                w52    = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
-                w52c   = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
-                betac  = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
-                rr     = row['Risk_Reward']
-                rrc    = "#4ade80" if rr >= 2 else ("#2dd4bf" if rr >= 1 else "#f87171")
-                pe_str = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec    = "#a07850" if row['PE_Ratio'] <= 0 else ("#4ade80" if row['PE_Ratio'] < 25 else ("#fbbf24" if row['PE_Ratio'] < 40 else "#f87171"))
-                div_str= f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                divc   = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
-                sdc    = "#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171")
-                qcls   = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
+                rcls     = "r-sb" if row['Recommendation'] == "STRONG BUY" else "r-b"
+                sc       = sc_color(row['Combined_Score'])
+                upcls    = "up" if row['Upside'] >= 0 else "dn"
+                w52      = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                w52c     = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
+                betac    = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
+                rr       = row['Risk_Reward']
+                rrc      = "#4ade80" if rr >= 2 else ("#2dd4bf" if rr >= 1 else "#f87171")
+                pe_str   = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
+                pec      = ("#a07850" if row['PE_Ratio'] <= 0 else
+                            ("#4ade80" if row['PE_Ratio'] < 25 else
+                             ("#fbbf24" if row['PE_Ratio'] < 40 else "#f87171")))
+                div_str  = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
+                divc     = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
+                sdc      = ("#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else
+                            ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171"))
+                qcls     = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
                 tbc, tbt = ts_badge(row.get('Target_Status', ''), row.get('Targets_Hit', 0))
-                sltype = row.get('Stop_Type', 'ATR Stop')
-                slcls  = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
-                sllbl  = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
-                soon      = row.get('Earn_Soon', False)
-                vol_warn  = row.get('Vol_Ratio', 1.0) > 2.0 and row.get('RSI_Slope', 0) < 0
-                rowcls    = "earn-warning" if soon else ("vol-warning" if vol_warn else "")
-                vol_badge = ('<span style="font-size:0.6em;font-weight:700;padding:1px 5px;'
-                             'border-radius:3px;background:rgba(249,115,22,0.15);'
-                             'color:#fb923c;border:1px solid rgba(249,115,22,0.3);'
-                             'margin-left:4px;" title="High sell-off volume today — wait 1 session">'
-                             f'⚠ Vol×{row.get("Vol_Ratio",1.0):.1f}</span>') if vol_warn else ""
+                sltype   = row.get('Stop_Type', 'ATR Stop')
+                slcls    = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
+                sllbl    = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
+                soon     = row.get('Earn_Soon', False)
+                vol_warn = row.get('Vol_Ratio', 1.0) > 2.0 and row.get('RSI_Slope', 0) < 0
+                rowcls   = "earn-warning" if soon else ("vol-warning" if vol_warn else "")
+                veto     = row.get('Veto_Fired', False)
+                bs       = row.get('Bearish_Signals', 0)
+                vol_badge = (
+                    '<span style="font-size:0.6em;font-weight:700;padding:1px 5px;'
+                    'border-radius:3px;background:rgba(249,115,22,0.15);'
+                    'color:#fb923c;border:1px solid rgba(249,115,22,0.3);margin-left:4px;"'
+                    f' title="High sell-off volume — wait 1 session">⚠ Vol×{row.get("Vol_Ratio",1.0):.1f}</span>'
+                ) if vol_warn else ""
 
                 html += f"""    <tr class="{rowcls}">
       <td><div class="c-num">{i}</div></td>
@@ -1211,6 +1709,7 @@ footer strong {{ color:var(--accent); }}
       <td class="sep-identity">
         <div class="c-score-n" style="color:{sc}">{row['Combined_Score']:.0f}</div>
         <div class="c-score-bar" style="background:{sc}"></div>
+        {veto_indicator(veto, bs)}
       </td>
       <td><span class="{upcls}">{row['Upside']:+.1f}%</span></td>
       <td>
@@ -1251,7 +1750,7 @@ footer strong {{ color:var(--accent); }}
   <div class="sec-title-icon" style="background:rgba(239,68,68,0.12);color:#f87171;">▼</div>
   <span class="sec-title-text">Top 20 Sell Recommendations</span>
   <div class="sec-title-line"></div>
-  <span class="sec-title-note">Quick = 12 cols · Detail = all 19 · Hover headers for tips</span>
+  <span class="sec-title-note">Oversold stocks and RSI + MACD bullish stocks are excluded from this table</span>
 </div>
 
 <div class="tbl-wrap"><table>
@@ -1269,7 +1768,7 @@ footer strong {{ color:var(--accent); }}
       <th>Stock / Sector</th>
       <th data-tip="Last closing price">Price</th>
       <th data-tip="Algorithm sell rating">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0–100">Score</th>
+      <th class="gh-identity" data-tip="Combined score 0-100">Score</th>
       <th data-tip="% downside to Target 1">Downside</th>
       <th data-tip="T1 = nearest support · T2 = next support">Target T1/T2</th>
       <th data-tip="ATR-based stop above resistance">Stop Loss</th>
@@ -1277,13 +1776,13 @@ footer strong {{ color:var(--accent); }}
       <th data-tip="Average True Range in $">ATR</th>
       <th data-tip="Market beta sensitivity">Beta</th>
       <th class="gh-risk" data-tip="Distance to nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="RSI · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="RSI (Wilder's method)">RSI</th>
       <th class="detail-col" data-tip="MACD signal direction">MACD</th>
       <th class="detail-col" data-tip="ADX trend strength">ADX</th>
       <th class="detail-col gh-momentum" data-tip="Volume vs 20-day average">Vol/Avg</th>
       <th class="detail-col" data-tip="P/E ratio">P/E</th>
       <th class="detail-col" data-tip="Dividend yield">Div%</th>
-      <th class="detail-col gh-value" data-tip="Fundamental quality">Quality</th>
+      <th class="detail-col sep-value" data-tip="Fundamental quality">Quality</th>
       <th data-tip="% below 52-week high">52W Hi%</th>
       <th data-tip="Analyst consensus">Analyst</th>
       <th class="earn-cell" data-tip="⚠ Pulses red if earnings within 14 days">Earnings</th>
@@ -1301,17 +1800,20 @@ footer strong {{ color:var(--accent); }}
                 rr     = row['Risk_Reward']
                 rrc    = "#4ade80" if rr >= 2 else ("#fbbf24" if rr >= 1 else "#f87171")
                 pe_str = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec    = "#a07850" if row['PE_Ratio'] <= 0 else ("#f87171" if row['PE_Ratio'] > 40 else ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80"))
-                div_str= f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                divc   = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
-                sdc    = "#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171")
-                qcls   = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
+                pec    = ("#a07850" if row['PE_Ratio'] <= 0 else
+                          ("#f87171" if row['PE_Ratio'] > 40 else
+                           ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80")))
+                div_str = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
+                divc    = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
+                sdc     = ("#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else
+                           ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171"))
+                qcls    = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
                 tbc, tbt = ts_badge(row.get('Target_Status', ''), 0)
-                sltype = row.get('Stop_Type', 'ATR Stop')
-                slcls  = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
-                sllbl  = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
-                soon   = row.get('Earn_Soon', False)
-                rowcls = "earn-warning" if soon else ""
+                sltype  = row.get('Stop_Type', 'ATR Stop')
+                slcls   = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
+                sllbl   = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
+                soon    = row.get('Earn_Soon', False)
+                rowcls  = "earn-warning" if soon else ""
 
                 html += f"""    <tr class="{rowcls}">
       <td><div class="c-num">{i}</div></td>
@@ -1363,13 +1865,15 @@ footer strong {{ color:var(--accent); }}
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
     Stop losses are ATR-based near real 12-month S/R zones. Targets derived from swing highs/lows,
     52-week extremes and round number levels. Earnings dates are estimates.
+    RSI divergence signals are algorithmic and not a guarantee of reversal.
+    Trend Veto Gate caps BUY/STRONG BUY to HOLD when 3+ bearish signals fire simultaneously.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
 
   <footer>
-    <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v10
+    <strong>Top US Market Influencers · NASDAQ &amp; S&amp;P 500</strong>
+    · Wilder RSI · Trend Veto · Dynamic Weights · SMA200 Slope · Sector PE · RSI Divergence · v5.4
     · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
   </footer>
 
@@ -1414,13 +1918,13 @@ function setView(v, btn) {{
             from_email = os.environ.get('GMAIL_USER')
             password   = os.environ.get('GMAIL_APP_PASSWORD')
             if not from_email or not password:
-                print("❌ Set GMAIL_USER and GMAIL_APP_PASSWORD"); return False
+                print("❌ Set GMAIL_USER and GMAIL_APP_PASSWORD env vars"); return False
             now = self.get_est_time()
             tod = "Morning" if now.hour < 12 else "Evening"
             msg = MIMEMultipart('alternative')
             msg['From']    = from_email
             msg['To']      = to_email
-            msg['Subject'] = f"🌅 US Market Report v7 — {tod} {now.strftime('%d %b %Y')}"
+            msg['Subject'] = f"🌅 US Market Report v5.4 — {tod} {now.strftime('%d %b %Y')}"
             msg.attach(MIMEText(self.generate_email_html(), 'html'))
             srv = smtplib.SMTP('smtp.gmail.com', 587)
             srv.starttls(); srv.login(from_email, password)
@@ -1430,33 +1934,35 @@ function setView(v, btn) {{
             print(f"❌ Email error: {e}"); return False
 
     # =========================================================================
-    #  ENTRY
+    #  ENTRY POINT
     # =========================================================================
-    def generate_complete_report(self, send_email_flag=True, recipient_email=None):
+    def generate_complete_report(self, send_email_flag=True, recipient_email=None,
+                                  output_file='index.html'):
         now = self.get_est_time()
         print("=" * 70)
-        print("📊 S&P 500 ANALYZER v10 — Visibility Fixes")
+        print("📊 S&P 500 ANALYZER v5.4 — Trend Veto · Wilder RSI · Dynamic Weights · Sector PE")
         print(f"   {now.strftime('%d %b %Y, %I:%M %p EST')}")
         print("=" * 70)
         self.analyze_all_stocks()
+        html = self.generate_email_html()
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(html)
+        print(f"✅ HTML report saved: {output_file}")
         if send_email_flag and recipient_email:
             self.send_email(recipient_email)
-        print("=" * 70); print("✅ DONE"); print("=" * 70)
+        print("=" * 70)
+        print("✅ DONE")
+        print("=" * 70)
 
 
 # =============================================================================
 #  RUN
 # =============================================================================
-def main():
+if __name__ == "__main__":
     analyzer  = SP500CompleteAnalyzer()
     recipient = os.environ.get('RECIPIENT_EMAIL')
     analyzer.generate_complete_report(
-        send_email_flag=bool(recipient), recipient_email=recipient)
-
-if __name__ == "__main__":
-    analyzer = SP500CompleteAnalyzer()
-    analyzer.analyze_all_stocks()
-    html = analyzer.generate_email_html()
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print("✅ Report saved to index.html")
+        send_email_flag=bool(recipient),
+        recipient_email=recipient,
+        output_file=os.environ.get('OUTPUT_FILE', 'index.html')
+    )
