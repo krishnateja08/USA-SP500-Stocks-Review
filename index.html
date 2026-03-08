@@ -56,73 +56,55 @@ body::before {
   border:1px solid var(--border); border-radius:14px;
   padding:16px 20px;
 }
-.hdr-left { display:flex; align-items:center; gap:14px; flex-wrap:wrap; gap:12px; }
+.hdr-left { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .hdr-icon {
   width:42px; height:42px; flex-shrink:0;
   background:linear-gradient(135deg,var(--accent),#ef4444);
   border-radius:10px; display:flex; align-items:center;
   justify-content:center; font-size:20px;
 }
-.hdr-title {
-  font-family:'Syne',sans-serif;
-  font-size:clamp(13px,2vw,19px); font-weight:800; color:#fff;
+.hdr-title { font-family:'Syne',sans-serif; font-size:clamp(14px,2vw,20px); font-weight:800; color:#fff; }
+.hdr-sub   { font-size:0.72em; color:var(--muted); margin-top:2px; }
+
+/* Live clock */
+.live-clock {
+  padding:8px 14px; border-radius:8px; text-align:right;
 }
-.hdr-sub { font-size:0.72em; color:#a8cce0; margin-top:2px; letter-spacing:0.3px; font-weight:600; }
+.lc-label { font-size:0.6em; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.lc-time  { font-family:'JetBrains Mono',monospace; font-size:1.0em; font-weight:700; color:var(--accent); }
+.lc-date  { font-size:0.65em; color:var(--muted); }
+.lc-last  { font-size:0.62em; color:#5a8090; margin-top:2px; }
+
+/* View toggle */
+.view-toggle { display:flex; gap:6px; }
+.vt-btn {
+  font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700;
+  padding:6px 14px; border-radius:6px; border:1px solid var(--border);
+  background:var(--card2); color:var(--muted); cursor:pointer; transition:all .2s;
+}
+.vt-btn.active { background:rgba(245,158,11,0.12); border-color:var(--accent); color:var(--accent); }
 
 /* ── INDEX STRIP ── */
 .idx-strip {
-  display:flex; align-items:center; gap:0;
-  background:rgba(0,0,0,0.3); border:1px solid var(--border);
-  border-radius:10px; overflow:hidden;
+  display:flex; align-items:center; gap:14px;
+  background:rgba(0,0,0,0.25); border:1px solid var(--border);
+  border-radius:8px; padding:8px 14px;
 }
-.idx-item { display:flex; align-items:center; gap:10px; padding:8px 18px; }
-.idx-name { font-size:9px; font-weight:800; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-.idx-price { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:#fff; }
-.idx-chg { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; }
-.idx-chg.up { color:var(--green); }
-.idx-chg.dn { color:var(--red); }
-.idx-sep { width:1px; height:28px; background:var(--border); }
+.idx-item { display:flex; align-items:center; gap:8px; }
+.idx-sep  { width:1px; height:28px; background:var(--border); }
+.idx-name { font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700; color:var(--muted); letter-spacing:1px; }
+.idx-price { font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:900; color:#fff; }
+.idx-chg  { font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700; white-space:nowrap; }
+.up { color:var(--green); } .dn { color:var(--red); }
 
-/* ── LIVE CLOCK ── */
-.live-clock {
-  display:flex; flex-direction:column; align-items:center;
-  padding:8px 18px; border-left:1px solid var(--border);
-}
-.lc-label { font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
-.lc-time  { font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--green); letter-spacing:2px; margin-top:2px; }
-.lc-date  { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); margin-top:1px; }
-.lc-last  { font-size:8px; color:var(--accent); margin-top:2px; white-space:nowrap; }
-
-/* ── VIEW TOGGLE ── */
-.view-toggle {
-  display:flex; gap:4px; background:var(--card);
-  border:1px solid var(--border); border-radius:8px; padding:3px;
-}
-.vt-btn {
-  padding:6px 16px; border-radius:6px; border:none; cursor:pointer;
-  font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700;
-  letter-spacing:0.5px; text-transform:uppercase;
-  background:transparent; color:var(--muted); transition:all 0.2s;
-}
-.vt-btn.active { background:var(--accent); color:#000; }
-.vt-btn:hover:not(.active) { color:var(--text); }
-
-/* ── TICKER STRIP ── */
-.ticker {
-  background:rgba(0,0,0,0.4); border:1px solid var(--border);
-  border-radius:8px; margin-bottom:14px; overflow:hidden;
-}
-.ticker-inner { display:flex; overflow-x:auto; scrollbar-width:none; }
-.ticker-inner::-webkit-scrollbar { display:none; }
-.ti {
-  display:flex; gap:6px; align-items:center;
-  padding:6px 14px; border-right:1px solid var(--border);
-  font-family:'JetBrains Mono',monospace; font-size:10px; white-space:nowrap;
-}
-.ti-s { color:var(--accent); font-weight:700; }
-.ti-p { color:#fff; }
-.ti-u { color:var(--green); }
-.ti-d { color:var(--red); }
+/* ── TICKER ── */
+.ticker { overflow:hidden; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:8px; margin-bottom:16px; padding:8px 0; }
+.ticker-inner { display:flex; gap:24px; flex-wrap:wrap; padding:0 16px; }
+.ti { display:flex; align-items:center; gap:6px; }
+.ti-s { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); font-weight:700; }
+.ti-p { font-family:'JetBrains Mono',monospace; font-size:10px; color:#fff; font-weight:700; }
+.ti-u { color:var(--green); font-family:'JetBrains Mono',monospace; font-size:10px; }
+.ti-d { color:var(--red);   font-family:'JetBrains Mono',monospace; font-size:10px; }
 
 /* ── KPI BAND ── */
 .kpi-band {
@@ -224,7 +206,6 @@ td.sep-value    { border-right:2px solid rgba(167,139,250,0.08); }
 /* Earnings warning */
 tr.earn-warning td { background:rgba(239,68,68,0.04)!important; }
 tr.earn-warning td.earn-cell { background:rgba(239,68,68,0.1)!important; }
-/* v9: High sell-off volume warning */
 tr.vol-warning td { background:rgba(249,115,22,0.04)!important; }
 .earn-badge {
   font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700;
@@ -250,41 +231,14 @@ tr.vol-warning td { background:rgba(249,115,22,0.04)!important; }
 
 .c-score-n   { font-family:'JetBrains Mono',monospace; font-size:1.35em; font-weight:900; line-height:1; }
 .c-score-bar { height:7px; border-radius:4px; margin-top:7px; width:46px; opacity:1.0; box-shadow:0 0 8px currentColor; }
-
-.up { font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#90ffb8; }
-.dn { font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#ffaaaa; }
-
-.ts-badge {
-  display:inline-block; font-family:'JetBrains Mono',monospace;
-  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px;
-  margin-bottom:4px;
-}
-.ts-real    { background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }
-.ts-partial { background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }
-.ts-ath     { background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }
-.ts-hit1    { background:rgba(34,197,94,0.28);  color:#6dffaa; border:1px solid rgba(34,197,94,0.50); }
-.ts-hit2    { background:rgba(45,212,191,0.28); color:#5fffee; border:1px solid rgba(45,212,191,0.50); }
-
-.c-t1 { font-family:'JetBrains Mono',monospace; font-size:0.95em; font-weight:900; color:#ffffff; }
-.c-t2 { font-size:0.78em; color:#d8f0ff; margin-top:3px; font-weight:800; }
-.c-sl { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }
-.c-sl-sell { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }
-.c-slpct { font-size:0.78em; color:#ffd080; margin-top:3px; font-weight:800; }
-.sl-badge {
-  display:inline-block; font-size:0.60em; font-weight:800;
-  padding:2px 6px; border-radius:3px; margin-top:3px;
+.veto-badge  {
+  display:inline-block; font-size:0.55em; font-weight:800;
+  padding:1px 5px; border-radius:3px; margin-top:3px;
+  background:rgba(255,140,0,0.15); color:#ff8c00;
+  border:1px solid rgba(255,140,0,0.35);
   font-family:'JetBrains Mono',monospace;
 }
-.sl-atr  { background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }
-.sl-beta { background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }
 
-.c-rr { font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; }
-.c-atr { font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }
-.c-atr-sub { font-size:0.76em; color:#b0d8e8; margin-top:3px; font-weight:800; }
-.c-beta { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }
-.c-sd   { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }
-
-/* RSI progress bar */
 .c-rsi { font-family:'JetBrains Mono',monospace; font-size:0.90em; font-weight:800; }
 .c-rsi-lbl { font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }
 .rsi-track { width:40px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin-top:4px; overflow:hidden; }
@@ -301,6 +255,31 @@ tr.vol-warning td { background:rgba(249,115,22,0.04)!important; }
 .c-pe  { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }
 .c-div { font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }
 .c-52w { font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }
+.c-rr  { font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; }
+.c-atr { font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }
+.c-atr-sub { font-size:0.76em; color:#b0d8e8; margin-top:3px; font-weight:800; }
+.c-beta { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }
+.c-sd   { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }
+.up { font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#90ffb8; }
+.dn { font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#ffaaaa; }
+.c-sl { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }
+.c-sl-sell { font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }
+.c-slpct { font-size:0.78em; color:#ffd080; margin-top:3px; font-weight:800; }
+.c-t1 { font-family:'JetBrains Mono',monospace; font-size:0.95em; font-weight:900; color:#ffffff; }
+.c-t2 { font-size:0.78em; color:#d8f0ff; margin-top:3px; font-weight:800; }
+.ts-badge {
+  display:inline-block; font-family:'JetBrains Mono',monospace;
+  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px; margin-bottom:4px;
+}
+.ts-real    { background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }
+.ts-partial { background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }
+.ts-ath     { background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }
+.sl-badge {
+  display:inline-block; font-size:0.60em; font-weight:800;
+  padding:2px 6px; border-radius:3px; margin-top:3px; font-family:'JetBrains Mono',monospace;
+}
+.sl-atr  { background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }
+.sl-beta { background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }
 
 .analyst { font-family:'JetBrains Mono',monospace; font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; display:inline-block; }
 .an-sb { background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }
@@ -371,7 +350,10 @@ footer strong { color:var(--accent); }
     <div class="hdr-icon">🌅</div>
     <div>
       <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">12M S/R · ATR Stops · Tech &amp; Fundamental Analysis v11 · Report: 07 Mar 2026 08:08 PM EST</div>
+      <div class="hdr-sub">
+        12M S/R · Trend Veto · Dynamic Weights · Wilder RSI · Sector PE · v5.4
+        · Report: 07 Mar 2026 08:50 PM EST
+      </div>
     </div>
   </div>
 
@@ -413,15 +395,15 @@ footer strong { color:var(--accent); }
 
 <!-- TICKER -->
 <div class="ticker"><div class="ticker-inner">
-<div class="ti"><span class="ti-s">NVDA</span><span class="ti-p">$177.82</span><span class="ti-d">-4.5%</span></div><div class="ti"><span class="ti-s">AAPL</span><span class="ti-p">$257.46</span><span class="ti-d">-3.4%</span></div><div class="ti"><span class="ti-s">MSFT</span><span class="ti-p">$408.96</span><span class="ti-u">+2.0%</span></div><div class="ti"><span class="ti-s">AMZN</span><span class="ti-p">$213.21</span><span class="ti-u">+2.6%</span></div><div class="ti"><span class="ti-s">GOOGL</span><span class="ti-p">$298.52</span><span class="ti-d">-3.4%</span></div><div class="ti"><span class="ti-s">GOOG</span><span class="ti-p">$298.30</span><span class="ti-d">-3.5%</span></div><div class="ti"><span class="ti-s">META</span><span class="ti-p">$644.86</span><span class="ti-d">-1.3%</span></div><div class="ti"><span class="ti-s">TSLA</span><span class="ti-p">$396.73</span><span class="ti-d">-3.3%</span></div><div class="ti"><span class="ti-s">AVGO</span><span class="ti-p">$330.48</span><span class="ti-u">+0.3%</span></div><div class="ti"><span class="ti-s">BRK-B</span><span class="ti-p">$498.98</span><span class="ti-u">+0.4%</span></div></div></div>
+<div class="ti"><span class="ti-s">NVDA</span><span class="ti-p">$177.82</span><span class="ti-d">-4.5%</span></div><div class="ti"><span class="ti-s">AAPL</span><span class="ti-p">$257.46</span><span class="ti-d">-3.4%</span></div><div class="ti"><span class="ti-s">MSFT</span><span class="ti-p">$408.96</span><span class="ti-u">+1.9%</span></div><div class="ti"><span class="ti-s">AMZN</span><span class="ti-p">$213.21</span><span class="ti-u">+2.6%</span></div><div class="ti"><span class="ti-s">GOOGL</span><span class="ti-p">$298.52</span><span class="ti-d">-3.4%</span></div><div class="ti"><span class="ti-s">GOOG</span><span class="ti-p">$298.30</span><span class="ti-d">-3.5%</span></div><div class="ti"><span class="ti-s">META</span><span class="ti-p">$644.86</span><span class="ti-d">-1.3%</span></div><div class="ti"><span class="ti-s">AVGO</span><span class="ti-p">$330.48</span><span class="ti-u">+0.3%</span></div><div class="ti"><span class="ti-s">BRK-B</span><span class="ti-p">$498.98</span><span class="ti-u">+0.4%</span></div><div class="ti"><span class="ti-s">WMT</span><span class="ti-p">$123.80</span><span class="ti-d">-2.8%</span></div></div></div>
 
 <!-- KPI BAND -->
 <div class="kpi-band">
-  <div class="kc"><div class="kn" style="color:#f59e0b">50</div><div class="kl">Analyzed</div><div class="kbar" style="background:#f59e0b"></div></div>
-  <div class="kc"><div class="kn" style="color:#22c55e">0</div><div class="kl">Strong Buy</div><div class="kbar" style="background:#22c55e"></div></div>
-  <div class="kc"><div class="kn" style="color:#2dd4bf">16</div><div class="kl">Buy</div><div class="kbar" style="background:#2dd4bf"></div></div>
-  <div class="kc"><div class="kn" style="color:#ef4444">11</div><div class="kl">Sell</div><div class="kbar" style="background:#ef4444"></div></div>
-  <div class="kc"><div class="kn" style="color:#60a5fa">23</div><div class="kl">Hold</div><div class="kbar" style="background:#60a5fa"></div></div>
+  <div class="kc"><div class="kn" style="color:#f59e0b">47</div><div class="kl">Analyzed</div><div class="kbar" style="background:#f59e0b"></div></div>
+  <div class="kc"><div class="kn" style="color:#22c55e">1</div><div class="kl">Strong Buy</div><div class="kbar" style="background:#22c55e"></div></div>
+  <div class="kc"><div class="kn" style="color:#2dd4bf">9</div><div class="kl">Buy</div><div class="kbar" style="background:#2dd4bf"></div></div>
+  <div class="kc"><div class="kn" style="color:#ef4444">29</div><div class="kl">Sell</div><div class="kbar" style="background:#ef4444"></div></div>
+  <div class="kc"><div class="kn" style="color:#60a5fa">8</div><div class="kl">Hold</div><div class="kbar" style="background:#60a5fa"></div></div>
 </div>
 
 <!-- LEGEND -->
@@ -437,7 +419,7 @@ footer strong { color:var(--accent); }
     <span style="color:#f87171;font-weight:600;">🔴 Pulsing row</span> = Earnings within 14 days — trade carefully
   </span>
   <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
-    <span style="color:#fb923c;font-weight:600;">🟠 ⚠ Vol×</span> badge = High sell-off volume today — wait 1 session before entering
+    <span style="color:#ff8c00;font-weight:600;">🟠 🚫 Veto</span> = 3+ bearish signals — fundamentals overridden, capped at HOLD
   </span>
 </div>
 
@@ -445,7 +427,7 @@ footer strong { color:var(--accent); }
   <div class="sec-title-icon" style="background:rgba(34,197,94,0.12);color:#4ade80;">▲</div>
   <span class="sec-title-text">Top 20 Buy Recommendations</span>
   <div class="sec-title-line"></div>
-  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips</span>
+  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips · 🚫 = Trend Veto active</span>
 </div>
 
 <div class="tbl-wrap"><table>
@@ -462,8 +444,8 @@ footer strong { color:var(--accent); }
       <th data-tip="Row number">#</th>
       <th data-tip="Company name, ticker, and sector">Stock / Sector</th>
       <th data-tip="Last closing price">Price</th>
-      <th data-tip="Algorithm rating from combined tech + fundamental score">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0–100 (50% tech + 50% fundamental)">Score</th>
+      <th data-tip="Algorithm rating · 🚫 = Trend Veto capped at HOLD">Rating</th>
+      <th class="gh-identity" data-tip="Combined score 0-100 · Dynamic weights (50/50 normal · 60/40 tech if 2+ bearish signals)">Score</th>
       <th data-tip="% gain to Target 1">Upside</th>
       <th data-tip="T1 = nearest resistance · T2 = next resistance">Target T1/T2</th>
       <th data-tip="ATR-based stop below support zone">Stop Loss</th>
@@ -471,15 +453,15 @@ footer strong { color:var(--accent); }
       <th data-tip="Average True Range — daily volatility in $">ATR</th>
       <th data-tip="Market sensitivity · &lt;1 = stable · &gt;1.5 = volatile">Beta</th>
       <th class="gh-risk" data-tip="How far price is above nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="Relative Strength Index · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="RSI (Wilder's method = TradingView accurate) · Direction shown">RSI</th>
       <th class="detail-col" data-tip="MACD vs signal line direction">MACD</th>
-      <th class="detail-col" data-tip="Average Directional Index · &gt;25 = strong trend">ADX</th>
-      <th class="detail-col gh-momentum" data-tip="Today's volume ÷ 20-day avg · &gt;1.5× = high conviction">Vol/Avg</th>
-      <th class="detail-col" data-tip="Price-to-Earnings · &lt;25 = reasonable">P/E</th>
+      <th class="detail-col" data-tip="ADX direction-aware · bonus only if price > SMA50">ADX</th>
+      <th class="detail-col gh-momentum" data-tip="5-day avg volume ÷ 20-day avg · &gt;1.5× = conviction">Vol/Avg</th>
+      <th class="detail-col" data-tip="P/E · Financial sector: &lt;15 = cheap · Others: &lt;25 = cheap">P/E</th>
       <th class="detail-col" data-tip="Annual dividend yield">Div%</th>
-      <th class="detail-col gh-value" data-tip="Fundamental quality rating">Quality</th>
+      <th class="detail-col gh-value" data-tip="Fundamental quality (FCF +15, D/E +15)">Quality</th>
       <th data-tip="% below 52-week high">52W Hi%</th>
-      <th data-tip="Wall Street analyst consensus">Analyst</th>
+      <th data-tip="Wall Street analyst consensus (±5 pts applied to score)">Analyst</th>
       <th class="earn-cell" data-tip="⚠ Row pulses red if earnings within 14 days">Earnings</th>
     </tr>
   </thead>
@@ -487,63 +469,22 @@ footer strong { color:var(--accent); }
     <tr class="">
       <td><div class="c-num">1</div></td>
       <td>
-        <div class="c-name">Broadcom</div>
-        <div class="c-sym">AVGO</div>
-        <div class="c-sector">Technology</div>
-      </td>
-      <td><div class="c-price">$330.48</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">72</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+8.8%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$359.44</div>
-        <div class="c-t2">T2: $373.82</div>
-      </td>
-      <td>
-        <div class="c-sl">$305.27</div>
-        <div class="c-slpct">-7.6%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.1×</div></td>
-      <td>
-        <div class="c-atr">$14.48</div>
-        <div class="c-atr-sub">4.4% · 1.5×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.26</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">1.1%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">54</div><div class="rsi-track"><div class="rsi-fill" style="width:54%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">62</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#4ade80">1.6×</div><div class="c-vol-lbl">High Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#f87171">69.4</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">79.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#4ade80">-20.1%</div></td>
-      <td><span class="analyst an-h">Strong_Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">03 Jun 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">2</div></td>
-      <td>
         <div class="c-name">RTX Corporation</div>
         <div class="c-sym">RTX</div>
         <div class="c-sector">Industrials</div>
       </td>
       <td><div class="c-price">$209.76</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
+      <td><span class="rating r-sb">⭐⭐⭐⭐⭐ STRONG BUY</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">72</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
+        <div class="c-score-n" style="color:#4ade80">84</div>
+        <div class="c-score-bar" style="background:#4ade80"></div>
+        
       </td>
       <td><span class="up">+5.5%</span></td>
       <td>
         <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$221.38</div>
-        <div class="c-t2">T2: $230.24</div>
+        <div class="c-t1">$221.40</div>
+        <div class="c-t2">T2: $230.26</div>
       </td>
       <td>
         <div class="c-sl">$199.27</div>
@@ -552,14 +493,14 @@ footer strong { color:var(--accent); }
       </td>
       <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.1×</div></td>
       <td>
-        <div class="c-atr">$5.81</div>
+        <div class="c-atr">$5.82</div>
         <div class="c-atr-sub">2.8% · 1.0×</div>
       </td>
       <td><div class="c-beta" style="color:#4ade80">0.41</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#f87171">8.2%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">60</div><div class="rsi-track"><div class="rsi-fill" style="width:60%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">8.0%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">60</div><div class="rsi-track"><div class="rsi-fill" style="width:60%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Healthy (60)</div></td>
       <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">41</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">40</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
       <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.2×</div><div class="c-vol-lbl">Avg Vol</div></td>
       <td class="detail-col"><div class="c-pe" style="color:#f87171">42.4</div></td>
       <td class="detail-col"><div class="c-div" style="color:#4ade80">130.00%</div></td>
@@ -569,91 +510,7 @@ footer strong { color:var(--accent); }
       <td class="earn-cell"><span class="earn-badge earn-ok">27 Jan 2026</span></td>
     </tr>
     <tr class="">
-      <td><div class="c-num">3</div></td>
-      <td>
-        <div class="c-name">T-Mobile US</div>
-        <div class="c-sym">TMUS</div>
-        <div class="c-sector">Communication Services</div>
-      </td>
-      <td><div class="c-price">$221.57</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">71</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+5.0%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$232.57</div>
-        <div class="c-t2">T2: $241.87</div>
-      </td>
-      <td>
-        <div class="c-sl">$214.34</div>
-        <div class="c-slpct">-3.3%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.5×</div></td>
-      <td>
-        <div class="c-atr">$5.50</div>
-        <div class="c-atr-sub">2.5% · 1.0×</div>
-      </td>
-      <td><div class="c-beta" style="color:#4ade80">0.41</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">0.8%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">54</div><div class="rsi-track"><div class="rsi-fill" style="width:54%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">40</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#a07850">0.5×</div><div class="c-vol-lbl">Low Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#4ade80">22.8</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">184.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-17.3%</div></td>
-      <td><span class="analyst an-h">None</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">11 Feb 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">4</div></td>
-      <td>
-        <div class="c-name">Berkshire Hathaway</div>
-        <div class="c-sym">BRK-B</div>
-        <div class="c-sector">Financial Services</div>
-      </td>
-      <td><div class="c-price">$498.98</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">69</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+3.7%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$517.50</div>
-        <div class="c-t2">T2: $538.20</div>
-      </td>
-      <td>
-        <div class="c-sl">$483.43</div>
-        <div class="c-slpct">-3.1%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.2×</div></td>
-      <td>
-        <div class="c-atr">$9.26</div>
-        <div class="c-atr-sub">1.9% · 1.0×</div>
-      </td>
-      <td><div class="c-beta" style="color:#4ade80">0.69</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">1.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">51</div><div class="rsi-track"><div class="rsi-fill" style="width:51%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#fbbf24">29</div><div class="c-adx-lbl" style="color:#fbbf24">Moderate</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#4ade80">16.1</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#a07850">—</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-7.9%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">28 Feb 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">5</div></td>
+      <td><div class="c-num">2</div></td>
       <td>
         <div class="c-name">AbbVie</div>
         <div class="c-sym">ABBV</div>
@@ -662,8 +519,9 @@ footer strong { color:var(--accent); }
       <td><div class="c-price">$230.11</div></td>
       <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">66</div>
+        <div class="c-score-n" style="color:#2dd4bf">73</div>
         <div class="c-score-bar" style="background:#2dd4bf"></div>
+        
       </td>
       <td><span class="up">+5.2%</span></td>
       <td>
@@ -672,27 +530,156 @@ footer strong { color:var(--accent); }
         <div class="c-t2">T2: $251.77</div>
       </td>
       <td>
-        <div class="c-sl">$218.60</div>
-        <div class="c-slpct">-5.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+        <div class="c-sl">$219.33</div>
+        <div class="c-slpct">-4.7%</div>
+        <span class="sl-badge sl-atr">📐 ATR Stop</span>
       </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.0×</div></td>
+      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.1×</div></td>
       <td>
         <div class="c-atr">$5.99</div>
         <div class="c-atr-sub">2.6% · 1.0×</div>
       </td>
       <td><div class="c-beta" style="color:#4ade80">0.33</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">5.0%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">48</div><div class="rsi-track"><div class="rsi-fill" style="width:48%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">2.1%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">53</div><div class="rsi-track"><div class="rsi-fill" style="width:53%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Fading ↓ (58→53)</div></td>
       <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">36</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.9×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">37</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
       <td class="detail-col"><div class="c-pe" style="color:#f87171">97.1</div></td>
       <td class="detail-col"><div class="c-div" style="color:#4ade80">301.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#f87171">-4.6%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-6.0%</div></td>
       <td><span class="analyst an-b">Buy</span></td>
       <td class="earn-cell"><span class="earn-badge earn-ok">04 Feb 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">3</div></td>
+      <td>
+        <div class="c-name">Broadcom</div>
+        <div class="c-sym">AVGO</div>
+        <div class="c-sector">Technology</div>
+      </td>
+      <td><div class="c-price">$330.48</div></td>
+      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#2dd4bf">69</div>
+        <div class="c-score-bar" style="background:#2dd4bf"></div>
+        <div style="font-size:0.55em;color:#f59e0b;margin-top:3px;font-family:'JetBrains Mono',monospace;">⚠ 2 bearish</div>
+      </td>
+      <td><span class="up">+8.8%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$359.44</div>
+        <div class="c-t2">T2: $373.82</div>
+      </td>
+      <td>
+        <div class="c-sl">$304.19</div>
+        <div class="c-slpct">-8.0%</div>
+        <span class="sl-badge sl-atr">📐 ATR Stop</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.1×</div></td>
+      <td>
+        <div class="c-atr">$14.48</div>
+        <div class="c-atr-sub">4.4% · 1.5×</div>
+      </td>
+      <td><div class="c-beta" style="color:#fbbf24">1.26</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">1.4%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">51</div><div class="rsi-track"><div class="rsi-fill" style="width:51%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Building ↑ (42→51)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">62</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.4×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#f87171">69.4</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">79.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#4ade80">-20.3%</div></td>
+      <td><span class="analyst an-h">Strong_Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">03 Jun 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">4</div></td>
+      <td>
+        <div class="c-name">Chevron Corporation</div>
+        <div class="c-sym">CVX</div>
+        <div class="c-sector">Energy</div>
+      </td>
+      <td><div class="c-price">$189.94</div></td>
+      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#2dd4bf">66</div>
+        <div class="c-score-bar" style="background:#2dd4bf"></div>
+        
+      </td>
+      <td><span class="up">+3.9%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$197.38</div>
+        <div class="c-t2">T2: $205.28</div>
+      </td>
+      <td>
+        <div class="c-sl">$180.44</div>
+        <div class="c-slpct">-5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
+      <td>
+        <div class="c-atr">$3.72</div>
+        <div class="c-atr-sub">2.0% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.66</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">67</div><div class="rsi-track"><div class="rsi-fill" style="width:67%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Healthy (67)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#a07850">14</div><div class="c-adx-lbl" style="color:#a07850">Weak</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.3×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">28.6</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">375.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
+      <td><div class="c-52w" style="color:#f87171">-1.3%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">30 Jan 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">5</div></td>
+      <td>
+        <div class="c-name">T-Mobile US</div>
+        <div class="c-sym">TMUS</div>
+        <div class="c-sector">Communication Services</div>
+      </td>
+      <td><div class="c-price">$221.57</div></td>
+      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#2dd4bf">66</div>
+        <div class="c-score-bar" style="background:#2dd4bf"></div>
+        
+      </td>
+      <td><span class="up">+5.0%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$232.57</div>
+        <div class="c-t2">T2: $241.87</div>
+      </td>
+      <td>
+        <div class="c-sl">$210.49</div>
+        <div class="c-slpct">-5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">1.0×</div></td>
+      <td>
+        <div class="c-atr">$5.50</div>
+        <div class="c-atr-sub">2.5% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.41</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">65</div><div class="rsi-track"><div class="rsi-fill" style="width:65%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Momentum ↑ (61→65)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">40</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#4ade80">22.8</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">184.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-18.7%</div></td>
+      <td><span class="analyst an-h">None</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">11 Feb 2026</span></td>
     </tr>
     <tr class="">
       <td><div class="c-num">6</div></td>
@@ -704,8 +691,9 @@ footer strong { color:var(--accent); }
       <td><div class="c-price">$998.10</div></td>
       <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">65</div>
+        <div class="c-score-n" style="color:#2dd4bf">58</div>
         <div class="c-score-bar" style="background:#2dd4bf"></div>
+        
       </td>
       <td><span class="up">+4.3%</span></td>
       <td>
@@ -714,8 +702,8 @@ footer strong { color:var(--accent); }
         <div class="c-t2">T2: $1,082.52</div>
       </td>
       <td>
-        <div class="c-sl">$948.42</div>
-        <div class="c-slpct">-5.0%</div>
+        <div class="c-sl">$949.79</div>
+        <div class="c-slpct">-4.8%</div>
         <span class="sl-badge sl-atr">📐 ATR Stop</span>
       </td>
       <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.9×</div></td>
@@ -724,15 +712,15 @@ footer strong { color:var(--accent); }
         <div class="c-atr-sub">2.1% · 1.2×</div>
       </td>
       <td><div class="c-beta" style="color:#4ade80">0.99</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">2.4%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">42</div><div class="rsi-track"><div class="rsi-fill" style="width:42%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">2.3%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">55</div><div class="rsi-track"><div class="rsi-fill" style="width:55%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Fading ↓ (62→55)</div></td>
       <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
       <td class="detail-col"><div class="c-adx" style="color:#4ade80">40</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.3×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
       <td class="detail-col"><div class="c-pe" style="color:#f87171">53.5</div></td>
       <td class="detail-col"><div class="c-div" style="color:#4ade80">52.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-6.2%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-6.5%</div></td>
       <td><span class="analyst an-b">Buy</span></td>
       <td class="earn-cell"><span class="earn-badge earn-ok">28 May 2026</span></td>
     </tr>
@@ -746,8 +734,9 @@ footer strong { color:var(--accent); }
       <td><div class="c-price">$240.40</div></td>
       <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">62</div>
+        <div class="c-score-n" style="color:#2dd4bf">57</div>
         <div class="c-score-bar" style="background:#2dd4bf"></div>
+        <div style="font-size:0.55em;color:#f59e0b;margin-top:3px;font-family:'JetBrains Mono',monospace;">⚠ 2 bearish</div>
       </td>
       <td><span class="up">+4.7%</span></td>
       <td>
@@ -762,18 +751,18 @@ footer strong { color:var(--accent); }
       </td>
       <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.9×</div></td>
       <td>
-        <div class="c-atr">$4.41</div>
+        <div class="c-atr">$4.42</div>
         <div class="c-atr-sub">1.8% · 1.0×</div>
       </td>
       <td><div class="c-beta" style="color:#4ade80">0.33</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#f87171">16.7%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">47</div><div class="rsi-track"><div class="rsi-fill" style="width:47%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#f87171">16.2%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">53</div><div class="rsi-track"><div class="rsi-fill" style="width:53%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Falling Fast ↓ (72→53)</div></td>
       <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">39</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">38</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
       <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
       <td class="detail-col"><div class="c-pe" style="color:#4ade80">21.8</div></td>
       <td class="detail-col"><div class="c-div" style="color:#4ade80">216.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td class="detail-col sep-value"><span class="qual q-ex">Excellent</span></td>
       <td><div class="c-52w" style="color:#f87171">-4.5%</div></td>
       <td><span class="analyst an-b">Buy</span></td>
       <td class="earn-cell"><span class="earn-badge earn-ok">14 Apr 2026</span></td>
@@ -781,380 +770,45 @@ footer strong { color:var(--accent); }
     <tr class="">
       <td><div class="c-num">8</div></td>
       <td>
-        <div class="c-name">Microsoft</div>
-        <div class="c-sym">MSFT</div>
+        <div class="c-name">Palantir Technologies</div>
+        <div class="c-sym">PLTR</div>
         <div class="c-sector">Technology</div>
       </td>
-      <td><div class="c-price">$408.96</div></td>
+      <td><div class="c-price">$157.16</div></td>
       <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">60</div>
+        <div class="c-score-n" style="color:#2dd4bf">55</div>
         <div class="c-score-bar" style="background:#2dd4bf"></div>
+        <div style="font-size:0.55em;color:#f59e0b;margin-top:3px;font-family:'JetBrains Mono',monospace;">⚠ 2 bearish</div>
       </td>
-      <td><span class="up">+5.1%</span></td>
+      <td><span class="up">+19.8%</span></td>
       <td>
         <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$429.74</div>
-        <div class="c-t2">T2: $446.93</div>
+        <div class="c-t1">$188.32</div>
+        <div class="c-t2">T2: $198.88</div>
       </td>
       <td>
-        <div class="c-sl">$380.33</div>
-        <div class="c-slpct">-7.0%</div>
+        <div class="c-sl">$141.44</div>
+        <div class="c-slpct">-10.0%</div>
         <span class="sl-badge sl-beta">🔒 Beta Cap</span>
       </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.7×</div></td>
+      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">2.0×</div></td>
       <td>
-        <div class="c-atr">$10.39</div>
-        <div class="c-atr-sub">2.5% · 1.2×</div>
+        <div class="c-atr">$7.76</div>
+        <div class="c-atr-sub">4.9% · 1.5×</div>
       </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.11</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">56</div><div class="rsi-track"><div class="rsi-fill" style="width:56%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td><div class="c-beta" style="color:#f87171">1.74</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">3.9%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">61</div><div class="rsi-track"><div class="rsi-fill" style="width:61%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Momentum ↑ (43→61)</div></td>
       <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">56</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">25.6</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">89.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#4ade80">-25.9%</div></td>
-      <td><span class="analyst an-h">Strong_Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">28 Jan 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">9</div></td>
-      <td>
-        <div class="c-name">Caterpillar Inc.</div>
-        <div class="c-sym">CAT</div>
-        <div class="c-sector">Industrials</div>
-      </td>
-      <td><div class="c-price">$680.90</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">60</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+8.1%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$735.74</div>
-        <div class="c-t2">T2: $765.17</div>
-      </td>
-      <td>
-        <div class="c-sl">$612.81</div>
-        <div class="c-slpct">-10.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
-      <td>
-        <div class="c-atr">$27.42</div>
-        <div class="c-atr-sub">4.0% · 1.5×</div>
-      </td>
-      <td><div class="c-beta" style="color:#f87171">1.53</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">7.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#4ade80">23</div><div class="rsi-track"><div class="rsi-fill" style="width:23%;background:#4ade80"></div></div><div class="c-rsi-lbl">Oversold</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">36</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">36.2</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">89.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-13.8%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">30 Apr 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">10</div></td>
-      <td>
-        <div class="c-name">Lam Research</div>
-        <div class="c-sym">LRCX</div>
-        <div class="c-sector">Technology</div>
-      </td>
-      <td><div class="c-price">$199.33</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">60</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+25.6%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$250.45</div>
-        <div class="c-t2">T2: $256.37</div>
-      </td>
-      <td>
-        <div class="c-sl">$179.40</div>
-        <div class="c-slpct">-10.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#4ade80">2.6×</div></td>
-      <td>
-        <div class="c-atr">$11.88</div>
-        <div class="c-atr-sub">6.0% · 1.5×</div>
-      </td>
-      <td><div class="c-beta" style="color:#f87171">1.79</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#f87171">14.4%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#4ade80">29</div><div class="rsi-track"><div class="rsi-fill" style="width:29%;background:#4ade80"></div></div><div class="c-rsi-lbl">Oversold</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#fbbf24">21</div><div class="c-adx-lbl" style="color:#fbbf24">Moderate</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.4×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#f87171">41.0</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">52.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#4ade80">-22.2%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">28 Jan 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">11</div></td>
-      <td>
-        <div class="c-name">Alphabet (Class A)</div>
-        <div class="c-sym">GOOGL</div>
-        <div class="c-sector">Communication Services</div>
-      </td>
-      <td><div class="c-price">$298.52</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">58</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+7.0%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$319.52</div>
-        <div class="c-t2">T2: $328.62</div>
-      </td>
-      <td>
-        <div class="c-sl">$286.15</div>
-        <div class="c-slpct">-4.1%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.7×</div></td>
-      <td>
-        <div class="c-atr">$8.36</div>
-        <div class="c-atr-sub">2.8% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.11</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">0.8%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">42</div><div class="rsi-track"><div class="rsi-fill" style="width:42%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">59</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#a07850">0.7×</div><div class="c-vol-lbl">Low Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">27.6</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">28.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-14.5%</div></td>
-      <td><span class="analyst an-h">Strong_Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">04 Feb 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">12</div></td>
-      <td>
-        <div class="c-name">Alphabet (Class C)</div>
-        <div class="c-sym">GOOG</div>
-        <div class="c-sector">Communication Services</div>
-      </td>
-      <td><div class="c-price">$298.30</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">58</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+7.1%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$319.45</div>
-        <div class="c-t2">T2: $328.46</div>
-      </td>
-      <td>
-        <div class="c-sl">$277.42</div>
-        <div class="c-slpct">-7.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.0×</div></td>
-      <td>
-        <div class="c-atr">$8.25</div>
-        <div class="c-atr-sub">2.8% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.11</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#f87171">9.1%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">42</div><div class="rsi-track"><div class="rsi-fill" style="width:42%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">58</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">27.6</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">28.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-14.8%</div></td>
-      <td><span class="analyst an-h">Strong_Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">04 Feb 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">13</div></td>
-      <td>
-        <div class="c-name">Applied Materials</div>
-        <div class="c-sym">AMAT</div>
-        <div class="c-sector">Technology</div>
-      </td>
-      <td><div class="c-price">$324.74</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">58</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+10.5%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$358.84</div>
-        <div class="c-t2">T2: $373.19</div>
-      </td>
-      <td>
-        <div class="c-sl">$292.27</div>
-        <div class="c-slpct">-10.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#2dd4bf">1.1×</div></td>
-      <td>
-        <div class="c-atr">$17.05</div>
-        <div class="c-atr-sub">5.2% · 1.5×</div>
-      </td>
-      <td><div class="c-beta" style="color:#f87171">1.63</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">38</div><div class="rsi-track"><div class="rsi-fill" style="width:38%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#a07850">19</div><div class="c-adx-lbl" style="color:#a07850">Weak</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">33.3</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">57.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-18.0%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">14 May 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">14</div></td>
-      <td>
-        <div class="c-name">Cisco Systems</div>
-        <div class="c-sym">CSCO</div>
-        <div class="c-sector">Technology</div>
-      </td>
-      <td><div class="c-price">$78.64</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">57</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+5.4%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$82.92</div>
-        <div class="c-t2">T2: $86.24</div>
-      </td>
-      <td>
-        <div class="c-sl">$73.14</div>
-        <div class="c-slpct">-7.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
-      <td>
-        <div class="c-atr">$2.14</div>
-        <div class="c-atr-sub">2.7% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#4ade80">0.83</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">57</div><div class="rsi-track"><div class="rsi-fill" style="width:57%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
       <td class="detail-col"><div class="c-adx" style="color:#4ade80">46</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">28.3</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">214.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-10.8%</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#f87171">249.5</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#a07850">—</div></td>
+      <td class="detail-col sep-value"><span class="qual q-ex">Excellent</span></td>
+      <td><div class="c-52w" style="color:#4ade80">-24.3%</div></td>
       <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">13 May 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">15</div></td>
-      <td>
-        <div class="c-name">Chevron Corporation</div>
-        <div class="c-sym">CVX</div>
-        <div class="c-sector">Energy</div>
-      </td>
-      <td><div class="c-price">$189.94</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">56</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+3.9%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$197.36</div>
-        <div class="c-t2">T2: $205.25</div>
-      </td>
-      <td>
-        <div class="c-sl">$180.44</div>
-        <div class="c-slpct">-5.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
-      <td>
-        <div class="c-atr">$3.71</div>
-        <div class="c-atr-sub">1.9% · 1.0×</div>
-      </td>
-      <td><div class="c-beta" style="color:#4ade80">0.66</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.3%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">68</div><div class="rsi-track"><div class="rsi-fill" style="width:68%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#a07850">12</div><div class="c-adx-lbl" style="color:#a07850">Weak</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.2×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">28.6</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">375.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-po">Poor</span></td>
-      <td><div class="c-52w" style="color:#f87171">-1.3%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">30 Jan 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">16</div></td>
-      <td>
-        <div class="c-name">NVIDIA</div>
-        <div class="c-sym">NVDA</div>
-        <div class="c-sector">Technology</div>
-      </td>
-      <td><div class="c-price">$177.82</div></td>
-      <td><span class="rating r-b">⭐⭐⭐⭐ BUY</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#2dd4bf">56</div>
-        <div class="c-score-bar" style="background:#2dd4bf"></div>
-      </td>
-      <td><span class="up">+7.2%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$190.58</div>
-        <div class="c-t2">T2: $198.20</div>
-      </td>
-      <td>
-        <div class="c-sl">$157.06</div>
-        <div class="c-slpct">-11.7%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.6×</div></td>
-      <td>
-        <div class="c-atr">$6.38</div>
-        <div class="c-atr-sub">3.6% · 2.0×</div>
-      </td>
-      <td><div class="c-beta" style="color:#f87171">2.38</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.5%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">45</div><div class="rsi-track"><div class="rsi-fill" style="width:45%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">61</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">36.2</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">2.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-16.2%</div></td>
-      <td><span class="analyst an-h">Strong_Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">20 May 2026</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">02 Feb 2026</span></td>
     </tr>
   </tbody>
 </table></div>
@@ -1163,7 +817,7 @@ footer strong { color:var(--accent); }
   <div class="sec-title-icon" style="background:rgba(239,68,68,0.12);color:#f87171;">▼</div>
   <span class="sec-title-text">Top 20 Sell Recommendations</span>
   <div class="sec-title-line"></div>
-  <span class="sec-title-note">Quick = 12 cols · Detail = all 19 · Hover headers for tips</span>
+  <span class="sec-title-note">Oversold stocks and RSI + MACD bullish stocks are excluded from this table</span>
 </div>
 
 <div class="tbl-wrap"><table>
@@ -1181,7 +835,7 @@ footer strong { color:var(--accent); }
       <th>Stock / Sector</th>
       <th data-tip="Last closing price">Price</th>
       <th data-tip="Algorithm sell rating">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0–100">Score</th>
+      <th class="gh-identity" data-tip="Combined score 0-100">Score</th>
       <th data-tip="% downside to Target 1">Downside</th>
       <th data-tip="T1 = nearest support · T2 = next support">Target T1/T2</th>
       <th data-tip="ATR-based stop above resistance">Stop Loss</th>
@@ -1189,13 +843,13 @@ footer strong { color:var(--accent); }
       <th data-tip="Average True Range in $">ATR</th>
       <th data-tip="Market beta sensitivity">Beta</th>
       <th class="gh-risk" data-tip="Distance to nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="RSI · &lt;30 oversold · &gt;70 overbought">RSI</th>
+      <th class="detail-col" data-tip="RSI (Wilder's method)">RSI</th>
       <th class="detail-col" data-tip="MACD signal direction">MACD</th>
       <th class="detail-col" data-tip="ADX trend strength">ADX</th>
       <th class="detail-col gh-momentum" data-tip="Volume vs 20-day average">Vol/Avg</th>
       <th class="detail-col" data-tip="P/E ratio">P/E</th>
       <th class="detail-col" data-tip="Dividend yield">Div%</th>
-      <th class="detail-col gh-value" data-tip="Fundamental quality">Quality</th>
+      <th class="detail-col sep-value" data-tip="Fundamental quality">Quality</th>
       <th data-tip="% below 52-week high">52W Hi%</th>
       <th data-tip="Analyst consensus">Analyst</th>
       <th class="earn-cell" data-tip="⚠ Pulses red if earnings within 14 days">Earnings</th>
@@ -1205,212 +859,422 @@ footer strong { color:var(--accent); }
     <tr class="">
       <td><div class="c-num">1</div></td>
       <td>
-        <div class="c-name">JPMorgan Chase</div>
-        <div class="c-sym">JPM</div>
-        <div class="c-sector">Financial Services</div>
-      </td>
-      <td><div class="c-price">$289.48</div></td>
-      <td><span class="rating r-ss">⭐ STRONG SELL</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#f87171">27</div>
-        <div class="c-score-bar" style="background:#f87171"></div>
-      </td>
-      <td><span class="dn">+3.4%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$279.64</div>
-        <div class="c-t2">T2: $257.83</div>
-      </td>
-      <td>
-        <div class="c-sl-sell">$303.67</div>
-        <div class="c-slpct">+4.9%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.7×</div></td>
-      <td>
-        <div class="c-atr">$8.36</div>
-        <div class="c-atr-sub">2.9% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.06</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">3.4%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">38</div><div class="rsi-track"><div class="rsi-fill" style="width:38%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">76</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.3×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#4ade80">14.4</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">207.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-13.8%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">14 Apr 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">2</div></td>
-      <td>
-        <div class="c-name">Wells Fargo</div>
-        <div class="c-sym">WFC</div>
-        <div class="c-sector">Financial Services</div>
-      </td>
-      <td><div class="c-price">$80.42</div></td>
-      <td><span class="rating r-ss">⭐ STRONG SELL</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#f87171">28</div>
-        <div class="c-score-bar" style="background:#f87171"></div>
-      </td>
-      <td><span class="dn">+5.2%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$76.21</div>
-        <div class="c-t2">T2: $70.72</div>
-      </td>
-      <td>
-        <div class="c-sl-sell">$86.05</div>
-        <div class="c-slpct">+7.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
-      <td>
-        <div class="c-atr">$3.10</div>
-        <div class="c-atr-sub">3.9% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.07</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">5.2%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">35</div><div class="rsi-track"><div class="rsi-fill" style="width:35%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">68</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#4ade80">12.8</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">224.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-17.3%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">14 Apr 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">3</div></td>
-      <td>
-        <div class="c-name">American Express</div>
-        <div class="c-sym">AXP</div>
-        <div class="c-sector">Financial Services</div>
-      </td>
-      <td><div class="c-price">$301.00</div></td>
-      <td><span class="rating r-s">⭐⭐ SELL</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#f87171">36</div>
-        <div class="c-score-bar" style="background:#f87171"></div>
-      </td>
-      <td><span class="dn">+5.1%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$285.52</div>
-        <div class="c-t2">T2: $279.42</div>
-      </td>
-      <td>
-        <div class="c-sl-sell">$322.07</div>
-        <div class="c-slpct">+7.0%</div>
-        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.7×</div></td>
-      <td>
-        <div class="c-atr">$10.54</div>
-        <div class="c-atr-sub">3.5% · 1.2×</div>
-      </td>
-      <td><div class="c-beta" style="color:#fbbf24">1.15</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">5.1%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">31</div><div class="rsi-track"><div class="rsi-fill" style="width:31%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#4ade80">66</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.2×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#4ade80">19.6</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">126.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#4ade80">-22.1%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">23 Apr 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">4</div></td>
-      <td>
-        <div class="c-name">McDonald's</div>
-        <div class="c-sym">MCD</div>
-        <div class="c-sector">Consumer Cyclical</div>
-      </td>
-      <td><div class="c-price">$328.06</div></td>
-      <td><span class="rating r-s">⭐⭐ SELL</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:#f87171">43</div>
-        <div class="c-score-bar" style="background:#f87171"></div>
-      </td>
-      <td><span class="dn">+3.0%</span></td>
-      <td>
-        <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$318.37</div>
-        <div class="c-t2">T2: $294.39</div>
-      </td>
-      <td>
-        <div class="c-sl-sell">$339.45</div>
-        <div class="c-slpct">+3.5%</div>
-        <span class="sl-badge sl-atr">📐 ATR Stop</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
-      <td>
-        <div class="c-atr">$5.64</div>
-        <div class="c-atr-sub">1.7% · 1.0×</div>
-      </td>
-      <td><div class="c-beta" style="color:#4ade80">0.50</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#4ade80">3.0%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">54</div><div class="rsi-track"><div class="rsi-fill" style="width:54%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
-      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
-      <td class="detail-col"><div class="c-adx" style="color:#fbbf24">23</div><div class="c-adx-lbl" style="color:#fbbf24">Moderate</div></td>
-      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.9×</div><div class="c-vol-lbl">Avg Vol</div></td>
-      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">27.5</div></td>
-      <td class="detail-col"><div class="c-div" style="color:#4ade80">227.00%</div></td>
-      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
-      <td><div class="c-52w" style="color:#f87171">-3.5%</div></td>
-      <td><span class="analyst an-b">Buy</span></td>
-      <td class="earn-cell"><span class="earn-badge earn-ok">11 Feb 2026</span></td>
-    </tr>
-    <tr class="">
-      <td><div class="c-num">5</div></td>
-      <td>
         <div class="c-name">Visa Inc.</div>
         <div class="c-sym">V</div>
         <div class="c-sector">Financial Services</div>
       </td>
       <td><div class="c-price">$317.36</div></td>
-      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td><span class="rating r-ss">⭐ STRONG SELL</span></td>
       <td class="sep-identity">
-        <div class="c-score-n" style="color:#f87171">44</div>
+        <div class="c-score-n" style="color:#f87171">14</div>
         <div class="c-score-bar" style="background:#f87171"></div>
       </td>
-      <td><span class="dn">+4.5%</span></td>
+      <td><span class="dn">+5.1%</span></td>
       <td>
         <span class="ts-badge ts-real">📍 Real S/R</span>
-        <div class="c-t1">$303.08</div>
-        <div class="c-t2">T2: $296.78</div>
+        <div class="c-t1">$301.04</div>
+        <div class="c-t2">T2: $267.36</div>
       </td>
       <td>
         <div class="c-sl-sell">$333.23</div>
         <div class="c-slpct">+5.0%</div>
         <span class="sl-badge sl-beta">🔒 Beta Cap</span>
       </td>
-      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.9×</div></td>
+      <td class="sep-trade"><div class="c-rr" style="color:#fbbf24">1.0×</div></td>
       <td>
-        <div class="c-atr">$7.46</div>
+        <div class="c-atr">$7.47</div>
         <div class="c-atr-sub">2.4% · 1.0×</div>
       </td>
       <td><div class="c-beta" style="color:#4ade80">0.79</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.5%</div></td>
-      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">54</div><div class="rsi-track"><div class="rsi-fill" style="width:54%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">5.1%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">44</div><div class="rsi-track"><div class="rsi-fill" style="width:44%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Weak Momentum ⚠</div></td>
       <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
       <td class="detail-col"><div class="c-adx" style="color:#4ade80">64</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
       <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.8×</div><div class="c-vol-lbl">Avg Vol</div></td>
       <td class="detail-col"><div class="c-pe" style="color:#fbbf24">29.8</div></td>
       <td class="detail-col"><div class="c-div" style="color:#4ade80">84.00%</div></td>
       <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
-      <td><div class="c-52w" style="color:#fbbf24">-15.0%</div></td>
+      <td><div class="c-52w" style="color:#fbbf24">-15.5%</div></td>
       <td><span class="analyst an-h">Strong_Buy</span></td>
       <td class="earn-cell"><span class="earn-badge earn-ok">29 Jan 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">2</div></td>
+      <td>
+        <div class="c-name">Philip Morris International</div>
+        <div class="c-sym">PM</div>
+        <div class="c-sector">Consumer Defensive</div>
+      </td>
+      <td><div class="c-price">$169.98</div></td>
+      <td><span class="rating r-ss">⭐ STRONG SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">21</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+4.0%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$163.23</div>
+        <div class="c-t2">T2: $159.74</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$178.48</div>
+        <div class="c-slpct">+5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.8×</div></td>
+      <td>
+        <div class="c-atr">$4.76</div>
+        <div class="c-atr-sub">2.8% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.40</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.0%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">35</div><div class="rsi-track"><div class="rsi-fill" style="width:35%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Weak & Falling ↓ (62→35)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">38</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#4ade80">23.4</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">346.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-11.1%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">22 Apr 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">3</div></td>
+      <td>
+        <div class="c-name">Mastercard</div>
+        <div class="c-sym">MA</div>
+        <div class="c-sector">Financial Services</div>
+      </td>
+      <td><div class="c-price">$522.34</div></td>
+      <td><span class="rating r-ss">⭐ STRONG SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">22</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+6.2%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$490.00</div>
+        <div class="c-t2">T2: $468.96</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$558.90</div>
+        <div class="c-slpct">+7.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.9×</div></td>
+      <td>
+        <div class="c-atr">$12.99</div>
+        <div class="c-atr-sub">2.5% · 1.2×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.84</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">6.2%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">47</div><div class="rsi-track"><div class="rsi-fill" style="width:47%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Neutral →</div></td>
+      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">46</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.9×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">31.6</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">67.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-13.2%</div></td>
+      <td><span class="analyst an-h">Strong_Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">29 Jan 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">4</div></td>
+      <td>
+        <div class="c-name">Lam Research</div>
+        <div class="c-sym">LRCX</div>
+        <div class="c-sector">Technology</div>
+      </td>
+      <td><div class="c-price">$199.33</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">35</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+14.3%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$170.76</div>
+        <div class="c-t2">T2: $153.60</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$219.26</div>
+        <div class="c-slpct">+10.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#fbbf24">1.4×</div></td>
+      <td>
+        <div class="c-atr">$11.87</div>
+        <div class="c-atr-sub">6.0% · 1.5×</div>
+      </td>
+      <td><div class="c-beta" style="color:#f87171">1.79</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#f87171">14.3%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">35</div><div class="rsi-track"><div class="rsi-fill" style="width:35%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Weak & Falling ↓ (52→35)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#fbbf24">21</div><div class="c-adx-lbl" style="color:#fbbf24">Moderate</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#f87171">41.0</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">52.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-ex">Excellent</span></td>
+      <td><div class="c-52w" style="color:#4ade80">-22.3%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">28 Jan 2026</span></td>
+    </tr>
+    <tr class="earn-warning">
+      <td><div class="c-num">5</div></td>
+      <td>
+        <div class="c-name">Oracle Corporation</div>
+        <div class="c-sym">ORCL</div>
+        <div class="c-sector">Technology</div>
+      </td>
+      <td><div class="c-price">$152.96</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">36</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+9.4%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$138.59</div>
+        <div class="c-t2">T2: $135.25</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$168.26</div>
+        <div class="c-slpct">+10.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.9×</div></td>
+      <td>
+        <div class="c-atr">$7.95</div>
+        <div class="c-atr-sub">5.2% · 1.5×</div>
+      </td>
+      <td><div class="c-beta" style="color:#f87171">1.65</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#f87171">9.4%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">46</div><div class="rsi-track"><div class="rsi-fill" style="width:46%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Building ↑ (38→46)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bull">Bullish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">60</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">0.9×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">28.8</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">131.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
+      <td><div class="c-52w" style="color:#4ade80">-55.8%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-soon">⚠ 10 Mar 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">6</div></td>
+      <td>
+        <div class="c-name">Merck & Co.</div>
+        <div class="c-sym">MRK</div>
+        <div class="c-sector">Healthcare</div>
+      </td>
+      <td><div class="c-price">$115.79</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">39</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+8.4%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$106.03</div>
+        <div class="c-t2">T2: $104.43</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$121.58</div>
+        <div class="c-slpct">+5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#fbbf24">1.7×</div></td>
+      <td>
+        <div class="c-atr">$3.14</div>
+        <div class="c-atr-sub">2.7% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.26</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#f87171">8.4%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">45</div><div class="rsi-track"><div class="rsi-fill" style="width:45%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Falling Fast ↓ (65→45)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#a07850">19</div><div class="c-adx-lbl" style="color:#a07850">Weak</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#4ade80">15.9</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">294.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-gd">Good</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-7.5%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">30 Apr 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">7</div></td>
+      <td>
+        <div class="c-name">NVIDIA</div>
+        <div class="c-sym">NVDA</div>
+        <div class="c-sector">Technology</div>
+      </td>
+      <td><div class="c-price">$177.82</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">40</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+4.5%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$169.83</div>
+        <div class="c-t2">T2: $164.32</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$193.04</div>
+        <div class="c-slpct">+8.6%</div>
+        <span class="sl-badge sl-atr">📐 ATR Stop</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.5×</div></td>
+      <td>
+        <div class="c-atr">$6.38</div>
+        <div class="c-atr-sub">3.6% · 2.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#f87171">2.38</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">4.5%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">42</div><div class="rsi-track"><div class="rsi-fill" style="width:42%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Weak Momentum ⚠</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">61</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">36.2</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">2.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-ex">Excellent</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-16.2%</div></td>
+      <td><span class="analyst an-h">Strong_Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">20 May 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">8</div></td>
+      <td>
+        <div class="c-name">Coca-Cola Company</div>
+        <div class="c-sym">KO</div>
+        <div class="c-sector">Consumer Defensive</div>
+      </td>
+      <td><div class="c-price">$77.04</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">40</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+6.5%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$72.04</div>
+        <div class="c-t2">T2: $68.41</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$80.89</div>
+        <div class="c-slpct">+5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#fbbf24">1.3×</div></td>
+      <td>
+        <div class="c-atr">$1.31</div>
+        <div class="c-atr-sub">1.7% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.33</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">6.5%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">46</div><div class="rsi-track"><div class="rsi-fill" style="width:46%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Falling Fast ↓ (74→46)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">38</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">25.3</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">267.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-po">Poor</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-6.0%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">10 Feb 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">9</div></td>
+      <td>
+        <div class="c-name">Linde plc</div>
+        <div class="c-sym">LIN</div>
+        <div class="c-sector">Basic Materials</div>
+      </td>
+      <td><div class="c-price">$484.74</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">41</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+7.9%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$446.39</div>
+        <div class="c-t2">T2: $422.08</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$508.98</div>
+        <div class="c-slpct">+5.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#fbbf24">1.6×</div></td>
+      <td>
+        <div class="c-atr">$9.97</div>
+        <div class="c-atr-sub">2.1% · 1.0×</div>
+      </td>
+      <td><div class="c-beta" style="color:#4ade80">0.80</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">7.9%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">52</div><div class="rsi-track"><div class="rsi-fill" style="width:52%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Falling Fast ↓ (73→52)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">36</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.1×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">33.2</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">132.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-5.1%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">05 Feb 2026</span></td>
+    </tr>
+    <tr class="">
+      <td><div class="c-num">10</div></td>
+      <td>
+        <div class="c-name">Caterpillar Inc.</div>
+        <div class="c-sym">CAT</div>
+        <div class="c-sector">Industrials</div>
+      </td>
+      <td><div class="c-price">$680.90</div></td>
+      <td><span class="rating r-s">⭐⭐ SELL</span></td>
+      <td class="sep-identity">
+        <div class="c-score-n" style="color:#f87171">44</div>
+        <div class="c-score-bar" style="background:#f87171"></div>
+      </td>
+      <td><span class="dn">+7.3%</span></td>
+      <td>
+        <span class="ts-badge ts-real">📍 Real S/R</span>
+        <div class="c-t1">$630.90</div>
+        <div class="c-t2">T2: $619.26</div>
+      </td>
+      <td>
+        <div class="c-sl-sell">$748.99</div>
+        <div class="c-slpct">+10.0%</div>
+        <span class="sl-badge sl-beta">🔒 Beta Cap</span>
+      </td>
+      <td class="sep-trade"><div class="c-rr" style="color:#f87171">0.7×</div></td>
+      <td>
+        <div class="c-atr">$27.43</div>
+        <div class="c-atr-sub">4.0% · 1.5×</div>
+      </td>
+      <td><div class="c-beta" style="color:#f87171">1.53</div></td>
+      <td class="sep-risk"><div class="c-sd" style="color:#fbbf24">7.3%</div></td>
+      <td class="detail-col"><div class="c-rsi" style="color:#93c5fd">40</div><div class="rsi-track"><div class="rsi-fill" style="width:40%;background:#93c5fd"></div></div><div class="c-rsi-lbl">Weak & Falling ↓ (58→40)</div></td>
+      <td class="detail-col"><span class="c-macd macd-bear">Bearish</span></td>
+      <td class="detail-col"><div class="c-adx" style="color:#4ade80">36</div><div class="c-adx-lbl" style="color:#4ade80">Strong</div></td>
+      <td class="detail-col sep-momentum"><div class="c-vol" style="color:#d8e8f5">1.0×</div><div class="c-vol-lbl">Avg Vol</div></td>
+      <td class="detail-col"><div class="c-pe" style="color:#fbbf24">36.2</div></td>
+      <td class="detail-col"><div class="c-div" style="color:#4ade80">89.00%</div></td>
+      <td class="detail-col sep-value"><span class="qual q-av">Average</span></td>
+      <td><div class="c-52w" style="color:#fbbf24">-13.8%</div></td>
+      <td><span class="analyst an-b">Buy</span></td>
+      <td class="earn-cell"><span class="earn-badge earn-ok">30 Apr 2026</span></td>
     </tr>
   </tbody>
 </table></div>
@@ -1419,13 +1283,15 @@ footer strong { color:var(--accent); }
     <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
     Stop losses are ATR-based near real 12-month S/R zones. Targets derived from swing highs/lows,
     52-week extremes and round number levels. Earnings dates are estimates.
+    RSI divergence signals are algorithmic and not a guarantee of reversal.
+    Trend Veto Gate caps BUY/STRONG BUY to HOLD when 3+ bearish signals fire simultaneously.
     Always conduct your own research, consult a registered financial advisor,
     and never invest more than you can afford to lose.
   </div>
 
   <footer>
-    <strong>Top US Market Influencers: NASDAQ &amp; S&amp;P 500</strong>
-    · 12M S/R · ATR Stops · Grouped Columns · Quick/Detail Toggle v10
+    <strong>Top US Market Influencers · NASDAQ &amp; S&amp;P 500</strong>
+    · Wilder RSI · Trend Veto · Dynamic Weights · SMA200 Slope · Sector PE · RSI Divergence · v5.4
     · Next Update: <strong>9:30 AM (Next Day) EST</strong> · 07 Mar 2026
   </footer>
 
