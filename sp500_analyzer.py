@@ -904,6 +904,7 @@ class SP500CompleteAnalyzer:
                 atr_multiplier = 2.0;  max_sl_pct = 12.0
 
             if recommendation in ("STRONG BUY", "BUY"):
+                # ── LONG setup: stop below support, targets at resistance ──
                 atr_stop       = nearest_support - (atr * atr_multiplier)
                 min_allowed_sl = current_price * (1 - max_sl_pct / 100)
                 stop_loss      = max(atr_stop, min_allowed_sl)
@@ -916,7 +917,38 @@ class SP500CompleteAnalyzer:
                 if target_1 <= current_price * 1.005:
                     recommendation = "HOLD"; rating = "⭐⭐⭐ HOLD"
                 upside = ((target_1 - current_price) / current_price) * 100
+
+            elif recommendation == "HOLD":
+                # ── HOLD setup: neutral — nearest support as soft floor,
+                #    nearest resistance as soft ceiling. No directional bias.
+                #    Stop = ATR below nearest support (risk management).
+                #    Target = nearest resistance above price.
+                #    Upside shown as % to resistance so user can judge entry.
+                atr_stop       = nearest_support - (atr * atr_multiplier)
+                min_allowed_sl = current_price * (1 - max_sl_pct / 100)
+                stop_loss      = max(atr_stop, min_allowed_sl)
+                sl_percentage  = ((current_price - stop_loss) / current_price) * 100
+                stop_type      = "ATR Stop" if atr_stop >= min_allowed_sl else "Beta Cap"
+
+                # Target: nearest resistance above price (or project +3%)
+                valid_res = [r['level'] for r in resistance_levels
+                             if r['level'] > current_price * 1.005]
+                if len(valid_res) >= 2:
+                    target_1, target_2 = valid_res[0], valid_res[1]
+                    target_status = "Hold S/R Levels"
+                elif len(valid_res) == 1:
+                    target_1      = valid_res[0]
+                    target_2      = round(target_1 * 1.03, 2)
+                    target_status = "Hold Partial S/R"
+                else:
+                    target_1      = round(current_price * 1.03, 2)
+                    target_2      = round(current_price * 1.06, 2)
+                    target_status = "Hold Projected"
+                targets_hit = 0
+                upside      = ((target_1 - current_price) / current_price) * 100
+
             else:
+                # ── SHORT/SELL setup: stop above resistance, targets at support ──
                 atr_stop       = nearest_resistance + (atr * atr_multiplier)
                 max_allowed_sl = current_price * (1 + max_sl_pct / 100)
                 stop_loss      = min(atr_stop, max_allowed_sl)
@@ -942,6 +974,13 @@ class SP500CompleteAnalyzer:
             reward      = abs(target_1 - current_price)
             risk_reward = round(reward / risk, 2) if risk > 0 else 0
 
+            # FIX-4: STRONG BUY requires R:R ≥ 1.5.
+            # If R:R is between 1.0-1.5 the trade is fine but not exceptional —
+            # demote to BUY so the user knows it's not a premium setup.
+            if recommendation == "STRONG BUY" and risk_reward < 1.5:
+                recommendation = "BUY"
+                rating         = "⭐⭐⭐⭐ BUY"
+
             if fund_score >= 80:   quality = "Excellent"
             elif fund_score >= 60: quality = "Good"
             elif fund_score >= 40: quality = "Average"
@@ -956,6 +995,7 @@ class SP500CompleteAnalyzer:
                 'RSI_Signal':       rsi_signal,
                 'RSI_Slope':        rsi_slope,          # scalar — used by v8/v9 filters
                 'RSI_Direction':    rsi_direction,       # U12: direction label
+                'RSI_5Bar':         rsi_5bar,            # RSI 5 bars ago — for display
                 'RSI_Divergence':   rsi_divergence,      # U11
                 'MACD':             macd_signal,
                 'MACD_Hist_Slope':  round(macd_hist_slope, 4),
@@ -1119,7 +1159,10 @@ class SP500CompleteAnalyzer:
         return top_buys, top_sells
 
     # =========================================================================
-    #  HTML — Dark Slate Design + v5.4 Logic Indicators
+    #  HTML — Nifty50-style compact always-detail no-scroll layout v5.4
+    # =========================================================================
+    # =========================================================================
+    #  HTML — Nifty50-style: sticky header, all columns, no toggle, no h-scroll
     # =========================================================================
     def generate_email_html(self):
         df = pd.DataFrame(self.results)
@@ -1136,777 +1179,511 @@ class SP500CompleteAnalyzer:
         sell_count        = len(df[df['Recommendation'] == 'SELL'])
         strong_sell_count = len(df[df['Recommendation'] == 'STRONG SELL'])
 
+        if not top_buys.empty:
+            sector_summary = top_buys['Sector'].value_counts().head(4)
+            sector_kpi = ' · '.join([f"{s}: {c}" for s, c in sector_summary.items()])
+        else:
+            sector_kpi = 'No buys'
+
+        ticker_items = ''
+        for t in self.results[:12]:
+            pct  = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
+            cls  = 'tick-up' if pct >= 0 else 'tick-dn'
+            sign = '+' if pct >= 0 else ''
+            ticker_items += (
+                f'<span class="tick">'
+                f'<span class="tick-sym">{t["Symbol"]}</span>'
+                f'<span class="tick-px">${t["Price"]:,.2f}</span>'
+                f'<span class="{cls}">{sign}{pct:.1f}%</span>'
+                f'</span>'
+            )
+        ticker_html = ticker_items + ticker_items   # doubled for seamless loop
+
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Top US Market Influencers — {time_of_day} Report</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>US Market Influencers - {time_of_day} · {now.strftime('%d %b %Y')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root {{
-  --bg:      #07080c;
-  --surf:    #0d1117;
-  --card:    #101620;
-  --card2:   #141c28;
-  --border:  rgba(255,255,255,0.06);
-  --text:    #eaf4ff;
-  --muted:   #9abccc;
-  --accent:  #f59e0b;
-  --green:   #22c55e;
-  --red:     #ef4444;
-  --blue:    #60a5fa;
-  --teal:    #2dd4bf;
-  --purple:  #a78bfa;
-  --orange:  #f97316;
+:root{{
+  --bg:#04080f; --bg2:#060d18; --surf:#0a1628; --surf2:#0c1a2e;
+  --bdr:#1e3a5a; --bdr2:#2a4a6a;
+  --accent:#00f5ff; --green:#00ff88; --red:#ff4466;
+  --gold:#ffcc00; --purple:#cc99ff; --text:#ddeeff; --muted:#aaccee;
+}}
+*,*::before,*::after{{margin:0;padding:0;box-sizing:border-box;}}
+body{{background:#04080f;color:#ddeeff;font-family:'Space Grotesk',sans-serif;font-size:12px;min-height:100vh;}}
 
-  --g-identity: rgba(245,158,11,0.08);
-  --g-trade:    rgba(34,197,94,0.07);
-  --g-risk:     rgba(239,68,68,0.06);
-  --g-momentum: rgba(96,165,250,0.07);
-  --g-value:    rgba(167,139,250,0.06);
-  --g-external: rgba(45,212,191,0.06);
-}}
-*, *::before, *::after {{ margin:0; padding:0; box-sizing:border-box; }}
-
-body {{
-  font-family:'DM Sans',sans-serif;
-  background:var(--bg); color:var(--text);
-  font-size:14px; line-height:1.5;
-  min-height:100vh;
-}}
-body::before {{
-  content:''; position:fixed; inset:0;
-  background-image:
-    linear-gradient(rgba(245,158,11,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245,158,11,0.02) 1px, transparent 1px);
-  background-size:48px 48px;
-  pointer-events:none; z-index:0;
-}}
-
-.page {{ position:relative; z-index:1; padding:20px 16px 60px; max-width:1800px; margin:0 auto; }}
-
-/* ── HEADER ── */
-.hdr {{
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:20px; flex-wrap:wrap; gap:12px;
-  background:linear-gradient(135deg,var(--card),var(--card2));
-  border:1px solid var(--border); border-radius:14px;
-  padding:16px 20px;
-}}
-.hdr-left {{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }}
-.hdr-icon {{
-  width:42px; height:42px; flex-shrink:0;
-  background:linear-gradient(135deg,var(--accent),#ef4444);
-  border-radius:10px; display:flex; align-items:center;
-  justify-content:center; font-size:20px;
-}}
-.hdr-title {{ font-family:'Syne',sans-serif; font-size:clamp(14px,2vw,20px); font-weight:800; color:#fff; }}
-.hdr-sub   {{ font-size:0.72em; color:var(--muted); margin-top:2px; }}
-
-/* Live clock */
-.live-clock {{
-  padding:8px 14px; border-radius:8px; text-align:right;
-}}
-.lc-label {{ font-size:0.6em; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }}
-.lc-time  {{ font-family:'JetBrains Mono',monospace; font-size:1.0em; font-weight:700; color:var(--accent); }}
-.lc-date  {{ font-size:0.65em; color:var(--muted); }}
-.lc-last  {{ font-size:0.62em; color:#5a8090; margin-top:2px; }}
-
-/* View toggle */
-.view-toggle {{ display:flex; gap:6px; }}
-.vt-btn {{
-  font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700;
-  padding:6px 14px; border-radius:6px; border:1px solid var(--border);
-  background:var(--card2); color:var(--muted); cursor:pointer; transition:all .2s;
-}}
-.vt-btn.active {{ background:rgba(245,158,11,0.12); border-color:var(--accent); color:var(--accent); }}
-
-/* ── INDEX STRIP ── */
-.idx-strip {{
-  display:flex; align-items:center; gap:14px;
-  background:rgba(0,0,0,0.25); border:1px solid var(--border);
-  border-radius:8px; padding:8px 14px;
-}}
-.idx-item {{ display:flex; align-items:center; gap:8px; }}
-.idx-sep  {{ width:1px; height:28px; background:var(--border); }}
-.idx-name {{ font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:700; color:var(--muted); letter-spacing:1px; }}
-.idx-price {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:900; color:#fff; }}
-.idx-chg  {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:700; white-space:nowrap; }}
-.up {{ color:var(--green); }} .dn {{ color:var(--red); }}
+/* ── STICKY HEADER ── */
+header{{background:#060d18;border-bottom:2px solid #00f5ff;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.85);}}
+.h-top{{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;gap:12px;flex-wrap:wrap;}}
+.brand{{display:flex;align-items:center;gap:10px;}}
+.brand-gem{{width:36px;height:36px;flex-shrink:0;background:linear-gradient(135deg,#00d4ff,#7c4dff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(0,212,255,0.3);}}
+.brand-name{{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;letter-spacing:-0.5px;}}
+.brand-sub{{font-size:9px;color:#aaddff;letter-spacing:2px;text-transform:uppercase;margin-top:2px;font-weight:700;}}
+.idx-strip{{display:flex;align-items:center;background:rgba(0,0,0,0.4);border:1px solid var(--bdr2);border-radius:8px;overflow:hidden;}}
+.idx-item{{display:flex;flex-direction:column;align-items:center;padding:5px 16px;border-right:1px solid var(--bdr);gap:1px;}}
+.idx-item:last-child{{border-right:none;}}
+.idx-name{{font-size:9px;font-weight:800;letter-spacing:2px;color:#aaddff;text-transform:uppercase;}}
+.idx-price{{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:#fff;}}
+.idx-chg{{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:800;}}
+.up{{color:#00ff88;}} .dn{{color:#ff4466;}}
+.clock-box{{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}}
+.clock-time{{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:800;color:#00ff88;text-shadow:0 0 12px rgba(0,255,136,0.6);letter-spacing:1px;}}
+.clock-meta{{font-size:10px;color:#fff;letter-spacing:1px;font-weight:700;}}
+.clock-next{{font-size:10px;color:#aaddff;font-weight:700;}}
 
 /* ── TICKER ── */
-.ticker {{ overflow:hidden; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:8px; margin-bottom:16px; padding:8px 0; }}
-.ticker-inner {{ display:flex; gap:24px; flex-wrap:wrap; padding:0 16px; }}
-.ti {{ display:flex; align-items:center; gap:6px; }}
-.ti-s {{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); font-weight:700; }}
-.ti-p {{ font-family:'JetBrains Mono',monospace; font-size:10px; color:#fff; font-weight:700; }}
-.ti-u {{ color:var(--green); font-family:'JetBrains Mono',monospace; font-size:10px; }}
-.ti-d {{ color:var(--red);   font-family:'JetBrains Mono',monospace; font-size:10px; }}
+.ticker{{background:rgba(0,0,0,0.6);border-top:1px solid var(--bdr);overflow:hidden;}}
+.ticker-inner{{display:flex;white-space:nowrap;animation:scroll 50s linear infinite;padding:4px 0;}}
+@keyframes scroll{{0%{{transform:translateX(0);}}100%{{transform:translateX(-50%);}}}}
+.tick{{display:inline-flex;align-items:center;gap:6px;padding:0 16px;border-right:1px solid #1e3a5a;font-family:'IBM Plex Mono',monospace;font-size:11px;}}
+.tick-sym{{color:#00f5ff;font-weight:800;}} .tick-px{{color:#fff;font-weight:600;}}
+.tick-up{{color:#00ff88;font-weight:700;}} .tick-dn{{color:#ff4466;font-weight:700;}}
 
 /* ── KPI BAND ── */
-.kpi-band {{
-  display:grid; grid-template-columns:repeat(5,1fr);
-  background:var(--card); border:1px solid var(--border);
-  border-radius:12px; margin-bottom:20px; overflow:hidden;
-}}
-.kc {{ padding:14px 10px; border-right:1px solid var(--border); text-align:center; }}
-.kc:last-child {{ border-right:none; }}
-.kn {{ font-family:'Syne',sans-serif; font-size:clamp(22px,4vw,32px); font-weight:800; line-height:1; }}
-.kl {{ font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }}
-.kbar {{ height:2px; border-radius:1px; margin:5px auto 0; width:30px; }}
+.kpi-band{{display:flex;align-items:center;background:#080f1e;border-bottom:2px solid #1e3a5a;}}
+.kpi-item{{display:flex;flex-direction:column;align-items:center;padding:12px 20px;border-right:1px solid #1e3a5a;flex:1;}}
+.kpi-item:last-child{{border-right:none;}}
+.kpi-num{{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}}
+.kpi-label{{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#aaddff;margin-top:4px;}}
+.kpi-bar{{height:3px;width:40px;border-radius:2px;margin-top:6px;}}
+.kpi-sub{{font-size:8px;color:#6699bb;margin-top:3px;font-weight:600;letter-spacing:0.5px;text-align:center;}}
 
-/* ── LEGEND ── */
-.legend {{
-  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:8px; padding:8px 16px; font-size:0.7em;
-  color:var(--muted); margin-bottom:14px;
-}}
-.leg-item {{ display:flex; align-items:center; gap:6px; }}
-.leg-dot {{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }}
+/* ── MAIN ── */
+.main{{padding:14px 18px;}}
+.sec-hdr{{display:flex;align-items:center;gap:10px;margin-bottom:10px;}}
+.sec-pill{{display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:100px;font-size:11px;font-weight:800;letter-spacing:0.5px;}}
+.pill-buy{{background:#004d25;color:#00ff88;border:2px solid #00cc66;}}
+.pill-sell{{background:#4d0010;color:#ff4466;border:2px solid #cc0033;}}
+.sec-line{{flex:1;height:1px;background:#1e3a5a;}}
+.sec-note{{font-size:9px;color:#88aacc;letter-spacing:1.5px;white-space:nowrap;font-weight:800;text-transform:uppercase;}}
 
-/* ── SECTION TITLE ── */
-.sec-title {{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }}
-.sec-title-icon {{
-  width:28px; height:28px; border-radius:6px;
-  display:flex; align-items:center; justify-content:center; font-size:13px;
-}}
-.sec-title-text {{ font-family:'Syne',sans-serif; font-size:1em; font-weight:800; color:#fff; }}
-.sec-title-line {{ flex:1; height:1px; background:var(--border); }}
-.sec-title-note {{ font-size:0.68em; color:var(--muted); }}
+/* ── TABLE — no min-width: fills screen, compact cells ── */
+.tbl-wrap{{width:100%;overflow-x:auto;border:1px solid #1e3a5a;border-radius:10px;margin-bottom:22px;box-shadow:0 8px 40px rgba(0,0,0,0.6);background:#080f1e;-webkit-overflow-scrolling:touch;}}
+table{{width:100%;border-collapse:collapse;table-layout:auto;}}
+.grp-row th{{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:6px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.08);white-space:nowrap;}}
+.grp-stock{{background:#0d3a42;color:#00f5ff;}}
+.grp-trade{{background:#0a3320;color:#00ff88;}}
+.grp-tech{{background:#0a2a40;color:#40c8ff;}}
+.grp-fund{{background:#3a2a00;color:#ffcc00;}}
+.grp-meta{{background:#28124a;color:#cc99ff;}}
+.col-row th{{font-size:9px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;padding:7px 6px;color:#fff;background:#0c1a2e;border-bottom:2px solid #1e3a5a;white-space:nowrap;text-align:left;}}
+.ch-stock{{border-top:3px solid #00f5ff;color:#b0f0ff;}}
+.ch-trade{{border-top:3px solid #00ff88;color:#b0ffe0;}}
+.ch-tech{{border-top:3px solid #40c8ff;color:#c0e8ff;}}
+.ch-fund{{border-top:3px solid #ffcc00;color:#fff0a0;}}
+.ch-meta{{border-top:3px solid #cc99ff;color:#e8d0ff;}}
+.gsep{{border-left:2px solid rgba(255,255,255,0.08)!important;}}
+td{{padding:8px 6px;border-bottom:1px solid #0e2040;vertical-align:middle;white-space:nowrap;}}
+tr:last-child td{{border-bottom:none;}}
+tr:nth-child(even) td{{background:rgba(255,255,255,0.02);}}
+tr:hover td{{background:rgba(0,212,255,0.06);transition:background 0.12s;}}
 
-/* ── TABLE WRAPPER ── */
-.tbl-wrap {{
-  width:100%; overflow-x:auto;
-  border:1px solid var(--border); border-radius:12px;
-  background:var(--card);
-  box-shadow:0 8px 40px rgba(0,0,0,0.4);
-  -webkit-overflow-scrolling:touch;
-  margin-bottom:28px;
-}}
-table {{ width:100%; border-collapse:collapse; min-width:1200px; }}
+/* ── STOCK ── */
+.sname{{font-size:11px;font-weight:700;color:#fff;line-height:1.2;}}
+.ssym{{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#00f5ff;font-weight:700;letter-spacing:1px;margin-top:2px;}}
+.ssec{{font-size:8px;color:#88bbdd;margin-top:1px;max-width:100px;overflow:hidden;text-overflow:ellipsis;font-weight:600;}}
+.pval{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#ffcc00;}}
 
-/* ── GROUP HEADER ROW ── */
-.grp-row th {{
-  padding:5px 10px;
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.58em; font-weight:700; letter-spacing:2px;
-  text-transform:uppercase; border-bottom:none; text-align:center;
-}}
-.grp-identity {{ background:var(--g-identity); color:var(--accent);  border-right:2px solid rgba(245,158,11,0.2); }}
-.grp-trade    {{ background:var(--g-trade);    color:var(--green);   border-right:2px solid rgba(34,197,94,0.2); }}
-.grp-risk     {{ background:var(--g-risk);     color:#f87171;        border-right:2px solid rgba(239,68,68,0.2); }}
-.grp-momentum {{ background:var(--g-momentum); color:var(--blue);    border-right:2px solid rgba(96,165,250,0.2); }}
-.grp-value    {{ background:var(--g-value);    color:var(--purple);  border-right:2px solid rgba(167,139,250,0.2); }}
-.grp-external {{ background:var(--g-external); color:var(--teal); }}
+/* ── RATING / SCORE ── */
+.badge{{display:inline-flex;align-items:center;font-size:8px;font-weight:800;padding:3px 7px;border-radius:4px;letter-spacing:0.5px;white-space:nowrap;}}
+.b-sb{{background:#004d25;color:#00ff88;border:1px solid #00ff88;}}
+.b-b {{background:#003a4d;color:#00f5ff;border:1px solid #00f5ff;}}
+.b-h {{background:#1a2a3a;color:#aabbcc;border:1px solid #445566;}}
+.b-s {{background:#4d0010;color:#ff4466;border:1px solid #ff4466;}}
+.b-ss{{background:#5a0015;color:#ff7788;border:1px solid #ff7788;}}
+.sc-wrap{{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:3px;}}
+.sc-num{{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;line-height:1;}}
+.sc-bar{{width:36px;height:3px;background:#1a2a3a;border-radius:2px;}}
+.sc-fill{{height:100%;border-radius:2px;}}
+.veto{{margin-top:2px;display:inline-block;padding:1px 5px;border-radius:3px;background:#2a1500;color:#ff8c00;border:1px solid #ff8c00;font-size:8px;font-weight:700;font-family:'IBM Plex Mono',monospace;}}
+.warn2{{color:#f59e0b;border-color:#f59e0b;background:#1a1000;}}
 
-/* ── COLUMN HEADERS ── */
-thead tr.col-hdr th {{
-  font-size:0.74em; font-weight:900; letter-spacing:1px;
-  text-transform:uppercase; color:#cce8ff;
-  padding:10px 10px;
-  border-bottom:2px solid rgba(255,255,255,0.18);
-  white-space:nowrap; text-align:left;
-  background:var(--card2);
-}}
-.gh-identity {{ border-right:2px solid rgba(245,158,11,0.15)!important; }}
-.gh-trade    {{ border-right:2px solid rgba(34,197,94,0.12)!important; }}
-.gh-risk     {{ border-right:2px solid rgba(239,68,68,0.12)!important; }}
-.gh-momentum {{ border-right:2px solid rgba(96,165,250,0.12)!important; }}
-.gh-value    {{ border-right:2px solid rgba(167,139,250,0.12)!important; }}
+/* ── TRADE SETUP ── */
+.tbadge{{font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:0.3px;display:block;margin-bottom:3px;white-space:nowrap;}}
+.tb-r{{background:#004d25;color:#00ff88;border:1px solid #00ff88;}}
+.tb-p{{background:#4d3300;color:#ffcc00;border:1px solid #ffcc00;}}
+.tb-a{{background:#003a4d;color:#00f5ff;border:1px solid #00f5ff;}}
+.t1{{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#fff;}}
+.t2{{font-size:9px;color:#88bbdd;margin-top:1px;font-weight:700;}}
+.slv{{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#ff4466;}}
+.slvs{{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#ffcc00;}}
+.slp{{font-size:9px;color:#88bbdd;margin-top:1px;font-weight:700;}}
+.slt{{font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;margin-top:2px;display:inline-block;}}
+.slt-a{{background:#004d25;color:#00ff88;border:1px solid #00cc66;}}
+.slt-b{{background:#4d3300;color:#ffcc00;border:1px solid #cc9900;}}
+.upv{{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;}}
+.upv.up{{color:#00ff88;}} .upv.dn{{color:#ff4466;}}
+.rrv{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:800;}}
+.atrv{{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#00f5ff;}}
+.atrs{{font-size:8px;color:#88bbdd;margin-top:1px;font-weight:700;}}
 
-/* ── TABLE ROWS ── */
-tbody tr {{ transition:background 0.15s; }}
-tbody tr:hover td {{ background:rgba(245,158,11,0.04); }}
-tbody tr:nth-child(even) td {{ background:rgba(255,255,255,0.04); }}
-tbody tr:nth-child(even):hover td {{ background:rgba(245,158,11,0.04); }}
+/* ── TECHNICALS ── */
+.rsiv{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}}
+.rsis{{font-size:8px;color:#88bbdd;margin-top:1px;font-weight:700;max-width:95px;white-space:normal;line-height:1.3;}}
+.divb{{font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px;white-space:nowrap;display:inline-block;margin-top:2px;}}
+.db-bear{{background:#4d0010;color:#ff4466;border:1px solid #ff4466;}}
+.db-bull{{background:#004d25;color:#00ff88;border:1px solid #00ff88;}}
+.rsi-slope{{font-family:'IBM Plex Mono',monospace;font-size:9px;display:inline-block;margin-top:2px;}}
+.adxv{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}}
+.adxl{{font-size:8px;color:#88bbdd;margin-top:1px;font-weight:700;}}
+.adx-s{{color:#00ff88;}} .adx-m{{color:#ffcc00;}} .adx-w{{color:#aabbcc;}}
+.volv{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}}
+.voll{{font-size:8px;color:#88bbdd;margin-top:1px;font-weight:700;}}
+.vol-h{{color:#00ff88;}} .vol-n{{color:#ddeeff;}} .vol-l{{color:#aabbcc;}}
+.sdv{{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;}}
+.sd-c{{color:#00ff88;}} .sd-m{{color:#ffcc00;}} .sd-f{{color:#ff4466;}}
+.mono{{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;}}
+.macd-bull{{color:#00ff88;font-weight:800;font-size:10px;}}
+.macd-bear{{color:#ff4466;font-weight:800;font-size:10px;}}
 
-td {{
-  padding:12px 10px; border-bottom:1px solid rgba(255,255,255,0.08);
-  vertical-align:middle; white-space:nowrap;
-}}
-tbody tr:last-child td {{ border-bottom:none; }}
+/* ── FUNDAMENTALS ── */
+.qb{{font-size:8px;font-weight:800;padding:3px 6px;border-radius:4px;}}
+.q-ex{{background:#004d25;color:#00ff88;border:1px solid #00cc66;}}
+.q-gd{{background:#003a4d;color:#00f5ff;border:1px solid #0099bb;}}
+.q-av{{background:#4d3300;color:#ffcc00;border:1px solid #cc9900;}}
+.q-po{{background:#4d0010;color:#ff4466;border:1px solid #cc0033;}}
 
-/* group separators on data cells */
-td.sep-identity {{ border-right:2px solid rgba(245,158,11,0.1); }}
-td.sep-trade    {{ border-right:2px solid rgba(34,197,94,0.08); }}
-td.sep-risk     {{ border-right:2px solid rgba(239,68,68,0.08); }}
-td.sep-momentum {{ border-right:2px solid rgba(96,165,250,0.08); }}
-td.sep-value    {{ border-right:2px solid rgba(167,139,250,0.08); }}
-
-/* ── CELL COMPONENTS ── */
-.c-num {{ font-family:'JetBrains Mono',monospace; font-size:0.72em; color:#6a8090; text-align:center; }}
-.c-name {{ font-size:0.90em; font-weight:700; color:#ffffff; line-height:1.2; }}
-.c-sym  {{ font-family:'JetBrains Mono',monospace; font-size:0.68em; font-weight:800; color:#f59e0b; letter-spacing:1px; margin-top:1px; }}
-.c-sector {{ font-size:0.72em; color:#a0c8e0; margin-top:2px; max-width:130px; overflow:hidden; text-overflow:ellipsis; font-weight:700; }}
-
-/* Earnings warning */
-tr.earn-warning td {{ background:rgba(239,68,68,0.04)!important; }}
-tr.earn-warning td.earn-cell {{ background:rgba(239,68,68,0.1)!important; }}
-tr.vol-warning td {{ background:rgba(249,115,22,0.04)!important; }}
-.earn-badge {{
-  font-family:'JetBrains Mono',monospace; font-size:0.65em; font-weight:700;
-  padding:2px 7px; border-radius:4px; display:inline-block; white-space:nowrap;
-}}
-.earn-soon {{ background:rgba(239,68,68,0.18); color:#f87171; border:1px solid rgba(239,68,68,0.3); animation:pulse 2s infinite; }}
-.earn-ok   {{ background:rgba(45,212,191,0.18); color:#60fff0; border:1px solid rgba(45,212,191,0.40); }}
-.earn-na   {{ color:var(--muted); font-size:0.65em; }}
-@keyframes pulse {{ 0%,100%{{opacity:1;}} 50%{{opacity:0.6;}} }}
-
-.c-price {{ font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; color:#ffc040; }}
-
-.rating {{
-  display:inline-flex; align-items:center; gap:4px;
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.62em; font-weight:800;
-  padding:4px 9px; border-radius:5px; white-space:nowrap; letter-spacing:0.5px;
-}}
-.r-sb {{ background:rgba(34,197,94,0.22);  color:#6dffaa; border:1px solid rgba(34,197,94,0.45); }}
-.r-b  {{ background:rgba(45,212,191,0.18); color:#5fffee; border:1px solid rgba(45,212,191,0.40); }}
-.r-s  {{ background:rgba(239,68,68,0.22);  color:#ff8080; border:1px solid rgba(239,68,68,0.45); }}
-.r-ss {{ background:rgba(239,68,68,0.28);  color:#ffb0b0; border:1px solid rgba(239,68,68,0.55); }}
-
-.c-score-n   {{ font-family:'JetBrains Mono',monospace; font-size:1.35em; font-weight:900; line-height:1; }}
-.c-score-bar {{ height:7px; border-radius:4px; margin-top:7px; width:46px; opacity:1.0; box-shadow:0 0 8px currentColor; }}
-.veto-badge  {{
-  display:inline-block; font-size:0.55em; font-weight:800;
-  padding:1px 5px; border-radius:3px; margin-top:3px;
-  background:rgba(255,140,0,0.15); color:#ff8c00;
-  border:1px solid rgba(255,140,0,0.35);
-  font-family:'JetBrains Mono',monospace;
-}}
-
-.c-rsi {{ font-family:'JetBrains Mono',monospace; font-size:0.90em; font-weight:800; }}
-.c-rsi-lbl {{ font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
-.rsi-track {{ width:40px; height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin-top:4px; overflow:hidden; }}
-.rsi-fill  {{ height:100%; border-radius:3px; }}
-
-.c-macd {{ font-size:0.76em; font-weight:800; padding:3px 8px; border-radius:4px; font-family:'JetBrains Mono',monospace; display:inline-block; }}
-.macd-bull {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
-.macd-bear {{ background:rgba(239,68,68,0.18);  color:#ff8080; border:1px solid rgba(239,68,68,0.3); }}
-
-.c-adx {{ font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:800; }}
-.c-adx-lbl {{ font-size:0.65em; margin-top:2px; font-weight:600; }}
-.c-vol {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.c-vol-lbl {{ font-size:0.65em; color:#8ab8c8; margin-top:2px; font-weight:600; }}
-.c-pe  {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.c-div {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
-.c-52w {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; }}
-.c-rr  {{ font-family:'JetBrains Mono',monospace; font-size:1.05em; font-weight:900; }}
-.c-atr {{ font-family:'JetBrains Mono',monospace; font-size:0.82em; font-weight:700; color:#5fffee; }}
-.c-atr-sub {{ font-size:0.76em; color:#b0d8e8; margin-top:3px; font-weight:800; }}
-.c-beta {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.c-sd   {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; }}
-.up {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#90ffb8; }}
-.dn {{ font-family:'JetBrains Mono',monospace; font-size:0.98em; font-weight:900; color:#ffaaaa; }}
-.c-sl {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ff8080; }}
-.c-sl-sell {{ font-family:'JetBrains Mono',monospace; font-size:0.85em; font-weight:700; color:#ffd060; }}
-.c-slpct {{ font-size:0.78em; color:#ffd080; margin-top:3px; font-weight:800; }}
-.c-t1 {{ font-family:'JetBrains Mono',monospace; font-size:0.95em; font-weight:900; color:#ffffff; }}
-.c-t2 {{ font-size:0.78em; color:#d8f0ff; margin-top:3px; font-weight:800; }}
-.ts-badge {{
-  display:inline-block; font-family:'JetBrains Mono',monospace;
-  font-size:0.60em; font-weight:800; padding:2px 6px; border-radius:3px; margin-bottom:4px;
-}}
-.ts-real    {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
-.ts-partial {{ background:rgba(245,158,11,0.20); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
-.ts-ath     {{ background:rgba(96,165,250,0.20); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
-.sl-badge {{
-  display:inline-block; font-size:0.60em; font-weight:800;
-  padding:2px 6px; border-radius:3px; margin-top:3px; font-family:'JetBrains Mono',monospace;
-}}
-.sl-atr  {{ background:rgba(34,197,94,0.18);  color:#6dffaa; border:1px solid rgba(34,197,94,0.3); }}
-.sl-beta {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.3); }}
-
-.analyst {{ font-family:'JetBrains Mono',monospace; font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; display:inline-block; }}
-.an-sb {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
-.an-b  {{ background:rgba(96,165,250,0.18); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
-.an-h  {{ background:rgba(160,120,80,0.22); color:#e8c080; border:1px solid rgba(160,120,80,0.40); }}
-.an-s  {{ background:rgba(239,68,68,0.18);  color:#ff9090; border:1px solid rgba(239,68,68,0.35); }}
-
-.qual {{ font-size:0.67em; font-weight:800; padding:3px 8px; border-radius:4px; }}
-.q-ex {{ background:rgba(34,197,94,0.20);  color:#6dffaa; border:1px solid rgba(34,197,94,0.35); }}
-.q-gd {{ background:rgba(96,165,250,0.18); color:#b0d8ff; border:1px solid rgba(96,165,250,0.35); }}
-.q-av {{ background:rgba(245,158,11,0.18); color:#ffd060; border:1px solid rgba(245,158,11,0.35); }}
-.q-po {{ background:rgba(239,68,68,0.18);  color:#ff9090; border:1px solid rgba(239,68,68,0.35); }}
-
-/* QUICK VIEW hidden cols */
-.detail-col {{ transition:opacity 0.2s; }}
-body.quick-view .detail-col {{ display:none; }}
-
-/* TOOLTIP */
-[data-tip] {{ position:relative; cursor:help; }}
-[data-tip]::after {{
-  content:attr(data-tip);
-  position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
-  background:#1a2030; border:1px solid var(--border);
-  color:var(--text); font-size:0.68em; padding:5px 9px; border-radius:6px;
-  white-space:nowrap; pointer-events:none; opacity:0;
-  transition:opacity 0.15s; z-index:100;
-  font-family:'DM Sans',sans-serif; font-weight:400;
-}}
-[data-tip]:hover::after {{ opacity:1; }}
-
-/* ── DISCLAIMER ── */
-.disc {{
-  background:var(--card); border:1px solid var(--border);
-  border-left:3px solid #f59e0b; padding:12px 16px;
-  margin:16px 0; font-size:11px; color:var(--muted); line-height:1.7;
-  border-radius:8px;
-}}
-.disc strong {{ color:#f87171; }}
+/* ── META ── */
+.ab{{font-size:8px;font-weight:800;padding:3px 6px;border-radius:4px;white-space:nowrap;}}
+.ab-sb{{background:#004d25;color:#00ff88;border:1px solid #00cc66;}}
+.ab-b {{background:#003a4d;color:#00f5ff;border:1px solid #0099bb;}}
+.ab-h {{background:#1a2a3a;color:#aabbcc;border:1px solid #334455;}}
+.ab-s {{background:#4d0010;color:#ff4466;border:1px solid #cc0033;}}
+.earn{{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#00f5ff;font-weight:700;}}
+.earn-soon{{color:#ff4466;animation:pulse 2s infinite;}}
+@keyframes pulse{{0%,100%{{opacity:1;}}50%{{opacity:0.4;}}}}
+.actn{{display:inline-block;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:800;letter-spacing:0.3px;white-space:nowrap;}}
+.a-sb{{background:#004d25;color:#00ff88;border:1px solid #00ff88;}}
+.a-b {{background:#003a4d;color:#00f5ff;border:1px solid #00f5ff;}}
+.a-h {{background:#2a2200;color:#ffab00;border:1px solid #ffab00;}}
+.a-s {{background:#4d0010;color:#ff4466;border:1px solid #ff4466;}}
+.a-ss{{background:#5a0015;color:#ff7788;border:1px solid #ff7788;}}
+.rnum{{font-size:10px;color:#88bbdd;font-weight:700;}}
+.vol-warn{{font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3);margin-left:3px;}}
 
 /* ── FOOTER ── */
-footer {{
-  background:var(--card); border-top:1px solid var(--border);
-  text-align:center; padding:14px; font-size:10px;
-  color:var(--muted); letter-spacing:1px; border-radius:0 0 12px 12px;
-}}
-footer strong {{ color:var(--accent); }}
+.disc{{background:#0c1a2e;border:1px solid #1e3a5a;border-left:4px solid #ff4466;padding:10px 14px;border-radius:8px;font-size:10px;color:#aaccee;line-height:1.8;margin:12px 0;}}
+footer{{text-align:center;padding:12px;background:#080f1e;border-top:1px solid #1e3a5a;font-size:10px;color:#88aacc;letter-spacing:1px;}}
+footer strong{{color:#00f5ff;}}
 
-/* ── MOBILE ── */
-@media(max-width:900px) {{
-  .kpi-band {{ grid-template-columns:repeat(3,1fr); }}
-  .idx-strip {{ display:none; }}
-}}
-@media(max-width:600px) {{
-  .kpi-band {{ grid-template-columns:repeat(2,1fr); }}
-  .live-clock {{ display:none; }}
-  .hdr {{ padding:12px; }}
-  .page {{ padding:10px 8px 40px; }}
-}}
+/* ── RESPONSIVE ── */
+@media(max-width:900px){{.idx-strip{{display:none;}}.kpi-item{{padding:8px 10px;}}.kpi-num{{font-size:22px;}}}}
+@media(max-width:600px){{.h-top{{padding:6px 10px;}}.main{{padding:8px;}}.kpi-band{{flex-wrap:wrap;}}.kpi-item{{flex:0 0 50%;border-bottom:1px solid var(--bdr);}}.brand-name{{font-size:12px;}}}}
 </style>
 </head>
-<body class="quick-view">
+<body>
 
-<div class="page">
-
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-left">
-    <div class="hdr-icon">🌅</div>
-    <div>
-      <div class="hdr-title">Top US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
-      <div class="hdr-sub">
-        12M S/R · Trend Veto · Dynamic Weights · Wilder RSI · Sector PE · v5.4
-        · Report: {now.strftime('%d %b %Y %I:%M %p')} EST
+<header>
+  <div class="h-top">
+    <div class="brand">
+      <div class="brand-gem">🌅</div>
+      <div>
+        <div class="brand-name">US Market Influencers · NASDAQ &amp; S&amp;P 500</div>
+        <div class="brand-sub">12M S/R · Trend Veto · Wilder RSI · Dynamic Weights · Sector PE · v5.4</div>
       </div>
     </div>
-  </div>
-
-  <!-- Index Strip -->
-  <div class="idx-strip">
-    <div class="idx-item">
-      <span class="idx-name">DJI</span>
-      <span class="idx-price">{idx_data['DJI']['price']}</span>
-      <span class="idx-chg {idx_data['DJI']['cls']}">{idx_data['DJI']['chg']}</span>
+    <div class="idx-strip">
+      <div class="idx-item"><span class="idx-name">DJI</span><span class="idx-price">{idx_data['DJI']['price']}</span><span class="idx-chg {idx_data['DJI']['cls']}">{idx_data['DJI']['chg']}</span></div>
+      <div class="idx-item"><span class="idx-name">NDX</span><span class="idx-price">{idx_data['NDX']['price']}</span><span class="idx-chg {idx_data['NDX']['cls']}">{idx_data['NDX']['chg']}</span></div>
+      <div class="idx-item"><span class="idx-name">SPX</span><span class="idx-price">{idx_data['SPX']['price']}</span><span class="idx-chg {idx_data['SPX']['cls']}">{idx_data['SPX']['chg']}</span></div>
     </div>
-    <div class="idx-sep"></div>
-    <div class="idx-item">
-      <span class="idx-name">NDX</span>
-      <span class="idx-price">{idx_data['NDX']['price']}</span>
-      <span class="idx-chg {idx_data['NDX']['cls']}">{idx_data['NDX']['chg']}</span>
-    </div>
-    <div class="idx-sep"></div>
-    <div class="idx-item">
-      <span class="idx-name">SPX</span>
-      <span class="idx-price">{idx_data['SPX']['price']}</span>
-      <span class="idx-chg {idx_data['SPX']['cls']}">{idx_data['SPX']['chg']}</span>
+    <div class="clock-box">
+      <div class="clock-time" id="liveClock">--:--:-- --</div>
+      <div class="clock-meta" id="liveDate">{now.strftime('%d %b %Y')} · EST</div>
+      <div class="clock-next">Report: {now.strftime('%d %b %Y %I:%M %p')} EST</div>
+      <div class="clock-next">Next Update: <strong style="color:#00f5ff">{next_update}</strong></div>
     </div>
   </div>
+  <div class="ticker"><div class="ticker-inner">{ticker_html}</div></div>
+</header>
 
-  <!-- Live Clock + View Toggle -->
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <div class="live-clock" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;">
-      <div class="lc-label">EST TIME</div>
-      <div class="lc-time" id="liveClock">--:-- --</div>
-      <div class="lc-date" id="liveDate">{now.strftime('%d %b %Y')}</div>
-      <div class="lc-last">Next: {next_update}</div>
-    </div>
-    <div class="view-toggle">
-      <button class="vt-btn active" onclick="setView('quick',this)">⚡ Quick</button>
-      <button class="vt-btn" onclick="setView('detail',this)">🔍 Detail</button>
-    </div>
-  </div>
-</div>
-
-<!-- TICKER -->
-<div class="ticker"><div class="ticker-inner">
-"""
-        for t in self.results[:10]:
-            pct  = ((t['Price'] - t['SMA_20']) / t['SMA_20']) * 100
-            cls  = "ti-u" if pct >= 0 else "ti-d"
-            sign = "+" if pct >= 0 else ""
-            html += (f'<div class="ti"><span class="ti-s">{t["Symbol"]}</span>'
-                     f'<span class="ti-p">${t["Price"]:,.2f}</span>'
-                     f'<span class="{cls}">{sign}{pct:.1f}%</span></div>')
-
-        html += f"""</div></div>
-
-<!-- KPI BAND -->
 <div class="kpi-band">
-  <div class="kc"><div class="kn" style="color:#f59e0b">{len(self.results)}</div><div class="kl">Analyzed</div><div class="kbar" style="background:#f59e0b"></div></div>
-  <div class="kc"><div class="kn" style="color:#22c55e">{strong_buy_count}</div><div class="kl">Strong Buy</div><div class="kbar" style="background:#22c55e"></div></div>
-  <div class="kc"><div class="kn" style="color:#2dd4bf">{buy_count}</div><div class="kl">Buy</div><div class="kbar" style="background:#2dd4bf"></div></div>
-  <div class="kc"><div class="kn" style="color:#ef4444">{sell_count + strong_sell_count}</div><div class="kl">Sell</div><div class="kbar" style="background:#ef4444"></div></div>
-  <div class="kc"><div class="kn" style="color:#60a5fa">{hold_count}</div><div class="kl">Hold</div><div class="kbar" style="background:#60a5fa"></div></div>
+  <div class="kpi-item"><div class="kpi-num" style="color:#00f5ff">{len(self.results)}</div><div class="kpi-label">Analyzed</div><div class="kpi-bar" style="background:#00f5ff"></div></div>
+  <div class="kpi-item"><div class="kpi-num" style="color:#00ff88">{strong_buy_count}</div><div class="kpi-label">Strong Buy</div><div class="kpi-bar" style="background:#00ff88"></div></div>
+  <div class="kpi-item"><div class="kpi-num" style="color:#00d4ff">{buy_count}</div><div class="kpi-label">Buy</div><div class="kpi-bar" style="background:#00d4ff"></div></div>
+  <div class="kpi-item"><div class="kpi-num" style="color:#ff4466">{sell_count + strong_sell_count}</div><div class="kpi-label">Sell / Strong Sell</div><div class="kpi-bar" style="background:#ff4466"></div></div>
+  <div class="kpi-item"><div class="kpi-num" style="color:#60a5fa">{hold_count}</div><div class="kpi-label">Hold</div><div class="kpi-bar" style="background:#60a5fa"></div><div class="kpi-sub">{sector_kpi}</div></div>
 </div>
 
-<!-- LEGEND -->
-<div class="legend">
-  <span style="font-weight:600;color:var(--text);">Legend:</span>
-  <div class="leg-item"><div class="leg-dot" style="background:#f59e0b;"></div> Identity</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#22c55e;"></div> Trade Setup</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#ef4444;"></div> Risk</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#60a5fa;"></div> Momentum (Detail)</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#a78bfa;"></div> Valuation (Detail)</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#2dd4bf;"></div> External</div>
-  <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
-    <span style="color:#f87171;font-weight:600;">🔴 Pulsing row</span> = Earnings within 14 days — trade carefully
-  </span>
-  <span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px;">
-    <span style="color:#ff8c00;font-weight:600;">🟠 🚫 Veto</span> = 3+ bearish signals — fundamentals overridden, capped at HOLD
-  </span>
-</div>
+<div class="main">
 """
 
-        # ── HTML HELPERS ─────────────────────────────────────────────────────
-        def analyst_badge(label):
-            m   = {'Strong Buy': 'an-sb', 'Buy': 'an-b', 'Hold': 'an-h',
-                   'Sell': 'an-s', 'Strong Sell': 'an-s'}
-            cls = m.get(label, 'an-h')
-            return f'<span class="analyst {cls}">{label}</span>'
+        # ── HELPERS ──────────────────────────────────────────────────────────
+        def badge(rec):
+            m = {'STRONG BUY':'b-sb','BUY':'b-b','HOLD':'b-h','SELL':'b-s','STRONG SELL':'b-ss'}
+            labels = {'STRONG BUY':'⭐⭐⭐⭐⭐ STRONG BUY','BUY':'⭐⭐⭐⭐ BUY',
+                      'HOLD':'⭐⭐⭐ HOLD','SELL':'⭐⭐ SELL','STRONG SELL':'⭐ STRONG SELL'}
+            return f'<span class="badge {m.get(rec,"b-h")}">{labels.get(rec,rec)}</span>'
 
-        def adx_html(v):
-            c = "#4ade80" if v >= 30 else ("#fbbf24" if v >= 20 else "#a07850")
-            l = "Strong" if v >= 30 else ("Moderate" if v >= 20 else "Weak")
-            return f'<div class="c-adx" style="color:{c}">{v:.0f}</div><div class="c-adx-lbl" style="color:{c}">{l}</div>'
+        def action_btn(rec):
+            m = {'STRONG BUY':('a-sb','⭐⭐ STRONG BUY'),'BUY':('a-b','▲ BUY'),
+                 'HOLD':('a-h','◆ HOLD'),'SELL':('a-s','▼ SELL'),'STRONG SELL':('a-ss','⚠ STRONG SELL')}
+            cls, lbl = m.get(rec, ('a-h','◆ HOLD'))
+            return f'<span class="actn {cls}">{lbl}</span>'
 
-        def vol_html(v):
-            c = "#4ade80" if v >= 1.5 else ("#a07850" if v < 0.7 else "#d8e8f5")
-            l = "High Vol" if v >= 1.5 else ("Low Vol" if v < 0.7 else "Avg Vol")
-            return f'<div class="c-vol" style="color:{c}">{v:.1f}×</div><div class="c-vol-lbl">{l}</div>'
+        def score_cell(val, col, bar):
+            pct = min(int(val), 100)
+            return (f'<div class="sc-wrap">'
+                    f'<div class="sc-num" style="color:{col}">{val:.0f}</div>'
+                    f'<div class="sc-bar"><div class="sc-fill" style="width:{pct}%;background:{bar}"></div></div>'
+                    f'</div>')
 
-        def rsi_html(v, sig):
-            c = "#f87171" if v > 70 else ("#4ade80" if v < 30 else "#93c5fd")
-            return (f'<div class="c-rsi" style="color:{c}">{v:.0f}</div>'
-                    f'<div class="rsi-track"><div class="rsi-fill" style="width:{min(v,100):.0f}%;background:{c}"></div></div>'
-                    f'<div class="c-rsi-lbl">{sig}</div>')
-
-        def ts_badge(ts, th):
-            if 'ATH' in ts:     return 'ts-ath',     '🚀 ATH Zone'
-            elif 'Partial' in ts: return 'ts-partial', '⚡ Partial S/R'
-            else:                return 'ts-real',    '📍 Real S/R'
-
-        def sc_color(v):
-            return "#4ade80" if v >= 75 else ("#2dd4bf" if v >= 55 else "#fbbf24")
-
-        def earn_html(date_str, soon):
-            if date_str == "N/A":
-                return '<span class="earn-na">N/A</span>'
-            cls    = "earn-soon" if soon else "earn-ok"
-            prefix = "⚠ " if soon else ""
-            return f'<span class="earn-badge {cls}">{prefix}{date_str}</span>'
-
-        def veto_indicator(veto_fired, bearish_count):
-            if veto_fired:
-                return f'<div class="veto-badge">🚫 Veto ({bearish_count} signals)</div>'
-            elif bearish_count >= 2:
-                return f'<div style="font-size:0.55em;color:#f59e0b;margin-top:3px;font-family:\'JetBrains Mono\',monospace;">⚠ {bearish_count} bearish</div>'
+        def veto_pill(bs):
+            if bs >= 3:
+                return f'<div class="veto">🚫 Veto ({bs}/6)</div>'
+            if bs >= 2:
+                return f'<div class="veto warn2">⚠ {bs} signals</div>'
             return ''
+
+        def tbadge(ts):
+            if 'ATH' in ts:      return 'tb-a', '🚀 ATH Zone'
+            elif 'Partial' in ts or 'Hold' in ts: return 'tb-p', '⚡ Partial S/R'
+            return 'tb-r', '📍 Real S/R'
+
+        def div_badge(div):
+            if div == 'Bearish Divergence':
+                return '<span class="divb db-bear">⚠ Bear Div</span>'
+            elif div == 'Bullish Divergence':
+                return '<span class="divb db-bull">✅ Bull Div</span>'
+            return ''
+
+        def slope_html(direction, slope):
+            if direction == 'Rising':
+                return f'<span class="rsi-slope" style="color:#00ff88">↑ +{slope:.0f}</span>'
+            elif direction == 'Falling':
+                c = '#ff4466' if abs(slope) > 8 else '#ffcc00'
+                return f'<span class="rsi-slope" style="color:{c}">↓ {slope:.0f}</span>'
+            return '<span class="rsi-slope" style="color:#4a6080">→</span>'
+
+        def adx_cell(v):
+            if v >= 30:   c,l = 'adx-s','Strong'
+            elif v >= 20: c,l = 'adx-m','Moderate'
+            else:         c,l = 'adx-w','Weak'
+            return f'<div class="adxv {c}">{v:.0f}</div><div class="adxl">{l}</div>'
+
+        def vol_cell(v):
+            c = 'vol-h' if v >= 1.5 else ('vol-l' if v < 0.7 else 'vol-n')
+            l = 'High' if v >= 1.5 else ('Low' if v < 0.7 else 'Avg')
+            return f'<div class="volv {c}">{v:.1f}×</div><div class="voll">{l} Vol</div>'
+
+        def sdist(v):
+            c = 'sd-c' if v <= 3 else ('sd-m' if v <= 8 else 'sd-f')
+            return f'<span class="sdv {c}">{v:.1f}%</span>'
+
+        def ab(label):
+            m = {'Strong Buy':'ab-sb','Buy':'ab-b','Hold':'ab-h','Sell':'ab-s','Strong Sell':'ab-s'}
+            return f'<span class="ab {m.get(label,"ab-h")}">{label}</span>'
+
+        def qb(q):
+            m = {'Excellent':'q-ex','Good':'q-gd','Average':'q-av','Poor':'q-po'}
+            return f'<span class="qb {m.get(q,"q-av")}">{q}</span>'
+
+        def rr_c(v):   return '#00e676' if v >= 2 else ('#00d4ff' if v >= 1.5 else ('#ffab00' if v >= 1 else '#ff3d57'))
+        def pe_c(v,d='b'): 
+            if v <= 0: return '#4a6080'
+            return ('#00e676' if v < 25 else ('#ffab00' if v < 40 else '#ff3d57')) if d=='b' else ('#ff3d57' if v > 40 else ('#ffab00' if v > 25 else '#00e676'))
+        def w52_c(p):  return '#ff3d57' if p >= -5 else ('#ffab00' if p >= -20 else '#00e676')
+        def beta_c(v): return '#ff3d57' if v > 1.5 else ('#ffab00' if v > 1.0 else '#00e676')
+        def sc_c(v):   return '#00e676' if v >= 75 else ('#00d4ff' if v >= 55 else '#ffab00')
+        def sc_b(v):   return '#00c853' if v >= 75 else ('#0099cc' if v >= 55 else '#f59e0b')
 
         # ── BUY TABLE ─────────────────────────────────────────────────────────
         if not top_buys.empty:
             html += """
-<div class="sec-title">
-  <div class="sec-title-icon" style="background:rgba(34,197,94,0.12);color:#4ade80;">▲</div>
-  <span class="sec-title-text">Top 20 Buy Recommendations</span>
-  <div class="sec-title-line"></div>
-  <span class="sec-title-note">Quick = 12 cols · Detail = all 21 · Hover headers for tips · 🚫 = Trend Veto active</span>
-</div>
-
-<div class="tbl-wrap"><table>
-  <thead>
-    <tr class="grp-row">
-      <th colspan="5" class="grp-identity">⬡ Identity</th>
-      <th colspan="4" class="grp-trade">▲ Trade Setup</th>
-      <th colspan="3" class="grp-risk">⚠ Risk</th>
-      <th colspan="4" class="grp-momentum detail-col">◎ Momentum</th>
-      <th colspan="3" class="grp-value detail-col">◈ Valuation</th>
-      <th colspan="3" class="grp-external">⊕ External</th>
-    </tr>
-    <tr class="col-hdr">
-      <th data-tip="Row number">#</th>
-      <th data-tip="Company name, ticker, and sector">Stock / Sector</th>
-      <th data-tip="Last closing price">Price</th>
-      <th data-tip="Algorithm rating · 🚫 = Trend Veto capped at HOLD">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0-100 · Dynamic weights (50/50 normal · 60/40 tech if 2+ bearish signals)">Score</th>
-      <th data-tip="% gain to Target 1">Upside</th>
-      <th data-tip="T1 = nearest resistance · T2 = next resistance">Target T1/T2</th>
-      <th data-tip="ATR-based stop below support zone">Stop Loss</th>
-      <th class="gh-trade" data-tip="Reward ÷ Risk · ≥2× is ideal">R:R</th>
-      <th data-tip="Average True Range — daily volatility in $">ATR</th>
-      <th data-tip="Market sensitivity · &lt;1 = stable · &gt;1.5 = volatile">Beta</th>
-      <th class="gh-risk" data-tip="How far price is above nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="RSI (Wilder's method = TradingView accurate) · Direction shown">RSI</th>
-      <th class="detail-col" data-tip="MACD vs signal line direction">MACD</th>
-      <th class="detail-col" data-tip="ADX direction-aware · bonus only if price > SMA50">ADX</th>
-      <th class="detail-col gh-momentum" data-tip="5-day avg volume ÷ 20-day avg · &gt;1.5× = conviction">Vol/Avg</th>
-      <th class="detail-col" data-tip="P/E · Financial sector: &lt;15 = cheap · Others: &lt;25 = cheap">P/E</th>
-      <th class="detail-col" data-tip="Annual dividend yield">Div%</th>
-      <th class="detail-col gh-value" data-tip="Fundamental quality (FCF +15, D/E +15)">Quality</th>
-      <th data-tip="% below 52-week high">52W Hi%</th>
-      <th data-tip="Wall Street analyst consensus (±5 pts applied to score)">Analyst</th>
-      <th class="earn-cell" data-tip="⚠ Row pulses red if earnings within 14 days">Earnings</th>
-    </tr>
-  </thead>
-  <tbody>
+  <div class="sec-hdr">
+    <div class="sec-pill pill-buy">▲ Top Buy Recommendations — Sector Diversified</div>
+    <div class="sec-line"></div>
+    <div class="sec-note">STOCK INFO · TRADE SETUP · TECHNICALS · FUNDAMENTALS · META</div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead>
+      <tr class="grp-row">
+        <th class="grp-stock" colspan="3">STOCK INFO</th>
+        <th class="grp-trade gsep" colspan="6">TRADE SETUP</th>
+        <th class="grp-tech gsep"  colspan="6">TECHNICALS</th>
+        <th class="grp-fund gsep"  colspan="4">FUNDAMENTALS</th>
+        <th class="grp-meta gsep"  colspan="3">META</th>
+      </tr>
+      <tr class="col-row">
+        <th class="ch-stock">#</th>
+        <th class="ch-stock">Stock / Sector</th>
+        <th class="ch-stock">Price</th>
+        <th class="ch-trade gsep">Rating / Score</th>
+        <th class="ch-trade">Upside</th>
+        <th class="ch-trade">Target S/R</th>
+        <th class="ch-trade">Stop Loss</th>
+        <th class="ch-trade">ATR</th>
+        <th class="ch-trade">R:R</th>
+        <th class="ch-tech gsep">RSI / Div</th>
+        <th class="ch-tech">ADX</th>
+        <th class="ch-tech">Vol</th>
+        <th class="ch-tech">Sup Dist</th>
+        <th class="ch-tech">52W Hi</th>
+        <th class="ch-tech">MACD</th>
+        <th class="ch-fund gsep">P/E</th>
+        <th class="ch-fund">Beta</th>
+        <th class="ch-fund">Div%</th>
+        <th class="ch-fund">Quality</th>
+        <th class="ch-meta gsep">Analyst</th>
+        <th class="ch-meta">Earnings</th>
+        <th class="ch-meta">Action</th>
+      </tr>
+    </thead>
+    <tbody>
 """
             for i, (_, row) in enumerate(top_buys.iterrows(), 1):
-                rcls     = "r-sb" if row['Recommendation'] == "STRONG BUY" else "r-b"
-                sc       = sc_color(row['Combined_Score'])
-                upcls    = "up" if row['Upside'] >= 0 else "dn"
-                w52      = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
-                w52c     = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
-                betac    = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
-                rr       = row['Risk_Reward']
-                rrc      = "#4ade80" if rr >= 2 else ("#2dd4bf" if rr >= 1 else "#f87171")
-                pe_str   = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec      = ("#a07850" if row['PE_Ratio'] <= 0 else
-                            ("#4ade80" if row['PE_Ratio'] < 25 else
-                             ("#fbbf24" if row['PE_Ratio'] < 40 else "#f87171")))
-                div_str  = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                divc     = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
-                sdc      = ("#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else
-                            ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171"))
-                qcls     = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
-                tbc, tbt = ts_badge(row.get('Target_Status', ''), row.get('Targets_Hit', 0))
-                sltype   = row.get('Stop_Type', 'ATR Stop')
-                slcls    = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
-                sllbl    = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
-                soon     = row.get('Earn_Soon', False)
-                vol_warn = row.get('Vol_Ratio', 1.0) > 2.0 and row.get('RSI_Slope', 0) < 0
-                rowcls   = "earn-warning" if soon else ("vol-warning" if vol_warn else "")
-                veto     = row.get('Veto_Fired', False)
-                bs       = row.get('Bearish_Signals', 0)
-                vol_badge = (
-                    '<span style="font-size:0.6em;font-weight:700;padding:1px 5px;'
-                    'border-radius:3px;background:rgba(249,115,22,0.15);'
-                    'color:#fb923c;border:1px solid rgba(249,115,22,0.3);margin-left:4px;"'
-                    f' title="High sell-off volume — wait 1 session">⚠ Vol×{row.get("Vol_Ratio",1.0):.1f}</span>'
-                ) if vol_warn else ""
-
-                html += f"""    <tr class="{rowcls}">
-      <td><div class="c-num">{i}</div></td>
-      <td>
-        <div class="c-name">{row['Name']}{vol_badge}</div>
-        <div class="c-sym">{row['Symbol']}</div>
-        <div class="c-sector">{row.get('Sector','N/A')}</div>
-      </td>
-      <td><div class="c-price">${row['Price']:,.2f}</div></td>
-      <td><span class="rating {rcls}">{row['Rating']}</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:{sc}">{row['Combined_Score']:.0f}</div>
-        <div class="c-score-bar" style="background:{sc}"></div>
-        {veto_indicator(veto, bs)}
-      </td>
-      <td><span class="{upcls}">{row['Upside']:+.1f}%</span></td>
-      <td>
-        <span class="ts-badge {tbc}">{tbt}</span>
-        <div class="c-t1">${row['Target_1']:,.2f}</div>
-        <div class="c-t2">T2: ${row['Target_2']:,.2f}</div>
-      </td>
-      <td>
-        <div class="c-sl">${row['Stop_Loss']:,.2f}</div>
-        <div class="c-slpct">-{row['SL_Percentage']:.1f}%</div>
-        <span class="sl-badge {slcls}">{sllbl}</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:{rrc}">{rr:.1f}×</div></td>
-      <td>
-        <div class="c-atr">${row['ATR']:,.2f}</div>
-        <div class="c-atr-sub">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
-      </td>
-      <td><div class="c-beta" style="color:{betac}">{row['Beta']:.2f}</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:{sdc}">{row.get('Support_Dist_Pct',0):.1f}%</div></td>
-      <td class="detail-col">{rsi_html(row['RSI'], row['RSI_Signal'])}</td>
-      <td class="detail-col"><span class="c-macd {'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
-      <td class="detail-col">{adx_html(row.get('ADX',0))}</td>
-      <td class="detail-col sep-momentum">{vol_html(row.get('Vol_Ratio',1.0))}</td>
-      <td class="detail-col"><div class="c-pe" style="color:{pec}">{pe_str}</div></td>
-      <td class="detail-col"><div class="c-div" style="color:{divc}">{div_str}</div></td>
-      <td class="detail-col sep-value"><span class="qual {qcls}">{row['Quality']}</span></td>
-      <td><div class="c-52w" style="color:{w52c}">{w52:+.1f}%</div></td>
-      <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
-      <td class="earn-cell">{earn_html(row.get('Earnings_Date','N/A'), soon)}</td>
-    </tr>
+                rec     = row['Recommendation']
+                w52     = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                tbc,tbt = tbadge(row.get('Target_Status',''))
+                st      = row.get('Stop_Type','ATR Stop')
+                sltcls  = 'slt-a' if st == 'ATR Stop' else 'slt-b'
+                sltlbl  = '📐 ATR' if st == 'ATR Stop' else '🔒 Beta'
+                dy      = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else '-'
+                dyc     = '#00e676' if row['Dividend_Yield'] > 0 else '#4a6080'
+                rr      = row['Risk_Reward']
+                bs      = row.get('Bearish_Signals', 0)
+                ec      = 'earn-soon' if row.get('Earn_Soon', False) else ''
+                vw      = row.get('Vol_Ratio', 1.0) > 2.0 and row.get('RSI_Slope', 0) < 0
+                vwb     = '<span class="vol-warn">⚠ Vol×' + f"{row.get('Vol_Ratio',1.0):.1f}" + '</span>' if vw else ''
+                html += f"""      <tr>
+        <td><span class="rnum">{i}</span></td>
+        <td><div class="sname">{row['Name']}{vwb}</div><div class="ssym">{row['Symbol']}</div><div class="ssec">{row.get('Sector','N/A')}</div></td>
+        <td><div class="pval">${row['Price']:,.2f}</div></td>
+        <td class="gsep">{badge(rec)}{score_cell(row['Combined_Score'],sc_c(row['Combined_Score']),sc_b(row['Combined_Score']))}{veto_pill(bs)}</td>
+        <td><span class="upv {'up' if row['Upside']>=0 else 'dn'}">{row['Upside']:+.1f}%</span></td>
+        <td><span class="tbadge {tbc}">{tbt}</span><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
+        <td><div class="slv">${row['Stop_Loss']:,.2f}</div><div class="slp">-{row['SL_Percentage']:.1f}%</div><span class="slt {sltcls}">{sltlbl}</span></td>
+        <td><div class="atrv">${row['ATR']:,.2f}</div><div class="atrs">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div></td>
+        <td><span class="rrv" style="color:{rr_c(rr)}">{rr:.1f}×</span></td>
+        <td class="gsep"><div class="rsiv" style="color:{'#ff3d57' if row['RSI']>70 else ('#00e676' if row['RSI']<30 else '#60a5fa')}">{row['RSI']:.0f}</div><div class="rsis">{row['RSI_Signal']}</div>{div_badge(row.get('RSI_Divergence','None'))}{slope_html(row.get('RSI_Direction','Flat'),row.get('RSI_Slope',0))}</td>
+        <td>{adx_cell(row.get('ADX',0))}</td>
+        <td>{vol_cell(row.get('Vol_Ratio',1.0))}</td>
+        <td>{sdist(row.get('Support_Dist_Pct',0))}</td>
+        <td><span class="mono" style="color:{w52_c(w52)}">{w52:+.1f}%</span></td>
+        <td><span class="{'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
+        <td class="gsep"><span class="mono" style="color:{pe_c(row['PE_Ratio'],'b')}">{f"{row['PE_Ratio']:.1f}" if row['PE_Ratio']>0 else 'N/A'}</span></td>
+        <td><span class="mono" style="color:{beta_c(row['Beta'])}">{row['Beta']:.2f}</span></td>
+        <td><span class="mono" style="color:{dyc}">{dy}</span></td>
+        <td>{qb(row['Quality'])}</td>
+        <td class="gsep">{ab(row.get('Analyst','N/A'))}</td>
+        <td><div class="earn {ec}">{row.get('Earnings_Date','N/A')}</div></td>
+        <td>{action_btn(rec)}</td>
+      </tr>
 """
-            html += "  </tbody>\n</table></div>\n"
+            html += "    </tbody></table></div>\n"
 
         # ── SELL TABLE ────────────────────────────────────────────────────────
         if not top_sells.empty:
             html += """
-<div class="sec-title">
-  <div class="sec-title-icon" style="background:rgba(239,68,68,0.12);color:#f87171;">▼</div>
-  <span class="sec-title-text">Top 20 Sell Recommendations</span>
-  <div class="sec-title-line"></div>
-  <span class="sec-title-note">Oversold stocks and RSI + MACD bullish stocks are excluded from this table</span>
-</div>
-
-<div class="tbl-wrap"><table>
-  <thead>
-    <tr class="grp-row">
-      <th colspan="5" class="grp-identity">⬡ Identity</th>
-      <th colspan="4" class="grp-trade">▼ Trade Setup</th>
-      <th colspan="3" class="grp-risk">⚠ Risk</th>
-      <th colspan="4" class="grp-momentum detail-col">◎ Momentum</th>
-      <th colspan="3" class="grp-value detail-col">◈ Valuation</th>
-      <th colspan="3" class="grp-external">⊕ External</th>
-    </tr>
-    <tr class="col-hdr">
-      <th>#</th>
-      <th>Stock / Sector</th>
-      <th data-tip="Last closing price">Price</th>
-      <th data-tip="Algorithm sell rating">Rating</th>
-      <th class="gh-identity" data-tip="Combined score 0-100">Score</th>
-      <th data-tip="% downside to Target 1">Downside</th>
-      <th data-tip="T1 = nearest support · T2 = next support">Target T1/T2</th>
-      <th data-tip="ATR-based stop above resistance">Stop Loss</th>
-      <th class="gh-trade" data-tip="Reward ÷ Risk">R:R</th>
-      <th data-tip="Average True Range in $">ATR</th>
-      <th data-tip="Market beta sensitivity">Beta</th>
-      <th class="gh-risk" data-tip="Distance to nearest support">Sup Dist</th>
-      <th class="detail-col" data-tip="RSI (Wilder's method)">RSI</th>
-      <th class="detail-col" data-tip="MACD signal direction">MACD</th>
-      <th class="detail-col" data-tip="ADX trend strength">ADX</th>
-      <th class="detail-col gh-momentum" data-tip="Volume vs 20-day average">Vol/Avg</th>
-      <th class="detail-col" data-tip="P/E ratio">P/E</th>
-      <th class="detail-col" data-tip="Dividend yield">Div%</th>
-      <th class="detail-col sep-value" data-tip="Fundamental quality">Quality</th>
-      <th data-tip="% below 52-week high">52W Hi%</th>
-      <th data-tip="Analyst consensus">Analyst</th>
-      <th class="earn-cell" data-tip="⚠ Pulses red if earnings within 14 days">Earnings</th>
-    </tr>
-  </thead>
-  <tbody>
+  <div class="sec-hdr">
+    <div class="sec-pill pill-sell">▼ Top 20 Sell Recommendations</div>
+    <div class="sec-line"></div>
+    <div class="sec-note">STOCK INFO · TRADE SETUP · TECHNICALS · FUNDAMENTALS · META</div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead>
+      <tr class="grp-row">
+        <th class="grp-stock" colspan="3">STOCK INFO</th>
+        <th class="grp-trade gsep" colspan="6">TRADE SETUP</th>
+        <th class="grp-tech gsep"  colspan="5">TECHNICALS</th>
+        <th class="grp-fund gsep"  colspan="4">FUNDAMENTALS</th>
+        <th class="grp-meta gsep"  colspan="3">META</th>
+      </tr>
+      <tr class="col-row">
+        <th class="ch-stock">#</th>
+        <th class="ch-stock">Stock / Sector</th>
+        <th class="ch-stock">Price</th>
+        <th class="ch-trade gsep">Rating / Score</th>
+        <th class="ch-trade">Downside</th>
+        <th class="ch-trade">Target S/R</th>
+        <th class="ch-trade">Stop Loss</th>
+        <th class="ch-trade">ATR</th>
+        <th class="ch-trade">R:R</th>
+        <th class="ch-tech gsep">RSI / Signal</th>
+        <th class="ch-tech">ADX</th>
+        <th class="ch-tech">Vol</th>
+        <th class="ch-tech">52W Hi</th>
+        <th class="ch-tech">MACD</th>
+        <th class="ch-fund gsep">P/E</th>
+        <th class="ch-fund">Beta</th>
+        <th class="ch-fund">Div%</th>
+        <th class="ch-fund">Quality</th>
+        <th class="ch-meta gsep">Analyst</th>
+        <th class="ch-meta">Earnings</th>
+        <th class="ch-meta">Action</th>
+      </tr>
+    </thead>
+    <tbody>
 """
             for i, (_, row) in enumerate(top_sells.iterrows(), 1):
-                rcls   = "r-ss" if row['Recommendation'] == "STRONG SELL" else "r-s"
-                sc     = "#f87171"
-                dncls  = "dn" if row['Upside'] >= 0 else "up"
-                w52    = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
-                w52c   = "#f87171" if w52 >= -5 else ("#fbbf24" if w52 >= -20 else "#4ade80")
-                betac  = "#f87171" if row['Beta'] > 1.5 else ("#fbbf24" if row['Beta'] > 1.0 else "#4ade80")
-                rr     = row['Risk_Reward']
-                rrc    = "#4ade80" if rr >= 2 else ("#fbbf24" if rr >= 1 else "#f87171")
-                pe_str = f"{row['PE_Ratio']:.1f}" if row['PE_Ratio'] > 0 else "N/A"
-                pec    = ("#a07850" if row['PE_Ratio'] <= 0 else
-                          ("#f87171" if row['PE_Ratio'] > 40 else
-                           ("#fbbf24" if row['PE_Ratio'] > 25 else "#4ade80")))
-                div_str = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else "—"
-                divc    = "#4ade80" if row['Dividend_Yield'] > 0 else "#a07850"
-                sdc     = ("#4ade80" if row.get('Support_Dist_Pct', 0) <= 3 else
-                           ("#fbbf24" if row.get('Support_Dist_Pct', 0) <= 8 else "#f87171"))
-                qcls    = {"Excellent": "q-ex", "Good": "q-gd", "Average": "q-av", "Poor": "q-po"}.get(row['Quality'], "q-av")
-                tbc, tbt = ts_badge(row.get('Target_Status', ''), 0)
-                sltype  = row.get('Stop_Type', 'ATR Stop')
-                slcls   = "sl-atr" if sltype == "ATR Stop" else "sl-beta"
-                sllbl   = f"{'📐' if sltype == 'ATR Stop' else '🔒'} {sltype}"
-                soon    = row.get('Earn_Soon', False)
-                rowcls  = "earn-warning" if soon else ""
-
-                html += f"""    <tr class="{rowcls}">
-      <td><div class="c-num">{i}</div></td>
-      <td>
-        <div class="c-name">{row['Name']}</div>
-        <div class="c-sym">{row['Symbol']}</div>
-        <div class="c-sector">{row.get('Sector','N/A')}</div>
-      </td>
-      <td><div class="c-price">${row['Price']:,.2f}</div></td>
-      <td><span class="rating {rcls}">{row['Rating']}</span></td>
-      <td class="sep-identity">
-        <div class="c-score-n" style="color:{sc}">{row['Combined_Score']:.0f}</div>
-        <div class="c-score-bar" style="background:{sc}"></div>
-      </td>
-      <td><span class="{dncls}">{row['Upside']:+.1f}%</span></td>
-      <td>
-        <span class="ts-badge {tbc}">{tbt}</span>
-        <div class="c-t1">${row['Target_1']:,.2f}</div>
-        <div class="c-t2">T2: ${row['Target_2']:,.2f}</div>
-      </td>
-      <td>
-        <div class="c-sl-sell">${row['Stop_Loss']:,.2f}</div>
-        <div class="c-slpct">+{row['SL_Percentage']:.1f}%</div>
-        <span class="sl-badge {slcls}">{sllbl}</span>
-      </td>
-      <td class="sep-trade"><div class="c-rr" style="color:{rrc}">{rr:.1f}×</div></td>
-      <td>
-        <div class="c-atr">${row['ATR']:,.2f}</div>
-        <div class="c-atr-sub">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div>
-      </td>
-      <td><div class="c-beta" style="color:{betac}">{row['Beta']:.2f}</div></td>
-      <td class="sep-risk"><div class="c-sd" style="color:{sdc}">{row.get('Support_Dist_Pct',0):.1f}%</div></td>
-      <td class="detail-col">{rsi_html(row['RSI'], row['RSI_Signal'])}</td>
-      <td class="detail-col"><span class="c-macd {'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
-      <td class="detail-col">{adx_html(row.get('ADX',0))}</td>
-      <td class="detail-col sep-momentum">{vol_html(row.get('Vol_Ratio',1.0))}</td>
-      <td class="detail-col"><div class="c-pe" style="color:{pec}">{pe_str}</div></td>
-      <td class="detail-col"><div class="c-div" style="color:{divc}">{div_str}</div></td>
-      <td class="detail-col sep-value"><span class="qual {qcls}">{row['Quality']}</span></td>
-      <td><div class="c-52w" style="color:{w52c}">{w52:+.1f}%</div></td>
-      <td>{analyst_badge(row.get('Analyst','N/A'))}</td>
-      <td class="earn-cell">{earn_html(row.get('Earnings_Date','N/A'), soon)}</td>
-    </tr>
+                rec     = row['Recommendation']
+                w52     = ((row['Price'] - row['52W_High']) / row['52W_High']) * 100
+                tbc,tbt = tbadge(row.get('Target_Status',''))
+                st      = row.get('Stop_Type','ATR Stop')
+                sltcls  = 'slt-a' if st == 'ATR Stop' else 'slt-b'
+                sltlbl  = '📐 ATR' if st == 'ATR Stop' else '🔒 Beta'
+                dy      = f"{row['Dividend_Yield']:.2f}%" if row['Dividend_Yield'] > 0 else '-'
+                dyc     = '#00e676' if row['Dividend_Yield'] > 0 else '#4a6080'
+                rr      = row['Risk_Reward']
+                ec      = 'earn-soon' if row.get('Earn_Soon', False) else ''
+                html += f"""      <tr>
+        <td><span class="rnum">{i}</span></td>
+        <td><div class="sname">{row['Name']}</div><div class="ssym">{row['Symbol']}</div><div class="ssec">{row.get('Sector','N/A')}</div></td>
+        <td><div class="pval">${row['Price']:,.2f}</div></td>
+        <td class="gsep">{badge(rec)}{score_cell(row['Combined_Score'],'#ff4466','#cc2244')}</td>
+        <td><span class="upv {'dn' if row['Upside']>=0 else 'up'}">{row['Upside']:+.1f}%</span></td>
+        <td><span class="tbadge {tbc}">{tbt}</span><div class="t1">${row['Target_1']:,.2f}</div><div class="t2">T2: ${row['Target_2']:,.2f}</div></td>
+        <td><div class="slvs">${row['Stop_Loss']:,.2f}</div><div class="slp">+{row['SL_Percentage']:.1f}%</div><span class="slt {sltcls}">{sltlbl}</span></td>
+        <td><div class="atrv">${row['ATR']:,.2f}</div><div class="atrs">{row['ATR_Pct']:.1f}% · {row['ATR_Multiplier']}×</div></td>
+        <td><span class="rrv" style="color:{rr_c(rr)}">{rr:.1f}×</span></td>
+        <td class="gsep"><div class="rsiv" style="color:{'#ff3d57' if row['RSI']>70 else ('#00e676' if row['RSI']<30 else '#60a5fa')}">{row['RSI']:.0f}</div><div class="rsis">{row['RSI_Signal']}</div>{slope_html(row.get('RSI_Direction','Flat'),row.get('RSI_Slope',0))}</td>
+        <td>{adx_cell(row.get('ADX',0))}</td>
+        <td>{vol_cell(row.get('Vol_Ratio',1.0))}</td>
+        <td><span class="mono" style="color:{w52_c(w52)}">{w52:+.1f}%</span></td>
+        <td><span class="{'macd-bull' if row['MACD']=='Bullish' else 'macd-bear'}">{row['MACD']}</span></td>
+        <td class="gsep"><span class="mono" style="color:{pe_c(row['PE_Ratio'],'s')}">{f"{row['PE_Ratio']:.1f}" if row['PE_Ratio']>0 else 'N/A'}</span></td>
+        <td><span class="mono" style="color:{beta_c(row['Beta'])}">{row['Beta']:.2f}</span></td>
+        <td><span class="mono" style="color:{dyc}">{dy}</span></td>
+        <td>{qb(row['Quality'])}</td>
+        <td class="gsep">{ab(row.get('Analyst','N/A'))}</td>
+        <td><div class="earn {ec}">{row.get('Earnings_Date','N/A')}</div></td>
+        <td>{action_btn(rec)}</td>
+      </tr>
 """
-            html += "  </tbody>\n</table></div>\n"
+            html += "    </tbody></table></div>\n"
 
         html += f"""
   <div class="disc">
-    <strong>⚠ DISCLAIMER:</strong> For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
-    Stop losses are ATR-based near real 12-month S/R zones. Targets derived from swing highs/lows,
-    52-week extremes and round number levels. Earnings dates are estimates.
-    RSI divergence signals are algorithmic and not a guarantee of reversal.
-    Trend Veto Gate caps BUY/STRONG BUY to HOLD when 3+ bearish signals fire simultaneously.
-    Always conduct your own research, consult a registered financial advisor,
-    and never invest more than you can afford to lose.
+    <strong style="color:#ff4466">⚠ DISCLAIMER:</strong>
+    For <strong>EDUCATIONAL PURPOSES ONLY</strong>. Not financial advice.
+    Stop losses ATR-based near real 12-month S/R zones. Targets from swing highs/lows and 52W extremes.
+    Earnings dates are estimates. RSI divergence is algorithmic — not guaranteed.
+    Trend Veto caps BUY to HOLD when 3+ bearish signals fire. Consult a registered financial advisor.
   </div>
+</div>
 
-  <footer>
-    <strong>Top US Market Influencers · NASDAQ &amp; S&amp;P 500</strong>
-    · Wilder RSI · Trend Veto · Dynamic Weights · SMA200 Slope · Sector PE · RSI Divergence · v5.4
-    · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
-  </footer>
-
-</div><!-- /page -->
+<footer>
+  <strong>US Market Influencers · NASDAQ &amp; S&amp;P 500</strong>
+  · Wilder RSI · Trend Veto · Dynamic Weights · SMA200 Slope · Sector PE · RSI Divergence · v5.4
+  · Next Update: <strong>{next_update} EST</strong> · {now.strftime('%d %b %Y')}
+</footer>
 
 <script>
-/* ── LIVE CLOCK ── */
-function updateClock() {{
-  var now = new Date();
-  var est = new Date(now.toLocaleString('en-US', {{timeZone:'America/New_York'}}));
-  var h = est.getHours(), m = est.getMinutes(), s = est.getSeconds();
-  var ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  var pad = n => String(n).padStart(2,'0');
-  document.getElementById('liveClock').textContent = pad(h)+':'+pad(m)+' '+ampm+' EST';
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('liveDate').textContent = pad(est.getDate())+' '+months[est.getMonth()]+' '+est.getFullYear();
+function tick(){{
+  var d=new Date(),e=new Date(d.toLocaleString('en-US',{{timeZone:'America/New_York'}}));
+  var h=e.getHours(),m=e.getMinutes(),s=e.getSeconds(),ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  var p=n=>String(n).padStart(2,'0');
+  document.getElementById('liveClock').textContent=p(h)+':'+p(m)+':'+p(s)+' '+ap+' EST';
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('liveDate').textContent=p(e.getDate())+' '+mo[e.getMonth()]+' '+e.getFullYear()+' · EST';
 }}
-updateClock();
-setInterval(updateClock, 1000);
-
-/* ── VIEW TOGGLE ── */
-function setView(v, btn) {{
-  document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (v === 'quick') {{
-    document.body.classList.add('quick-view');
-  }} else {{
-    document.body.classList.remove('quick-view');
-  }}
-}}
+tick(); setInterval(tick,1000);
 </script>
-
 </body></html>"""
         return html
 
